@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 
 import os
+
+pd.set_option("styler.render.max_elements", 468657)
 # Demographics file
 dir=os.getcwd()
 nhanes_files={
@@ -20,7 +22,7 @@ print(f"File selection {file_selection} DEMO {f_demo}")
 df_demo=pd.read_sas(dir+'/data/'+f_demo, format='xport')
 print(f"DF shape demographics: {df_demo.shape}")
 with st.expander(f"# Raw Data : Demographics {df_demo.shape}"):
-    st.dataframe(df_demo,hide_index=True)
+    st.dataframe(df_demo.style.format(lambda x: f"{x:.0f}"),hide_index=True)
     st.download_button(label="Download CSV",data=df_demo.to_csv(index=False),file_name='demo.csv',mime='text/csv')
 df_demo_pro=df_demo
 # Select specific demographics
@@ -41,7 +43,7 @@ demo_id=nhanes_demos[demo_selection]
 df_demo_pro=df_demo_pro[df_demo_pro['RIDRETH3']==demo_id]
 df_demo_pro.to_csv(dir+'/output/'+f_demo[:-4]+'_pro.csv',index=False)
 with st.expander(f"# {demo_selection} : Demographics {df_demo_pro.shape}"):
-    st.dataframe(df_demo_pro,hide_index=True)
+    st.dataframe(df_demo_pro.style.format(lambda x: f"{x:.0f}"),hide_index=True)
     st.download_button(label="Download CSV",data=df_demo_pro.to_csv(index=False),file_name='demo_pro.csv',mime='text/csv')
 
 to_skip="""
