@@ -3,7 +3,7 @@ import pandas as pd
 
 import os
 
-pd.set_option("styler.render.max_elements", 468657)
+pd.set_option("styler.render.max_elements", 1468657)
 # Demographics file
 dir=os.getcwd()
 nhanes_files={
