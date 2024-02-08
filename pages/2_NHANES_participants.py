@@ -1,14 +1,21 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 import os
 
-# Given two dataframes with users identified by SEQN, compute how many common users they have
 def common_users(df1, df2):
     return len(set(df1['SEQN']).intersection(set(df2['SEQN'])))
 
-pd.set_option("styler.render.max_elements", 1468657)
-# Demographics file
+def create_matrix(df):
+    matrix = pd.DataFrame(index=df.keys(), columns=df.keys())
+    for i in df.keys():
+        for j in df.keys():
+            matrix[i][j] = common_users(df[i], df[j])
+    matrix = matrix.apply(pd.to_numeric)
+    return matrix
+
 dir=os.getcwd()
 nhanes_files={
     "2013-2014":"DEMO_H.XPT",
@@ -17,31 +24,16 @@ nhanes_files={
     "2017-March 2020 Pre-Pandemic":"DEMO_P.XPT",
 }
 
-nhlist = list(nhanes_files[i] for i in nhanes_files.keys())
 dfdict={}
 for i in nhanes_files.keys():
     fname=nhanes_files[i]
     dfdict[i] = pd.read_sas(dir+'/data/'+fname, format='xport')
 
-for i in nhanes_files.keys():
-    st.write(f"### Dataset: {i} has {dfdict[i].shape[0]} records")
-    st.dataframe(dfdict[i])
+m=create_matrix(dfdict)
+print(f"Matrix {m}")
+st.write("### Common Users Matrix")
+# Plotting the matrix
 
-for i in nhanes_files.keys():
-    for j in nhanes_files.keys():
-        if i != j:
-            st.write(f"{common_users(dfdict[i],dfdict[j])} records in common between {i} and {j}")
-
-
-
-a= """
-
-file_selection = st.selectbox(
-   "Select NHANES Data Year",
-   list(nhanes_files.keys()),
-)
-
-f_demo=nhanes_files[file_selection]
-print(f"File selection {file_selection} DEMO {f_demo}")
-df_demo=pd.read_sas(dir+'/data/'+f_demo, format='xport')
-"""
+fig, ax = plt.subplots(figsize=(10, 10))  # Explicitly create a figure and an axes object
+sns.heatmap(m, annot=True, cmap='coolwarm', fmt='g', ax=ax)  # Plot on the created axes object
+st.pyplot(fig)  # Pass the figure to st.pyplot() to display it
