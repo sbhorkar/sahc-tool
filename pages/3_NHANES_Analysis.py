@@ -124,6 +124,16 @@ def show_analysis(df):
         plt.title(f'Boxplot for {columnName}')
         plt.xlabel('Values')
         plt.ylabel(columnName)
+        stats = df[column].describe()
+    
+        # Annotating the plot with statistical values
+        plt.annotate(f'Median: {stats["50%"]:.2f}', xy=(1, stats["50%"]), xytext=(1.1, stats["50%"]),
+                 arrowprops=dict(facecolor='blue', shrink=0.05), horizontalalignment='left')
+        plt.annotate(f'25th percentile: {stats["25%"]:.2f}', xy=(1, stats["25%"]), xytext=(1.1, stats["25%"]),
+                 arrowprops=dict(facecolor='green', shrink=0.05), horizontalalignment='left')
+        plt.annotate(f'75th percentile: {stats["75%"]:.2f}', xy=(1, stats["75%"]), xytext=(1.1, stats["75%"]),
+                 arrowprops=dict(facecolor='red', shrink=0.05), horizontalalignment='left')
+    
         st.pyplot(plt.gcf())  # Show the plot in Streamlit
 
     plt.figure(figsize=(10, 6))
