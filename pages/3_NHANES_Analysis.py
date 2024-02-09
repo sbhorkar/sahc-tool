@@ -62,20 +62,20 @@ def load_files(debugging):
         df_combined.to_csv(os.path.join(OUTPUT_DIR, 'nhanes_combined.csv'),index=False)
     return df_combined
 
-def filter_df(df,genderList,ageList,diabetesSelect,medCholSelect,medDiabSelect,medBPSelect):
+def filter_df(df,genderList,ageList,diabetesList,medCholList,medDiabList,medBPList):
     df2=df.copy()
     st.sidebar.write(f"Intial, records= {df2.shape}")
     df2=df2[df2['RIAGENDR'].isin(genderList)]
     st.sidebar.write(f"After Gender, records= {df2.shape}")
     df2=df2[df2['Age_Group'].isin(ageList)]
     st.sidebar.write(f"After Age, records= {df2.shape}")
-    df2=df2[df2['DIQ010']==diabetesSelect]
+    df2=df2[df2['DIQ010'].isin(diabetesList)]
     st.sidebar.write(f"After Diabetes diagnosis, records= {df2.shape}")
-    df2=df2[df2['DIQ160']==medDiabSelect]
+    df2=df2[df2['DIQ160'].isin(medDiabList)]
     st.sidebar.write(f"After diabetes meds, records= {df2.shape}")
-    df2=df2[df2['BPQ090D']==medCholSelect]
+    df2=df2[df2['BPQ090D'].isin(medCholList)]
     st.sidebar.write(f"After Chol meds, records= {df2.shape}")
-    df2=df2[df2['BPQ100D']==medBPSelect]
+    df2=df2[df2['BPQ100D'].isin(medBPList)]
     st.sidebar.write(f"After BP meds, records= {df2.shape}")
     return df2
 
@@ -87,28 +87,28 @@ def ui_choose(df, debugging):
     medDiabOptions={'Yes':1,'No':2}
     medBPOptions={'Yes':1,'No':2}
 
-    genderList = st.sidebar.multiselect('Gender (can select multiple)',list(genderOptions.keys()))
-    ageList = st.sidebar.multiselect('Age groups (can select multiple)',list(ageOptions.keys()))
-    diabetesSelect = st.sidebar.selectbox('Diabetes status (pick one)',options=list(diabetesOptions.keys()))
+    genderList = st.sidebar.multiselect('Gender',list(genderOptions.keys()))
+    ageList = st.sidebar.multiselect('Age groups',list(ageOptions.keys()))
+    diabetesList = st.sidebar.multiselect('Diabetes status',options=list(diabetesOptions.keys()))
 
-    medCholSelect = st.sidebar.selectbox('Cholesterol medication (pick one)',options=list(medCholOptions.keys()))
-    medDiabSelect = st.sidebar.selectbox('Diabetes medication (pick one)',options=list(medDiabOptions.keys()))
-    medBPSelect = st.sidebar.selectbox('Blood pressure medication (pick one)',options=list(medBPOptions.keys()))
+    medCholList = st.sidebar.multiselect('Cholesterol medication',options=list(medCholOptions.keys()))
+    medDiabList = st.sidebar.multiselect('Diabetes medication',options=list(medDiabOptions.keys()))
+    medBPList = st.sidebar.multiselect('Blood pressure medication',options=list(medBPOptions.keys()))
 
     if debugging:
         st.write(genderList)
         st.write(ageList)
-        st.write(diabetesSelect)
-        st.write(medCholSelect)
-        st.write(medDiabSelect)
-        st.write(medBPSelect)
+        st.write(diabetesList)
+        st.write(medCholList)
+        st.write(medDiabList)
+        st.write(medBPList)
 
     genderFilter=[genderOptions[i] for i in genderList]
     ageFilter=[ageOptions[i] for i in ageList]
-    diabetesFilter=diabetesOptions[diabetesSelect]
-    medCholFilter=medCholOptions[medCholSelect]
-    medDiabFilter=medDiabOptions[medDiabSelect]
-    medBPFilter=medBPOptions[medBPSelect]
+    diabetesFilter=[diabetesOptions[i] for i in diabetesList]
+    medCholFilter=[medCholOptions[i] for i in medCholList]
+    medDiabFilter=[medDiabOptions[i] for i in medDiabList]
+    medBPFilter=[medBPOptions[i] for i in medBPList]
 
     df2 = filter_df(df,genderFilter,ageFilter,diabetesFilter,medCholFilter,medDiabFilter,medBPFilter)
     return df2
