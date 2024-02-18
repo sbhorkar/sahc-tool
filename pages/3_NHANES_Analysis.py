@@ -125,6 +125,14 @@ def show_analysis(df):
         plt.xlabel('Values')
         plt.ylabel(columnName)
         stats = df[column].describe()
+        Q1 = stats["25%"]
+        Q3 = stats["75%"]
+        IQR = Q3 - Q1
+        lower_whisker = Q1 - 1.5 * IQR
+        upper_whisker = Q3 + 1.5 * IQR
+        lower_whisker_val = df[column][df[column] >= lower_whisker].min()
+        upper_whisker_val = df[column][df[column] <= upper_whisker].max()
+    
     
         # Annotating the plot with statistical values
         plt.annotate(f'Median: {stats["50%"]:.2f}', xy=(1, stats["50%"]), xytext=(1.1, stats["50%"]),
@@ -133,6 +141,11 @@ def show_analysis(df):
                  arrowprops=dict(facecolor='green', shrink=0.05), horizontalalignment='left')
         plt.annotate(f'75th percentile: {stats["75%"]:.2f}', xy=(1, stats["75%"]), xytext=(1.1, stats["75%"]),
                  arrowprops=dict(facecolor='red', shrink=0.05), horizontalalignment='left')
+        plt.annotate(f'Lower Whisker: {lower_whisker_val:.2f}', xy=(1, lower_whisker_val), xytext=(1.1, lower_whisker_val - 0.5 * IQR),
+                 arrowprops=dict(facecolor='orange', shrink=0.05), horizontalalignment='left')
+        plt.annotate(f'Upper Whisker: {upper_whisker_val:.2f}', xy=(1, upper_whisker_val), xytext=(1.1, upper_whisker_val + 0.5 * IQR),
+                 arrowprops=dict(facecolor='purple', shrink=0.05), horizontalalignment='left')
+    
     
         st.pyplot(plt.gcf())  # Show the plot in Streamlit
 
