@@ -132,7 +132,7 @@ def augment_columns(df):
     columns_to_convert = df.columns.difference(exclude_columns)
     df[columns_to_convert] = df[columns_to_convert].applymap(lambda x: pd.to_numeric(x, errors='coerce'))
     df['GP_Age'] = df['RIDAGEYR'].apply(lambda age: group_for_age(age))
-    df['GP_Gender'] = df['RIAGENDR'].apply(lambda gender: group_common(gender))
+    df['GP_Gender'] = df['RIAGENDR'].apply(lambda gender: group_gender(gender))
     df['GP_StatusDiab'] = df['DIQ010'].apply(lambda x: group_common(x))
     df['GP_StatusPreDiab'] = df['DIQ160'].apply(lambda x: group_common(x))
     df['GP_StatusCAD1'] = df['MCQ160C'].apply(lambda x: group_base(x))

@@ -15,7 +15,7 @@ SELECT_LIST={'GP_Age':"Age",'GP_Gender':"Gender",'GP_StatusDiab':"Status: Diabet
 METRICS_MAP = {'LBXTR': 'Triglycerides', 'LBDHDD': 'HDL', 'LBDLDL': 'LDL', 'LBXTC': 'Total Cholesterol', 'LBXGLU': 'Fasting Glucose', 'LBXGH': 'Glycohemoglobin',
             'BPXOSY1': 'Systolic', 'BPXODI1': 'Diastolic', 'BPXOPLS1': 'Pulse'}
 
-@st.cache_data
+# Temp disable caching @st.cache_data
 def load_files(debugging):
     df=pd.read_csv(OUTPUT_DIR+'nhanes_augmented.csv')
     if debugging:
@@ -46,6 +46,10 @@ def ui_choose(df, vl, debugging):
 def show_analysis(df):
     st.write("# Raw Data")
     st.dataframe(df, hide_index=True)
+    st.write("# Summary Statistics")
+    st.write(df.describe())
+    st.write("# Data Distribution")
+    
 
     for column in METRICS_MAP.keys():
         columnName=METRICS_MAP[column]
