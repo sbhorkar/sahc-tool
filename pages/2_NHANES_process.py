@@ -43,25 +43,37 @@ def group_for_age(age):
 
 def group_base(x):
     if math.isnan(x):
-        return 'Catch-All'
+        return 'Others'
     y=round(x)
     if y in [1]:
         return 'Yes'
     elif y in [2]:
         return 'No'
     else:
-        return 'Catch-All'
+        return 'Others'
 
 def group_common(x):
     if math.isnan(x):
-        return 'Catch-All'
+        return 'Others'
     y=round(x)
     if y in [1,3]:
         return 'Yes'
     elif y in [2]:
         return 'No'
     else:
-        return 'Catch-All'
+        return 'Others'
+    
+
+def group_gender(x):
+    if math.isnan(x):
+        return 'Others'
+    y=round(x)
+    if y in [1]:
+        return 'Male'
+    elif y in [2]:
+        return 'Female'
+    else:
+        return 'Others'
 
 @st.cache_data
 def load_and_combine_files(debugging):
