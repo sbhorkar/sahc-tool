@@ -28,7 +28,7 @@ COMMON_YES_NO_MAP=['Unknown','Yes','No','Yes']
 AGE_MAP = [
     {'min':0,  'max':17, 'name':'0-17','id':0},
     {'min':18, 'max':35, 'name':'18-35','id':1},
-    {'min':36, 'max':55, 'name':'36-45','id':2},
+    {'min':36, 'max':45, 'name':'36-45','id':2},
     {'min':46, 'max':55, 'name':'46-55','id':3},
     {'min':56, 'max':65, 'name':'56-65','id':4},
     {'min':66, 'max':79, 'name':'66-79','id':5},
