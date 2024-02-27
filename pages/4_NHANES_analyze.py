@@ -7,7 +7,8 @@ DIR=os.getcwd()
 DATA_DIR=DIR+'/data/'
 OUTPUT_DIR=DIR+'/output/'
 
-SELECT_LIST={'GP_Age':"Age",'GP_Gender':"Gender",'GP_StatusDiab':"Status: Diabetes",'GP_StatusPreDiab':"Status: Pre-diabetes",
+SELECT_LIST={'GP_Age':"Age",'GP_Gender':"Gender",'GP_Ethnic':"Ethnicity",
+             'GP_StatusDiab':"Status: Diabetes",'GP_StatusPreDiab':"Status: Pre-diabetes",
              'GP_StatusCAD1':"Told you had CAD",'GP_StatusCAD2':"Told you had Angina",'GP_StatusCAD3':"TOld you had heart attack",
              'GP_MedChol1':"Told to take prescription for cholesterol",'GP_MedChol2':"Now taking cholesterol medication",
              'GP_MedDiab1':"Told to take prescription for diabetes",'GP_MedDiab2':"Now taking diabetes medication",
@@ -54,18 +55,18 @@ def show_analysis(df):
     for column in METRICS_MAP.keys():
         columnName=METRICS_MAP[column]
         plt.figure(figsize=(10, 6))
-        df[column].plot(kind='box')
+        df[columnName].plot(kind='box')
         plt.title(f'{columnName}')
         plt.xlabel('Values')
         plt.ylabel(columnName)
-        stats = df[column].describe()
+        stats = df[columnName].describe()
         Q1 = stats["25%"]
         Q3 = stats["75%"]
         IQR = Q3 - Q1
         lower_whisker = Q1 - 1.5 * IQR
         upper_whisker = Q3 + 1.5 * IQR
-        lower_whisker_val = df[column][df[column] >= lower_whisker].min()
-        upper_whisker_val = df[column][df[column] <= upper_whisker].max()
+        lower_whisker_val = df[columnName][df[columnName] >= lower_whisker].min()
+        upper_whisker_val = df[columnName][df[columnName] <= upper_whisker].max()
     
     
         # Annotating the plot with statistical values

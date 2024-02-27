@@ -35,6 +35,8 @@ AGE_MAP = [
     {'min':80, 'max':500, 'name':'80+','id':6}
 ]
 
+ETHNIC_MAP = ['Mexican American', 'Other Hispanic', 'Non-Hispanic White', 'Non-Hispanic Black','Non-Hispanic Asian','Other Race - Including Multi-Racial','Missing']
+
 def group_for_age(age):
     for a in AGE_MAP:
         if a['min'] <= age <= a['max']:
@@ -74,6 +76,25 @@ def group_gender(x):
         return 'Female'
     else:
         return 'Others'
+    
+def group_ethnic(x):
+    if math.isnan(x):
+        return 'Others'
+    y=round(x)
+    if y in [1]:
+        return 'Hispanic'
+    elif y in [2]:
+        return 'Hispanic'
+    elif y in [3]:
+        return 'White'
+    elif y in [4]:
+        return 'Black'
+    elif y in [6]:
+        return 'Asian'
+    elif y in [7]:
+        return 'Other, including Multi-Racial'
+    else:
+        return 'Missing'
 
 @st.cache_data
 def load_and_combine_files(debugging):
@@ -88,7 +109,7 @@ def load_and_combine_files(debugging):
     df_bpx = pd.read_sas(BPX_FILE, format='xport')
     df_mcq = pd.read_sas(MCQ_FILE, format='xport')
     #
-    df_combined = df_user[['SEQN','RIAGENDR','RIDAGEYR']]
+    df_combined = df_user[['SEQN','RIAGENDR','RIDAGEYR','RIDRETH3']]
     df_combined = pd.merge(df_combined, df_diq[['SEQN', 'DIQ010', 'DIQ160','DIQ050','DIQ070']], on='SEQN', how='left')
     df_combined = pd.merge(df_combined, df_bpq[['SEQN', 'BPQ090D', 'BPQ100D','BPQ040A','BPQ050A']], on='SEQN', how='left')
     df_combined = pd.merge(df_combined, df_hdl[['SEQN', 'LBDHDD']], on='SEQN', how='left')
@@ -133,6 +154,7 @@ def augment_columns(df):
     df[columns_to_convert] = df[columns_to_convert].applymap(lambda x: pd.to_numeric(x, errors='coerce'))
     df['GP_Age'] = df['RIDAGEYR'].apply(lambda age: group_for_age(age))
     df['GP_Gender'] = df['RIAGENDR'].apply(lambda gender: group_gender(gender))
+    df['GP_Ethnic'] = df['RIDRETH3'].apply(lambda x: group_ethnic(x))
     df['GP_StatusDiab'] = df['DIQ010'].apply(lambda x: group_common(x))
     df['GP_StatusPreDiab'] = df['DIQ160'].apply(lambda x: group_common(x))
     df['GP_StatusCAD1'] = df['MCQ160C'].apply(lambda x: group_base(x))
@@ -144,6 +166,11 @@ def augment_columns(df):
     df['GP_MedDiab2'] = df['DIQ070'].apply(lambda x: group_base(x))
     df['GP_MedBP1'] = df['BPQ040A'].apply(lambda x: group_base(x))
     df['GP_MedBP2'] = df['BPQ050A'].apply(lambda x: group_base(x))
+
+    # Rename columns as per NAME_MAP
+    df.rename(columns=NAME_MAP, inplace=True)
+    # Reorder columns to bring first the ones listed in NAME_MAP and the SEQN column and the ones that start with GP_ 
+    df = df.reindex(columns=['SEQN'] + list(NAME_MAP.values()) + [col for col in df.columns if col.startswith('GP_')])
 
     #
     #
