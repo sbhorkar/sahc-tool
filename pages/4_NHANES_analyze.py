@@ -14,7 +14,8 @@ SELECT_LIST={'GP_Age':"Age",'GP_Gender':"Gender",'GP_Ethnic':"Ethnicity",
              'GP_MedDiab1':"Told to take prescription for diabetes",'GP_MedDiab2':"Now taking diabetes medication",
              'GP_MedBP1':"Told to take prescription for BP",'GP_MedBP2':"Now taking BP medication"}
 METRICS_MAP = {'LBXTR': 'Triglycerides', 'LBDHDD': 'HDL', 'LBDLDL': 'LDL', 'LBXTC': 'Total Cholesterol', 'LBXGLU': 'Fasting Glucose', 'LBXGH': 'Glycohemoglobin',
-            'BPXOSY1': 'Systolic', 'BPXODI1': 'Diastolic', 'BPXOPLS1': 'Pulse'}
+            'BPXOSY1': 'Systolic', 'BPXODI1': 'Diastolic', 'BPXOPLS1': 'Pulse',
+            'BMXWT': 'Weight', 'BMXHT': 'Height', 'BMXWAIST': 'Waist', 'BMXBMI': 'BMI'}
 
 # Temp disable caching @st.cache_data
 def load_files(debugging):

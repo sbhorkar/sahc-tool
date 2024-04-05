@@ -17,9 +17,11 @@ GLU_FILE=os.path.join(DATA_DIR, 'P_GLU.XPT')
 GHB_FILE=os.path.join(DATA_DIR, 'P_GHB.XPT')
 BPX_FILE=os.path.join(DATA_DIR, 'P_BPXO.XPT')
 MCQ_FILE=os.path.join(DATA_DIR, 'P_MCQ.XPT')
+BMX_FILE=os.path.join(DATA_DIR,'P_BMX.XPT')
 
 NAME_MAP = {'LBXTR': 'Triglycerides', 'LBDHDD': 'HDL', 'LBDLDL': 'LDL', 'LBXTC': 'Total Cholesterol', 'LBXGLU': 'Fasting Glucose', 'LBXGH': 'Glycohemoglobin',
-            'BPXOSY1': 'Systolic', 'BPXODI1': 'Diastolic', 'BPXOPLS1': 'Pulse'}
+            'BPXOSY1': 'Systolic', 'BPXODI1': 'Diastolic', 'BPXOPLS1': 'Pulse',
+            'BMXWT': 'Weight', 'BMXHT': 'Height', 'BMXWAIST': 'Waist', 'BMXBMI': 'BMI'}
 
 GENDER_MAP=['Unknown','Male','Female']
 COMMON_YES_NO_MAP=['Unknown','Yes','No','Yes']
@@ -108,6 +110,7 @@ def load_and_combine_files(debugging):
     df_ghb = pd.read_sas(GHB_FILE, format='xport')
     df_bpx = pd.read_sas(BPX_FILE, format='xport')
     df_mcq = pd.read_sas(MCQ_FILE, format='xport')
+    df_bmx = pd.read_sas(BMX_FILE, format='xport')
     #
     df_combined = df_user[['SEQN','RIAGENDR','RIDAGEYR','RIDRETH3']]
     df_combined = pd.merge(df_combined, df_diq[['SEQN', 'DIQ010', 'DIQ160','DIQ050','DIQ070']], on='SEQN', how='left')
@@ -119,6 +122,7 @@ def load_and_combine_files(debugging):
     df_combined = pd.merge(df_combined, df_ghb[['SEQN', 'LBXGH']], on='SEQN', how='left')
     df_combined = pd.merge(df_combined, df_bpx[['SEQN', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1','BPXOSY2', 'BPXODI2', 'BPXOPLS2','BPXOSY3', 'BPXODI3', 'BPXOPLS3' ]], on='SEQN', how='left')
     df_combined = pd.merge(df_combined, df_mcq[['SEQN', 'MCQ160C', 'MCQ160D', 'MCQ160E']], on='SEQN', how='left')
+    df_combined = pd.merge(df_combined, df_bmx[['SEQN','BMXWT','BMXHT','BMXWAIST','BMXBMI']], on='SEQN', how='left')
     #
     #
     if debugging:
@@ -133,6 +137,7 @@ def load_and_combine_files(debugging):
         st.dataframe(df_ghb,hide_index=True)
         st.dataframe(df_bpx,hide_index=True)
         st.dataframe(df_mcq,hide_index=True)
+        st.dataframe(df_bmx,hide_index=True)
     df_combined.to_csv(os.path.join(OUTPUT_DIR, 'nhanes_combined.csv'),index=False)
     return df_combined
 
