@@ -21,7 +21,8 @@ BMX_FILE=os.path.join(DATA_DIR,'P_BMX.XPT')
 
 NAME_MAP = {'LBXTR': 'Triglycerides', 'LBDHDD': 'HDL', 'LBDLDL': 'LDL', 'LBXTC': 'Total Cholesterol', 'LBXGLU': 'Fasting Glucose', 'LBXGH': 'Glycohemoglobin',
             'BPXOSY1': 'Systolic', 'BPXODI1': 'Diastolic', 'BPXOPLS1': 'Pulse',
-            'BMXWT': 'Weight', 'BMXHT': 'Height', 'BMXWAIST': 'Waist', 'BMXBMI': 'BMI'}
+            'BMXWT': 'Weight', 'BMXHT': 'Height', 'BMXWAIST': 'Waist', 'BMXBMI': 'BMI',
+            'GP_HWR': 'Height-Waist Ratio'}
 
 GENDER_MAP=['Unknown','Male','Female']
 COMMON_YES_NO_MAP=['Unknown','Yes','No','Yes']
@@ -171,6 +172,9 @@ def augment_columns(df):
     df['GP_MedDiab2'] = df['DIQ070'].apply(lambda x: group_base(x))
     df['GP_MedBP1'] = df['BPQ040A'].apply(lambda x: group_base(x))
     df['GP_MedBP2'] = df['BPQ050A'].apply(lambda x: group_base(x))
+    
+    # Add a column for height-waist ratio
+    df['GP_HWR'] = df['BMXHT']/df['BMXWAIST']
 
     # Rename columns as per NAME_MAP
     df.rename(columns=NAME_MAP, inplace=True)
