@@ -197,9 +197,9 @@ def ui_choose(df, debugging):
     df2 = df2[df2['BPQ090D'].isin(medCholFilter)]
     df2 = df2[df2['DIQ160'].isin(medDiabFilter)]
     df2 = df2[df2['BPQ100D'].isin(medBPFilter)]
-    return df2
+    return df2, gender, age_group
 
-def show_analysis(df):
+def show_analysis(df, gender, age_group):
     input_labels = {
         'LBDHDD': "Enter your value for HDL (mg/dL)",
         'LBXTR': "Enter your value for Triglycerides (mg/dL)",
@@ -218,9 +218,6 @@ def show_analysis(df):
 
     genderOptions = {'Male': 1, 'Female': 2}
     ageOptions = {'<20': 0, '20-40': 20, '40-60': 40, '60-80': 60, '80+': 80}
-
-    gender = st.sidebar.selectbox('Gender', list(genderOptions.keys()), placeholder="Choose an option", key='gender_selectbox')
-    age_group = st.sidebar.selectbox('Age groups', list(ageOptions.keys()), placeholder="Choose an option", key='age_group_selectbox')
 
     for column in ['LBDHDD', 'LBXTR', 'LBDLDL', 'LBXTC', 'LBXGLU', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1']:
         columnName = NAME_MAP[column]
@@ -313,5 +310,5 @@ def show_analysis(df):
 
 # Main execution
 df_c = load_files(False)
-df_d = ui_choose(df_c, False)
-show_analysis(df_d)
+df_d, g, a = ui_choose(df_c, False)
+show_analysis(df_d, g, a)
