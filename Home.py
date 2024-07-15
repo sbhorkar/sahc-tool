@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
 import os
+from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
+import numpy as np
 
 DIR = os.getcwd()
 DATA_DIR = DIR + '/data/'
@@ -23,107 +25,16 @@ NAME_MAP = {
     'BPXOSY1': 'Systolic (mmHg)', 'BPXODI1': 'Diastolic (mmHg)', 'BPXOPLS1': 'Pulse'
 }
 
+# Uniform AHA ranges regardless of gender and age
 AHA_RANGES = {
-    (1, 0): {
-        'Triglycerides (mg/dL)': (70, 150, 199, 499),
-        'HDL (mg/dL)': (None, 40, 60, None),
-        'LDL (mg/dL)': (None, 100, 129, 159),
-        'Total Cholesterol (mg/dL)': (None, 200, 239, None),
-        'Fasting Glucose (mg/dL)': (70, 99, 125, None),
-        'Systolic (mmHg)': (90, 120, 129, 139),
-        'Diastolic (mmHg)': (60, 80, 89, 99),
-        'Pulse': (60, 100, None, None),
-    },
-    (1, 20): {
-        'Triglycerides (mg/dL)': (70, 150, 199, 499),
-        'HDL (mg/dL)': (None, 40, 60, None),
-        'LDL (mg/dL)': (None, 100, 129, 159),
-        'Total Cholesterol (mg/dL)': (None, 200, 239, None),
-        'Fasting Glucose (mg/dL)': (70, 99, 125, None),
-        'Systolic (mmHg)': (90, 120, 129, 139),
-        'Diastolic (mmHg)': (60, 80, 89, 99),
-        'Pulse': (60, 100, None, None),
-    },
-    (1, 40): {
-        'Triglycerides (mg/dL)': (70, 150, 199, 499),
-        'HDL (mg/dL)': (None, 40, 60, None),
-        'LDL (mg/dL)': (None, 100, 129, 159),
-        'Total Cholesterol (mg/dL)': (None, 200, 239, None),
-        'Fasting Glucose (mg/dL)': (70, 99, 125, None),
-        'Systolic (mmHg)': (90, 120, 129, 139),
-        'Diastolic (mmHg)': (60, 80, 89, 99),
-        'Pulse': (60, 100, None, None),
-    },
-    (1, 60): {
-        'Triglycerides (mg/dL)': (70, 150, 199, 499),
-        'HDL (mg/dL)': (None, 40, 60, None),
-        'LDL (mg/dL)': (None, 100, 129, 159),
-        'Total Cholesterol (mg/dL)': (None, 200, 239, None),
-        'Fasting Glucose (mg/dL)': (70, 99, 125, None),
-        'Systolic (mmHg)': (90, 120, 129, 139),
-        'Diastolic (mmHg)': (60, 80, 89, 99),
-        'Pulse': (60, 100, None, None),
-    },
-    (1, 80): {
-        'Triglycerides (mg/dL)': (70, 150, 199, 499),
-        'HDL (mg/dL)': (None, 40, 60, None),
-        'LDL (mg/dL)': (None, 100, 129, 159),
-        'Total Cholesterol (mg/dL)': (None, 200, 239, None),
-        'Fasting Glucose (mg/dL)': (70, 99, 125, None),
-        'Systolic (mmHg)': (90, 120, 129, 139),
-        'Diastolic (mmHg)': (60, 80, 89, 99),
-        'Pulse': (60, 100, None, None),
-    },
-    (2, 0): {
-        'Triglycerides (mg/dL)': (70, 150, 199, 499),
-        'HDL (mg/dL)': (None, 50, 70, None),
-        'LDL (mg/dL)': (None, 100, 129, 159),
-        'Total Cholesterol (mg/dL)': (None, 200, 239, None),
-        'Fasting Glucose (mg/dL)': (70, 99, 125, None),
-        'Systolic (mmHg)': (90, 120, 129, 139),
-        'Diastolic (mmHg)': (60, 80, 89, 99),
-        'Pulse': (60, 100, None, None),
-    },
-    (2, 20): {
-        'Triglycerides (mg/dL)': (70, 150, 199, 499),
-        'HDL (mg/dL)': (None, 50, 70, None),
-        'LDL (mg/dL)': (None, 100, 129, 159),
-        'Total Cholesterol (mg/dL)': (None, 200, 239, None),
-        'Fasting Glucose (mg/dL)': (70, 99, 125, None),
-        'Systolic (mmHg)': (90, 120, 129, 139),
-        'Diastolic (mmHg)': (60, 80, 89, 99),
-        'Pulse': (60, 100, None, None),
-    },
-    (2, 40): {
-        'Triglycerides (mg/dL)': (70, 150, 199, 499),
-        'HDL (mg/dL)': (None, 50, 70, None),
-        'LDL (mg/dL)': (None, 100, 129, 159),
-        'Total Cholesterol (mg/dL)': (None, 200, 239, None),
-        'Fasting Glucose (mg/dL)': (70, 99, 125, None),
-        'Systolic (mmHg)': (90, 120, 129, 139),
-        'Diastolic (mmHg)': (60, 80, 89, 99),
-        'Pulse': (60, 100, None, None),
-    },
-    (2, 60): {
-        'Triglycerides (mg/dL)': (70, 150, 199, 499),
-        'HDL (mg/dL)': (None, 50, 70, None),
-        'LDL (mg/dL)': (None, 100, 129, 159),
-        'Total Cholesterol (mg/dL)': (None, 200, 239, None),
-        'Fasting Glucose (mg/dL)': (70, 99, 125, None),
-        'Systolic (mmHg)': (90, 120, 129, 139),
-        'Diastolic (mmHg)': (60, 80, 89, 99),
-        'Pulse': (60, 100, None, None),
-    },
-    (2, 80): {
-        'Triglycerides (mg/dL)': (70, 150, 199, 499),
-        'HDL (mg/dL)': (None, 50, 70, None),
-        'LDL (mg/dL)': (None, 100, 129, 159),
-        'Total Cholesterol (mg/dL)': (None, 200, 239, None),
-        'Fasting Glucose (mg/dL)': (70, 99, 125, None),
-        'Systolic (mmHg)': (90, 120, 129, 139),
-        'Diastolic (mmHg)': (60, 80, 89, 99),
-        'Pulse': (60, 100, None, None),
-    }
+    'Triglycerides (mg/dL)': (None, 150),
+    'HDL (mg/dL)': (40, None),
+    'LDL (mg/dL)': (None, 100),
+    'Total Cholesterol (mg/dL)': (140, 160),
+    'Fasting Glucose (mg/dL)': (None, 100),
+    'Systolic (mmHg)': (None, 120),
+    'Diastolic (mmHg)': (None, 80),
+    'Pulse': (60, 100)
 }
 
 @st.cache_data
@@ -139,7 +50,6 @@ def load_files(debugging):
     df_bpx = pd.read_sas(BPX_FILE, format='xport')
 
     df_combined = df_user[['SEQN', 'RIAGENDR', 'RIDAGEYR', 'RIDRETH3']]
-    df_combined = df_combined[df_combined['RIDRETH3'] == 6]
     df_combined = pd.merge(df_combined, df_diq[['SEQN', 'DIQ010', 'DIQ160', 'DIQ050', 'DIQ070']], on='SEQN', how='left')
     df_combined = pd.merge(df_combined, df_bpq[['SEQN', 'BPQ090D', 'BPQ100D', 'BPQ040A', 'BPQ050A']], on='SEQN', how='left')
     df_combined = pd.merge(df_combined, df_hdl[['SEQN', 'LBDHDD']], on='SEQN', how='left')
@@ -167,13 +77,13 @@ def load_files(debugging):
 
 def ui_choose(df, debugging):
     genderOptions = {'Male': 1, 'Female': 2}
-    ageOptions = {'<20': 0, '20-40': 20, '40-60': 40, '60-80': 60, '80+': 80}
+    ageOptions = {'20-40': 20, '40-60': 40, '60-80': 60, '80+': 80}
     medCholOptions = {'Yes': 1, 'No': 2}
     medDiabOptions = {'Yes': 1, 'No': 2}
     medBPOptions = {'Yes': 1, 'No': 2}
 
     gender = st.sidebar.selectbox('Gender', list(genderOptions.keys()), placeholder="Choose an option")
-    age_group = st.sidebar.selectbox('Age groups', list(ageOptions.keys()), placeholder="Choose an option")
+    age_group = st.sidebar.selectbox('Age group', list(ageOptions.keys()), placeholder="Choose an option")
     medChol = st.sidebar.selectbox('Cholesterol medication', options=list(medCholOptions.keys()), placeholder="Choose an option")
     medDiab = st.sidebar.selectbox('Diabetes medication', options=list(medDiabOptions.keys()), placeholder="Choose an option")
     medBP = st.sidebar.selectbox('Blood pressure medication', options=list(medBPOptions.keys()), placeholder="Choose an option")
@@ -197,7 +107,24 @@ def ui_choose(df, debugging):
     df2 = df2[df2['BPQ090D'].isin(medCholFilter)]
     df2 = df2[df2['DIQ160'].isin(medDiabFilter)]
     df2 = df2[df2['BPQ100D'].isin(medBPFilter)]
+    st.sidebar.write(f"After BP meds, records= {df2.shape}")
     return df2, gender, age_group
+
+def create_legend():
+    fig, ax = plt.subplots(figsize=(10, 1))  # Create a separate figure for the legend
+    ax.axis('off')  # Hide axes
+
+    # Create custom legend lines
+    custom_lines = [
+        Line2D([0], [0], color='grey', lw=10, alpha=0.5, label='Percentile Range'),
+        Line2D([0], [0], color='green', lw=10, label='Healthy Range'),
+        Line2D([0], [0], color='blue', marker='o', linestyle='None', label='Your Input')
+    ]
+
+    # Add the custom legend
+    ax.legend(handles=custom_lines, loc='center', ncol=3, frameon=False)
+    st.pyplot(fig)
+    plt.close()
 
 def show_analysis(df, gender, age_group):
     input_labels = {
@@ -223,92 +150,55 @@ def show_analysis(df, gender, age_group):
         columnName = NAME_MAP[column]
         user_input = user_inputs[column]  # Reference the user input from the dictionary
 
-        # NHANES Boxplot
-        st.write(f"## {columnName}")
-        plt.figure(figsize=(10, 3))  # Adjusted height for the box plot
-        plt.boxplot(df[column].dropna(), vert=False)
+        st.write(f"### {columnName}")
 
-        stats = df[column].describe()
-        Q1 = stats["25%"]
-        Q3 = stats["75%"]
-        IQR = Q3 - Q1
-        median = stats["50%"]
+        if columnName in AHA_RANGES:
+            low_value = AHA_RANGES[columnName][0]
+            high_value = AHA_RANGES[columnName][1]  # The second value in the tuple is the normal range
 
-        if user_input < Q1:
-            plt.scatter(user_input, 1, color='red', marker='v', label='Your Value')
-        elif Q1 <= user_input <= Q3:
-            plt.scatter(user_input, 1, color='red', marker='o', label='Your Value')
+            if low_value is not None:
+                low_number = normal_value
+            if high_value is not None:
+                high_number = normal_value
+            elif low_value is None:
+                low_number = 0
         else:
-            plt.scatter(user_input, 1, color='red', marker='^', label='Your Value')
+            st.write(f"No AHA range available for {columnName}.")
+            continue
 
-        plt.axvline(x=user_input, color='red', linestyle='--')
-        plt.legend()
+        array = df[column].dropna()
+        sorted_array = np.sort(array)
 
-        plt.title(f'NHANES Data Boxplot for {columnName}')
-        plt.xlabel(columnName)
+        # Calculate the percentile
+        percentile = np.mean(sorted_array <= low_number) * 100
 
-        lower_whisker = Q1 - 1.5 * IQR
-        upper_whisker = Q3 + 1.5 * IQR
-        lower_whisker_val = df[column][df[column] >= lower_whisker].min()
-        upper_whisker_val = df[column][df[column] <= upper_whisker].max()
+        if percentile == 0:
+            st.write(f"No data available for {columnName}.")
+            continue
 
-        plt.annotate(f'Median: {median:.2f}', xy=(median, 1), xytext=(median, 1.1),
-                     arrowprops=dict(facecolor='green', shrink=0.05, width=0.5), horizontalalignment='center')
-        plt.annotate(f'25th percentile: {Q1:.2f}', xy=(Q1, 1), xytext=(Q1, 0.8),
-                     arrowprops=dict(facecolor='yellow', shrink=0.05, width=0.5), horizontalalignment='center')
-        plt.annotate(f'75th percentile: {Q3:.2f}', xy=(Q3, 1), xytext=(Q3, 1.2),
-                     arrowprops=dict(facecolor='yellow', shrink=0.05, width=0.5), horizontalalignment='center')
-        plt.annotate(f'Low: {lower_whisker_val:.2f}', xy=(lower_whisker_val, 1), xytext=(lower_whisker_val, 0.7),
-                     arrowprops=dict(facecolor='red', shrink=0.05, width=0.5), horizontalalignment='center')
-        plt.annotate(f'High: {upper_whisker_val:.2f}', xy=(upper_whisker_val, 1), xytext=(upper_whisker_val, 1.3),
-                     arrowprops=dict(facecolor='red', shrink=0.05, width=0.5), horizontalalignment='center')
+        fig, ax = plt.subplots(figsize=(10, .5))
 
-        st.pyplot(plt.gcf())
+        # Grey line from 0 to 100
+        ax.plot([0, 100], [.9, .9], color='grey', lw=10, alpha=0.5, label='Percentile Range')
+
+        # Green line from percentile to 100
+        ax.plot([percentile, 100], [0.65, 0.65], color='green', lw=10, label='Healthy Range')
+
+        # Blue dot at user input position
+        user_percentile = np.mean(sorted_array <= user_input) * 100
+        ax.scatter(user_percentile, 0.9, color='blue', zorder=5, label='Your Input')
+
+        ax.set_xlim(0, 100)
+        ax.set_ylim(0.4, 1.1)
+        ax.set_yticks([])
+        ax.set_xticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+        ax.set_xlabel('Percentile (%)')
+
+        st.pyplot(fig)
         plt.close()
 
-        # AHA Boxplot
-        
-        key = (genderOptions[gender], ageOptions[age_group])
-
-        if key in AHA_RANGES and columnName in AHA_RANGES[key]:
-            low, normal, high, very_high = AHA_RANGES[key][columnName]
-
-            plt.figure(figsize=(10, 3))  # Adjusted height for the box plot
-
-            data = [val for val in [low, normal, high, very_high] if val is not None]
-            if len(data) < 2:
-                st.write(f"Insufficient data for {columnName}")
-                continue
-
-            plt.boxplot(data, vert=False, showmeans=False, showfliers=False,
-                        whiskerprops={'linestyle': '--'}, medianprops={'color': 'green'})
-
-            plt.axvline(x=user_input, color='red', linestyle='--')
-            plt.scatter(user_input, 1, color='red', marker='o', label='Your Value')
-            plt.legend()
-
-            plt.title(f'American Heart Association (AHA) Data Boxplot for {columnName}')
-            plt.xlabel(columnName)
-
-            if low is not None:
-                plt.annotate(f'Low: {low:.2f}', xy=(low, 1), xytext=(low, 1.2),
-                             arrowprops=dict(facecolor='orange', shrink=0.05), horizontalalignment='center')
-            if normal is not None:
-                plt.annotate(f'Normal: {normal:.2f}', xy=(normal, 1), xytext=(normal, 1.2),
-                             arrowprops=dict(facecolor='green', shrink=0.05), horizontalalignment='center')
-            if high is not None:
-                plt.annotate(f'High: {high:.2f}', xy=(high, 1), xytext=(high, 1.2),
-                             arrowprops=dict(facecolor='orange', shrink=0.05), horizontalalignment='center')
-            if very_high is not None:
-                plt.annotate(f'Very High: {very_high:.2f}', xy=(very_high, 1), xytext=(very_high, 1.2),
-                             arrowprops=dict(facecolor='red', shrink=0.05), horizontalalignment='center')
-
-            st.pyplot(plt.gcf())
-            plt.close()
-        else:
-            st.write(f"No data available for {columnName} for the selected gender and age group.")
-
 # Main execution
+create_legend()
 df_c = load_files(False)
 df_d, gender, age = ui_choose(df_c, False)
 show_analysis(df_d, gender, age)
