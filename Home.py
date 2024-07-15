@@ -202,12 +202,12 @@ def ui_choose(df, debugging):
 def show_analysis(df, gender, age_group):
     input_labels = {
         'LBDHDD': "Enter your value for HDL (mg/dL)",
-        'LBXTR': "Enter your value for Triglycerides (mg/dL)",
         'LBDLDL': "Enter your value for LDL (mg/dL)",
         'LBXTC': "Enter your value for Total Cholesterol (mg/dL)",
+        'LBXTR': "Enter your value for Triglycerides (mg/dL)",
         'LBXGLU': "Enter your value for Fasting Glucose (mg/dL)",
-        'BPXOSY1': "Enter your value for Systolic Blood Pressure (mmHg)",
-        'BPXODI1': "Enter your value for Diastolic Blood Pressure (mmHg)",
+        'BPXOSY1': "Enter your value for Systolic Blood Pressure, the top number in a BP reading (mmHg)",
+        'BPXODI1': "Enter your value for Diastolic Blood Pressure, the bottom number in a BP reading (mmHg)",
         'BPXOPLS1': "Enter your value for Pulse"
     }
 
@@ -219,7 +219,7 @@ def show_analysis(df, gender, age_group):
     genderOptions = {'Male': 1, 'Female': 2}
     ageOptions = {'<20': 0, '20-40': 20, '40-60': 40, '60-80': 60, '80+': 80}
 
-    for column in ['LBDHDD', 'LBXTR', 'LBDLDL', 'LBXTC', 'LBXGLU', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1']:
+    for column in ['LBDHDD', 'LBDLDL', 'LBXTC', 'LBXTR', 'LBXGLU', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1']:
         columnName = NAME_MAP[column]
         user_input = user_inputs[column]  # Reference the user input from the dictionary
 
@@ -235,11 +235,11 @@ def show_analysis(df, gender, age_group):
         median = stats["50%"]
 
         if user_input < Q1:
-            plt.scatter(user_input, 1, color='red', marker='v', label='User Input')
+            plt.scatter(user_input, 1, color='red', marker='v', label='Your Value')
         elif Q1 <= user_input <= Q3:
-            plt.scatter(user_input, 1, color='red', marker='o', label='User Input')
+            plt.scatter(user_input, 1, color='red', marker='o', label='Your Value')
         else:
-            plt.scatter(user_input, 1, color='red', marker='^', label='User Input')
+            plt.scatter(user_input, 1, color='red', marker='^', label='Your Value')
 
         plt.axvline(x=user_input, color='red', linestyle='--')
         plt.legend()
@@ -252,16 +252,16 @@ def show_analysis(df, gender, age_group):
         lower_whisker_val = df[column][df[column] >= lower_whisker].min()
         upper_whisker_val = df[column][df[column] <= upper_whisker].max()
 
-        plt.annotate(f'{median:.2f}', xy=(median, 1), xytext=(median, 1.1),
-                     arrowprops=dict(facecolor='blue', shrink=0.05, width=0.5), horizontalalignment='center')
-        plt.annotate(f'{Q1:.2f}', xy=(Q1, 1), xytext=(Q1, 0.8),
+        plt.annotate(f'Median: {median:.2f}', xy=(median, 1), xytext=(median, 1.1),
                      arrowprops=dict(facecolor='green', shrink=0.05, width=0.5), horizontalalignment='center')
-        plt.annotate(f'{Q3:.2f}', xy=(Q3, 1), xytext=(Q3, 1.2),
+        plt.annotate(f'25th percentile: {Q1:.2f}', xy=(Q1, 1), xytext=(Q1, 0.8),
+                     arrowprops=dict(facecolor='yellow', shrink=0.05, width=0.5), horizontalalignment='center')
+        plt.annotate(f'75th percentile: {Q3:.2f}', xy=(Q3, 1), xytext=(Q3, 1.2),
+                     arrowprops=dict(facecolor='yellow', shrink=0.05, width=0.5), horizontalalignment='center')
+        plt.annotate(f'Low: {lower_whisker_val:.2f}', xy=(lower_whisker_val, 1), xytext=(lower_whisker_val, 0.7),
                      arrowprops=dict(facecolor='red', shrink=0.05, width=0.5), horizontalalignment='center')
-        plt.annotate(f'{lower_whisker_val:.2f}', xy=(lower_whisker_val, 1), xytext=(lower_whisker_val, 0.7),
-                     arrowprops=dict(facecolor='orange', shrink=0.05, width=0.5), horizontalalignment='center')
-        plt.annotate(f'{upper_whisker_val:.2f}', xy=(upper_whisker_val, 1), xytext=(upper_whisker_val, 1.3),
-                     arrowprops=dict(facecolor='purple', shrink=0.05, width=0.5), horizontalalignment='center')
+        plt.annotate(f'High: {upper_whisker_val:.2f}', xy=(upper_whisker_val, 1), xytext=(upper_whisker_val, 1.3),
+                     arrowprops=dict(facecolor='red', shrink=0.05, width=0.5), horizontalalignment='center')
 
         st.pyplot(plt.gcf())
         plt.close()
@@ -284,7 +284,7 @@ def show_analysis(df, gender, age_group):
                         whiskerprops={'linestyle': '--'}, medianprops={'color': 'green'})
 
             plt.axvline(x=user_input, color='red', linestyle='--')
-            plt.scatter(user_input, 1, color='red', marker='o', label='User Input')
+            plt.scatter(user_input, 1, color='red', marker='o', label='Your Value')
             plt.legend()
 
             plt.title(f'American Heart Association (AHA) Data Boxplot for {columnName}')
@@ -292,7 +292,7 @@ def show_analysis(df, gender, age_group):
 
             if low is not None:
                 plt.annotate(f'Low: {low:.2f}', xy=(low, 1), xytext=(low, 1.2),
-                             arrowprops=dict(facecolor='blue', shrink=0.05), horizontalalignment='center')
+                             arrowprops=dict(facecolor='orange', shrink=0.05), horizontalalignment='center')
             if normal is not None:
                 plt.annotate(f'Normal: {normal:.2f}', xy=(normal, 1), xytext=(normal, 1.2),
                              arrowprops=dict(facecolor='green', shrink=0.05), horizontalalignment='center')
@@ -310,5 +310,5 @@ def show_analysis(df, gender, age_group):
 
 # Main execution
 df_c = load_files(False)
-df_d, g, a = ui_choose(df_c, False)
-show_analysis(df_d, g, a)
+df_d, gender, age = ui_choose(df_c, False)
+show_analysis(df_d, gender, age)
