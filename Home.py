@@ -5,7 +5,7 @@ from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
 
-st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
+st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="centered")
 
 DIR = os.getcwd()
 DATA_DIR = DIR + '/data/'
