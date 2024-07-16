@@ -5,6 +5,8 @@ from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
 
+st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
+
 DIR = os.getcwd()
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
@@ -36,6 +38,27 @@ AHA_RANGES = {
     'Diastolic (mmHg)': (None, 80),
     'Pulse': (60, 100)
 }
+
+def create_legend():
+    fig, ax = plt.subplots(figsize=(20, 1))  # Create a separate figure for the legend
+    ax.axis('off')  # Hide axes
+
+    # Create custom legend lines
+    custom_lines = [
+        Line2D([0], [0], color='grey', lw=10, alpha=0.5, label='Percentile Range'),
+        Line2D([0], [0], color='green', lw=10, label='AHA Reference Range'),
+        Line2D([0], [0], color='red', lw=10, label='High'),
+        Line2D([0], [0], color='orange', lw=10, label='Low'),
+        Line2D([0], [0], color='blue', marker='o', linestyle='None', label='Your Input')
+    ]
+
+    # Add the custom legend
+    ax.legend(handles=custom_lines, loc='center', ncol=5, frameon=False, bbox_to_anchor=(0.5, 0.5),
+              handletextpad=2, columnspacing=2, fontsize=14)
+    st.pyplot(fig)
+    plt.close()
+
+create_legend()
 
 @st.cache_data
 def load_files(debugging):
@@ -75,18 +98,27 @@ def load_files(debugging):
         df_combined.to_csv(os.path.join(OUTPUT_DIR, 'nhanes_combined.csv'), index=False)
     return df_combined
 
+col1, col2, col3, col4, col5 = st.columns(5)
+
 def ui_choose(df, debugging):
     genderOptions = {'Male': 1, 'Female': 2}
     ageOptions = {'20-40': 20, '40-60': 40, '60-80': 60, '80+': 80}
+
+    with col1:
+        gender = st.selectbox('Gender', list(genderOptions.keys()), placeholder="Choose an option")
+    with col2:
+        age_group = st.selectbox('Age group', list(ageOptions.keys()), placeholder="Choose an option")
+    
     medCholOptions = {'Yes': 1, 'No': 2}
     medDiabOptions = {'Yes': 1, 'No': 2}
     medBPOptions = {'Yes': 1, 'No': 2}
 
-    gender = st.sidebar.selectbox('Gender', list(genderOptions.keys()), placeholder="Choose an option")
-    age_group = st.sidebar.selectbox('Age group', list(ageOptions.keys()), placeholder="Choose an option")
-    medChol = st.sidebar.selectbox('Cholesterol medication', options=list(medCholOptions.keys()), placeholder="Choose an option")
-    medDiab = st.sidebar.selectbox('Diabetes medication', options=list(medDiabOptions.keys()), placeholder="Choose an option")
-    medBP = st.sidebar.selectbox('Blood pressure medication', options=list(medBPOptions.keys()), placeholder="Choose an option")
+    with col3:
+        medChol = st.selectbox('Cholesterol medication', options=list(medCholOptions.keys()), placeholder="Choose an option")
+    with col4:
+        medDiab = st.selectbox('Diabetes medication', options=list(medDiabOptions.keys()), placeholder="Choose an option")
+    with col5:
+        medBP = st.selectbox('Blood pressure medication', options=list(medBPOptions.keys()), placeholder="Choose an option")
 
     if debugging:
         st.write(gender)
@@ -107,98 +139,132 @@ def ui_choose(df, debugging):
     df2 = df2[df2['BPQ090D'].isin(medCholFilter)]
     df2 = df2[df2['DIQ160'].isin(medDiabFilter)]
     df2 = df2[df2['BPQ100D'].isin(medBPFilter)]
-    st.sidebar.write(f"After BP meds, records= {df2.shape}")
-    return df2, gender, age_group
+    return df2
 
-def create_legend():
-    fig, ax = plt.subplots(figsize=(10, 1))  # Create a separate figure for the legend
-    ax.axis('off')  # Hide axes
 
-    # Create custom legend lines
-    custom_lines = [
-        Line2D([0], [0], color='grey', lw=10, alpha=0.5, label='Percentile Range'),
-        Line2D([0], [0], color='green', lw=10, label='Healthy Range'),
-        Line2D([0], [0], color='blue', marker='o', linestyle='None', label='Your Input')
-    ]
+# Number of elements
+num_elements = 8
 
-    # Add the custom legend
-    ax.legend(handles=custom_lines, loc='center', ncol=3, frameon=False)
-    st.pyplot(fig)
-    plt.close()
+# Create placeholders for columns
+cols = [st.empty() for _ in range(num_elements)]
 
-def show_analysis(df, gender, age_group):
-    input_labels = {
-        'LBDHDD': "Enter your value for HDL (mg/dL)",
-        'LBDLDL': "Enter your value for LDL (mg/dL)",
-        'LBXTC': "Enter your value for Total Cholesterol (mg/dL)",
-        'LBXTR': "Enter your value for Triglycerides (mg/dL)",
-        'LBXGLU': "Enter your value for Fasting Glucose (mg/dL)",
-        'BPXOSY1': "Enter your value for Systolic Blood Pressure, the top number in a BP reading (mmHg)",
-        'BPXODI1': "Enter your value for Diastolic Blood Pressure, the bottom number in a BP reading (mmHg)",
-        'BPXOPLS1': "Enter your value for Pulse"
+def show_analysis(df):
+    validation_labels = {
+        'LBDHDD': "Value shold be between 20-100",
+        'LBDLDL': "Value shuld be between 30-300",
+        'LBXTC': "Value should be between 140-320",
+        'LBXTR': "Value should be between 50-500",
+        'LBXGLU': "Value should be between 50-150",
+        'BPXOSY1': "Value should be between 90-200",
+        'BPXODI1': "Value should be between 60-130",
+        'BPXOPLS1': "Value should be between 50-150"
     }
 
     user_inputs = {}
 
-    for key, label in input_labels.items():
-        user_inputs[key] = st.sidebar.number_input(label, key=key, step=1)
+    for i, column in enumerate(['LBDHDD', 'LBDLDL', 'LBXTC', 'LBXTR', 'LBXGLU', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1']):
 
-    genderOptions = {'Male': 1, 'Female': 2}
-    ageOptions = {'<20': 0, '20-40': 20, '40-60': 40, '60-80': 60, '80+': 80}
+        with cols[i].container():
 
-    for column in ['LBDHDD', 'LBDLDL', 'LBXTC', 'LBXTR', 'LBXGLU', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1']:
-        columnName = NAME_MAP[column]
-        user_input = user_inputs[column]  # Reference the user input from the dictionary
+            col6, col7 = st.columns([2, 5])
 
-        st.write(f"### {columnName}")
+            with col6:
+                key = column
+                columnName = NAME_MAP[column]
 
-        if columnName in AHA_RANGES:
-            low_value = AHA_RANGES[columnName][0]
-            high_value = AHA_RANGES[columnName][1]  # The second value in the tuple is the normal range
+                global header
+                header = columnName
 
-            if low_value is not None:
-                low_number = normal_value
-            if high_value is not None:
-                high_number = normal_value
-            elif low_value is None:
-                low_number = 0
-        else:
-            st.write(f"No AHA range available for {columnName}.")
-            continue
+                global header_color
+                header_color = "black"
 
-        array = df[column].dropna()
-        sorted_array = np.sort(array)
+                global placeholder
+                placeholder = st.empty()
 
-        # Calculate the percentile
-        percentile = np.mean(sorted_array <= low_number) * 100
+                placeholder.write(f"#### {header}")
 
-        if percentile == 0:
-            st.write(f"No data available for {columnName}.")
-            continue
+                unique_key = f"{key}_{i}"
+                user_inputs[key] = st.number_input(f"{validation_labels[key]}", key=unique_key, step=1)
 
-        fig, ax = plt.subplots(figsize=(10, .5))
+            with col7:
+                columnName = NAME_MAP[column]
+                user_input = user_inputs[column]  # Reference the user input from the dictionary
 
-        # Grey line from 0 to 100
-        ax.plot([0, 100], [.9, .9], color='grey', lw=10, alpha=0.5, label='Percentile Range')
+                # st.write('This is a <span style="color:red;">red text</span>', unsafe_allow_html=True)
 
-        # Green line from percentile to 100
-        ax.plot([percentile, 100], [0.65, 0.65], color='green', lw=10, label='Healthy Range')
+                st.write(f"###")
 
-        # Blue dot at user input position
-        user_percentile = np.mean(sorted_array <= user_input) * 100
-        ax.scatter(user_percentile, 0.9, color='blue', zorder=5, label='Your Input')
+                if columnName in AHA_RANGES:
+                    low_value = AHA_RANGES[columnName][0]
+                    high_value = AHA_RANGES[columnName][1]
 
-        ax.set_xlim(0, 100)
-        ax.set_ylim(0.4, 1.1)
-        ax.set_yticks([])
-        ax.set_xticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
-        ax.set_xlabel('Percentile (%)')
+                    if low_value is not None:
+                        low_number = low_value
+                    if high_value is not None:
+                        high_number = high_value
+                    if low_value is None:
+                        low_number = None
+                    if high_value is None:
+                        high_number = None
+                else:
+                    st.write(f"No AHA prescribed range available for {columnName}.")
+                    continue
 
-        st.pyplot(fig)
-        plt.close()
+                array = df[column].dropna()
+                # st.dataframe(array,hide_index=True)
+                sorted_array = np.sort(array)
+
+                # Calculate the percentile
+                if high_number == None:
+                    high_percentile = 100
+                else:
+                    high_percentile = np.mean(sorted_array <= high_number) * 100
+                if low_number == None:
+                    low_percentile = 0
+                else:
+                    low_percentile = np.mean(sorted_array <= low_number) * 100
+
+                if len(array.index) < 5:
+                    st.markdown(f"Not enough data available for {columnName}.")
+                    continue
+
+                fig, ax = plt.subplots(figsize=(10, .5))
+
+                # Grey line from 0 to 100
+                ax.plot([0, 100], [.9, .9], color='grey', lw=10, alpha=0.5, label='Percentile Range')
+
+                # Green line from low_percentile to high_percentile
+                ax.plot([low_percentile, high_percentile], [0.65, 0.65], color='green', lw=10, label='Healthy Range')
+
+                # Green line from low_percentile to high_percentile
+                ax.plot([low_percentile, high_percentile], [0.65, 0.65], color='green', lw=10, label='Healthy Range')
+
+                # Red line from high_percentile to 100
+                if high_percentile < 100:
+                    ax.plot([high_percentile, 100], [0.65, 0.65], color='red', lw=10, label='High')
+                if low_percentile > 0:
+                    ax.plot([0, low_percentile], [0.65, 0.65], color='orange', lw=10, label="Low")
+
+                # Blue dot at user input position
+                user_percentile = np.mean(sorted_array <= user_input) * 100
+                if user_percentile > high_percentile or user_percentile < low_percentile:
+                    ax.scatter(user_percentile, 0.9, color='red', zorder=5, label='Your Input')
+                    header_color = "red"
+                    placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
+                else:
+                    ax.scatter(user_percentile, 0.9, color='blue', zorder=5, label='Your Input')
+
+
+                ax.set_xlim(0, 100)
+                ax.set_ylim(0.4, 1.1)
+                ax.set_yticks([])
+                ax.set_xticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+                ax.set_xlabel('Percentile (%)')
+
+                st.pyplot(fig)
+                plt.close()
 
 # Main execution
-create_legend()
 df_c = load_files(False)
-df_d, gender, age = ui_choose(df_c, False)
-show_analysis(df_d, gender, age)
+df_d = ui_choose(df_c, False)
+show_analysis(df_d)
