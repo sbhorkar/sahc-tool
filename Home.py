@@ -40,7 +40,7 @@ AHA_RANGES = {
 }
 
 def create_legend():
-    fig, ax = plt.subplots(figsize=(20, 1))  # Create a separate figure for the legend
+    fig, ax = plt.subplots(figsize=(10, 1))  # Create a separate figure for the legend
     ax.axis('off')  # Hide axes
 
     # Create custom legend lines
