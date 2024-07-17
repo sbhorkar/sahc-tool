@@ -7,6 +7,10 @@ import numpy as np
 
 st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
+darkgreen = "#6E9E31"
+regugreen = "#86AD52"
+lightgreen = "#A1BE78"
+
 DIR = os.getcwd()
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
@@ -20,7 +24,7 @@ TCH_FILE = os.path.join(DATA_DIR, 'P_TCHOL.XPT')
 GLU_FILE = os.path.join(DATA_DIR, 'P_GLU.XPT')
 GHB_FILE = os.path.join(DATA_DIR, 'P_GHB.XPT')
 BPX_FILE = os.path.join(DATA_DIR, 'P_BPXO.XPT')
-
+t
 NAME_MAP = {
     'LBXTR': 'Triglycerides (mg/dL)', 'LBDHDD': 'HDL (mg/dL)', 'LBDLDL': 'LDL (mg/dL)',
     'LBXTC': 'Total Cholesterol (mg/dL)', 'LBXGLU': 'Fasting Glucose (mg/dL)',
@@ -161,6 +165,17 @@ def show_analysis(df):
         'BPXOPLS1': "Value should be between 50-150"
     }
 
+    units_map = {
+        'LBDHDD': "mg/dL",
+        'LBDLDL': "mg/dL",
+        'LBXTC': "mg/dL",
+        'LBXTR': "mg/dL",
+        'LBXGLU': "mg/dL",
+        'BPXOSY1': "mmHg",
+        'BPXODI1': "mmHg",
+        'BPXOPLS1': "bpm"
+    }
+
     user_inputs = {}
 
     for i, column in enumerate(['LBDHDD', 'LBDLDL', 'LBXTC', 'LBXTR', 'LBXGLU', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1']):
@@ -205,17 +220,8 @@ def show_analysis(df):
                 st.write(" ")
 
                 if columnName in AHA_RANGES:
-                    low_value = AHA_RANGES[columnName][0]
-                    high_value = AHA_RANGES[columnName][1]
-
-                    if low_value is not None:
-                        low_number = low_value
-                    if high_value is not None:
-                        high_number = high_value
-                    if low_value is None:
-                        low_number = None
-                    if high_value is None:
-                        high_number = None
+                    low_number = AHA_RANGES[columnName][0]
+                    high_number = AHA_RANGES[columnName][1]
                 else:
                     st.write(f"No AHA prescribed range available for {columnName}.")
                     continue
@@ -224,46 +230,54 @@ def show_analysis(df):
 
                 # Calculate the percentile
                 if high_number == None:
-                    high_percentile = 100
+                    high_number = 1000
+                    high_percentile = 101
                 else:
                     high_percentile = np.mean(sorted_array <= high_number) * 100
                 if low_number == None:
+                    low_number = 0
                     low_percentile = 0
                 else:
                     low_percentile = np.mean(sorted_array <= low_number) * 100
 
-                fig, ax = plt.subplots(figsize=(10, .5))
+                fig, ax = plt.subplots(figsize=(15, 1))
 
                 # Grey line from 0 to 100
-                ax.plot([0, 100], [.9, .9], color='grey', lw=10, alpha=0.5, label='Percentile Range')
+                ax.plot([0, 100], [.85, .85], color='grey', lw=10, alpha=0.5, label='Percentile Range')
 
                 # Green line from low_percentile to high_percentile
-                ax.plot([low_percentile, high_percentile], [0.65, 0.65], color='green', lw=10, label='Healthy Range')
+                ax.plot([low_percentile, high_percentile], [0.725, 0.725], color='green', lw=10, label='Healthy Range')
 
-                # Green line from low_percentile to high_percentile
-                ax.plot([low_percentile, high_percentile], [0.65, 0.65], color='green', lw=10, label='Healthy Range')
-
-                # Red line from high_percentile to 100
                 if high_percentile < 100:
-                    ax.plot([high_percentile, 100], [0.65, 0.65], color='red', lw=10, label='High')
+                    ax.plot([high_percentile, 100], [0.725, 0.725], color='red', lw=10, label='High')
                 if low_percentile > 0:
-                    ax.plot([0, low_percentile], [0.65, 0.65], color='orange', lw=10, label="Low")
+                    ax.plot([0, low_percentile], [0.725, 0.725], color='orange', lw=10, label="Low")
 
                 # Blue dot at user input position
                 user_percentile = np.mean(sorted_array <= user_input) * 100
-                if user_percentile > high_percentile or user_percentile < low_percentile:
-                    ax.scatter(user_percentile, 0.9, color='red', zorder=5, label='Your Input')
+                if user_input > high_number or user_input < low_number:
+                    # ax.scatter(user_percentile, 0.85, color='red', zorder=5, label='Your Input')
                     header_color = "red"
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
-                else:
-                    ax.scatter(user_percentile, 0.9, color='blue', zorder=5, label='Your Input')
+                # else:
 
+                ax.scatter(user_percentile, 0.85, color='blue', zorder=5, label='Your Input')
 
                 ax.set_xlim(0, 100)
                 ax.set_ylim(0.4, 1.1)
                 ax.set_yticks([])
                 ax.set_xticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
                 ax.set_xlabel('Percentile (%)')
+
+                plt.annotate(f'{user_percentile: .2f}%', xy=(user_percentile, 0.85), xytext=(user_percentile, 0.925),
+                              horizontalalignment='center')
+
+                if high_number < 1000:
+                    plt.annotate(f'{high_number} {units_map[column]}', xy=(high_percentile, 0.65), xytext=(high_percentile, 0.55),
+                                  horizontalalignment='center')
+                if low_number > 0:
+                    plt.annotate(f'{low_number} {units_map[column]}', xy=(low_percentile, 0.65), xytext=(low_percentile, 0.55),
+                                  horizontalalignment='center')
 
                 st.pyplot(fig)
                 plt.close()
