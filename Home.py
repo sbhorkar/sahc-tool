@@ -197,6 +197,7 @@ def show_analysis(df):
                     continue
 
                 st.write(f"###")
+                st.write(" ")
 
                 if columnName in AHA_RANGES:
                     low_value = AHA_RANGES[columnName][0]
@@ -273,4 +274,5 @@ df_c = load_files(False)
 df_d = ui_choose(df_c, False)
 show_analysis(df_d)
 
+st.write(f"#")
 st.markdown('<div style="text-align: center"> Version 0.2 </div>', unsafe_allow_html=True)
