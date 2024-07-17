@@ -46,7 +46,7 @@ def create_legend():
     # Create custom legend lines
     custom_lines = [
         Line2D([0], [0], color='grey', lw=10, alpha=0.5, label='Percentile Range'),
-        Line2D([0], [0], color='green', lw=10, label='AHA Reference Range'),
+        Line2D([0], [0], color='green', lw=10, label='Optimal per AHA Range'),
         Line2D([0], [0], color='red', lw=10, label='High'),
         Line2D([0], [0], color='orange', lw=10, label='Low'),
         Line2D([0], [0], color='blue', marker='o', linestyle='None', label='Your Input')
@@ -141,17 +141,18 @@ def ui_choose(df, debugging):
     df2 = df2[df2['BPQ100D'].isin(medBPFilter)]
     return df2
 
-
-# Number of elements
-num_elements = 8
-
-# Create placeholders for columns
-cols = [st.empty() for _ in range(num_elements)]
-
 def show_analysis(df):
+    st.markdown(f"### <u>Your risk profile markers</u>", unsafe_allow_html=True)
+    
+    # Number of elements
+    num_elements = 8
+
+    # Create placeholders for columns
+    cols = [st.empty() for _ in range(num_elements)]
+        
     validation_labels = {
-        'LBDHDD': "Value shold be between 20-100",
-        'LBDLDL': "Value shuld be between 30-300",
+        'LBDHDD': "Value should be between 20-100",
+        'LBDLDL': "Value should be between 30-300",
         'LBXTC': "Value should be between 140-320",
         'LBXTR': "Value should be between 50-500",
         'LBXGLU': "Value should be between 50-150",
@@ -190,7 +191,10 @@ def show_analysis(df):
                 columnName = NAME_MAP[column]
                 user_input = user_inputs[column]  # Reference the user input from the dictionary
 
-                # st.write('This is a <span style="color:red;">red text</span>', unsafe_allow_html=True)
+                if user_input == 0:
+                    st.write(f"### ")
+                    st.write(f"Please enter a value for {columnName}")
+                    continue
 
                 st.write(f"###")
 
@@ -268,3 +272,5 @@ def show_analysis(df):
 df_c = load_files(False)
 df_d = ui_choose(df_c, False)
 show_analysis(df_d)
+
+st.markdown('<div style="text-align: center"> Version 0.2 </div>', unsafe_allow_html=True)
