@@ -191,6 +191,11 @@ def show_analysis(df):
                 columnName = NAME_MAP[column]
                 user_input = user_inputs[column]  # Reference the user input from the dictionary
 
+                array = df[column].dropna()
+                if len(array.index) < 5:
+                    st.markdown(f"Not enough data available for {columnName}.")
+                    continue
+
                 if user_input == 0:
                     st.write(f"### ")
                     st.write(f"Please enter a value for {columnName}")
@@ -215,8 +220,6 @@ def show_analysis(df):
                     st.write(f"No AHA prescribed range available for {columnName}.")
                     continue
 
-                array = df[column].dropna()
-                # st.dataframe(array,hide_index=True)
                 sorted_array = np.sort(array)
 
                 # Calculate the percentile
@@ -228,10 +231,6 @@ def show_analysis(df):
                     low_percentile = 0
                 else:
                     low_percentile = np.mean(sorted_array <= low_number) * 100
-
-                if len(array.index) < 5:
-                    st.markdown(f"Not enough data available for {columnName}.")
-                    continue
 
                 fig, ax = plt.subplots(figsize=(10, .5))
 
