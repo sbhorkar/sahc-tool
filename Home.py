@@ -348,7 +348,7 @@ def show_analysis(df):
 
                 if more_info:
                     st.write(f'You are at {user_percentile: .0f}%ile for {columnName} compared to the general population per the NHANES dataset.')
-                    st.write(f'Your value of {user_input} {units_map[column]} for {columnName} is considered {status} per the AHA.')
+                    st.write(f'Your value of {user_input} {units_map[column]} for {columnName} is considered {status} per the American Heart Association.')
 
 # Main execution
 df_c = load_files(False)
