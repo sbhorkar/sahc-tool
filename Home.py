@@ -4,16 +4,26 @@ import os
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
-
-st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
+from PIL import Image
 
 darkgreen = "#6E9E31"
 regugreen = "#86AD52"
 lightgreen = "#A1BE78"
 
 DIR = os.getcwd()
+LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
+
+image_path = os.path.join(LOGO_DIR, 'new pt 2.png')
+
+st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
+
+im = Image.open(image_path)
+# st.title(":anatomical_heart:")
+st.image(image_path, width=400)
+
+st.divider()
 
 USER_FILE = os.path.join(DATA_DIR, 'DEMO_P.XPT')
 DIQ_FILE = os.path.join(DATA_DIR, 'P_DIQ.XPT')
@@ -229,8 +239,8 @@ def show_analysis(df):
                 user_inputs[key] = st.number_input(f"{validation_labels[key]}", key=unique_key, step=1)
             
             with col7:
-                st.write(f"#")
-                more_info = st.button(label=':information_source:', key=column)
+                # st.write(f"#")
+                more_info = st.button(label='ⓘ', key=column)
             
             with col8:
                 columnName = NAME_MAP[column]
@@ -246,7 +256,7 @@ def show_analysis(df):
                 #     st.write(f"Please enter a value for {columnName}")
                 #     continue
 
-                st.write(f"####")
+                # st.write(f"####")
 
                 if columnName in AHA_RANGES:
                     low_number = AHA_RANGES[columnName][0]
