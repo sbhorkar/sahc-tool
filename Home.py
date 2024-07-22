@@ -4,21 +4,19 @@ import os
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy as np
-from sklearn.neighbors import KernelDensity
+import scipy.stats as stats
 
 # Example HDL values (replace with your dataset)
-hdl_values = np.array([50, 55, 60, 65, 70, 45, 40, 35, 30, 25, 20, 75, 80]).reshape(-1, 1)
+hdl_values = np.array([50, 55, 60, 65, 70, 45, 40, 35, 30, 25, 20, 75, 80])
 
 # Fit a KDE model
-kde = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(hdl_values)
+kde = stats.gaussian_kde(hdl_values, bw_method=0.5)
 
 # Evaluate the KDE at HDL = 34
-hdl_value = np.array([[34]])
-log_density = kde.score_samples(hdl_value)
-prob_density_value = np.exp(log_density)
+hdl_value = 34
+prob_density_value = kde.evaluate(hdl_value)
 
-prob_density_value[0]  # Retrieve the probability density value
+st.write(prob_density_value[0])  # Retrieve the probability density value
 
 
 st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
