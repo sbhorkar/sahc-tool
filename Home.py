@@ -298,7 +298,7 @@ def show_analysis(df):
                 user_inputs[key] = st.number_input(f"{validation_labels[key]}", key=unique_key, step=1)
             
             with col8:
-                # st.write(f"#")
+                st.write("#")
                 more_info = st.button(label='ⓘ', key=column)
 
             with col9:
