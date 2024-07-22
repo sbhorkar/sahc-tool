@@ -4,6 +4,22 @@ import os
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy as np
+from sklearn.neighbors import KernelDensity
+
+# Example HDL values (replace with your dataset)
+hdl_values = np.array([50, 55, 60, 65, 70, 45, 40, 35, 30, 25, 20, 75, 80]).reshape(-1, 1)
+
+# Fit a KDE model
+kde = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(hdl_values)
+
+# Evaluate the KDE at HDL = 34
+hdl_value = np.array([[34]])
+log_density = kde.score_samples(hdl_value)
+prob_density_value = np.exp(log_density)
+
+prob_density_value[0]  # Retrieve the probability density value
+
 
 st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
@@ -96,7 +112,7 @@ ageOptions = {'19-33': 19, '34-48': 34, '49-64': 49, '65-78': 65,'79-98': 79}
 dataSelection = ['NHANES', 'SAHC']
 
 with demoExpand:
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3, vertical_alignment='top')
 
     with col1:
         gender_toggle = st.toggle('Male?', value=True)
@@ -105,7 +121,7 @@ with demoExpand:
         else:
             gender = 'Female'
     with col2:
-        age_group = st.selectbox('Age group', list(ageOptions.keys()))
+        age_group = st.selectbox('Age group', list(ageOptions.keys()), index=2)
     with col3:
         data_toggle = st.toggle("South Asian?", disabled=True)
         if data_toggle is True:
@@ -120,7 +136,7 @@ medBPOptions = {'Yes': 1, 'No': 2}
 medsExpand = st.expander("### My medication use", expanded=True)
 
 with medsExpand:
-    col4, col5, col6 = st.columns(3)
+    col4, col5, col6 = st.columns(3, vertical_alignment='bottom')
 
     with col4:
         # medChol = st.selectbox('Cholesterol medication', options=list(medCholOptions.keys()), placeholder="No", disabled=True)
@@ -131,14 +147,14 @@ with medsExpand:
             medChol = 'No'
     with col5:
         # medDiab = st.selectbox('Diabetes medication', options=list(medDiabOptions.keys()), placeholder="No", disabled=True)
-        diab_toggle = st.toggle("On blood sugar-lowering medication?", value=False, disabled=True)
+        diab_toggle = st.toggle("On blood sugar-lowering medication?", value=False)
         if diab_toggle is True:
             medDiab = 'Yes'
         else:
             medDiab = 'No'
     with col6:
         # medBP = st.selectbox('Blood pressure medication', options=list(medBPOptions.keys()), placeholder="No", disabled=True)
-        bp_toggle = st.toggle("On blood pressure-lowering medication?", value=False, disabled=True)
+        bp_toggle = st.toggle("On blood pressure-lowering medication?", value=False)
         if bp_toggle is True:
             medBP = 'Yes'
         else:
@@ -159,7 +175,7 @@ def load_files(debugging):
 
         df_combined = df_user[['SEQN', 'RIAGENDR', 'RIDAGEYR', 'RIDRETH3']]
         df_combined = pd.merge(df_combined, df_diq[['SEQN', 'DIQ010', 'DIQ160', 'DIQ050', 'DIQ070']], on='SEQN', how='left')
-        df_combined = pd.merge(df_combined, df_bpq[['SEQN', 'BPQ090D', 'BPQ100D', 'BPQ040A', 'BPQ050A']], on='SEQN', how='left')
+        df_combined = pd.merge(df_combined, df_bpq[['SEQN', 'BPQ090D', 'BPQ100D', 'BPQ040A', 'BPQ050A', 'BPQ020']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_hdl[['SEQN', 'LBDHDD']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_tgl[['SEQN', 'LBXTR', 'LBDLDL']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_tch[['SEQN', 'LBXTC']], on='SEQN', how='left')
@@ -184,6 +200,23 @@ def load_files(debugging):
             df_combined.to_csv(os.path.join(OUTPUT_DIR, 'nhanes_combined.csv'), index=False)
         return df_combined
 
+def filter_df(df,genderList,ageList,diabetesList,medCholList,medDiabList,medBPList):
+    df2=df.copy()
+    st.sidebar.write(f"Intial, records= {df2.shape}")
+    df2=df2[df2['RIAGENDR'].isin(genderList)]
+    st.sidebar.write(f"After Gender, records= {df2.shape}")
+    df2=df2[df2['Age_Group'].isin(ageList)]
+    st.sidebar.write(f"After Age, records= {df2.shape}")
+    df2=df2[df2['DIQ010'].isin(diabetesList)]
+    st.sidebar.write(f"After Diabetes diagnosis, records= {df2.shape}")
+    df2=df2[df2['DIQ160'].isin(medDiabList)]
+    st.sidebar.write(f"After diabetes meds, records= {df2.shape}")
+    df2=df2[df2['BPQ090D'].isin(medCholList)]
+    st.sidebar.write(f"After Chol meds, records= {df2.shape}")
+    df2=df2[df2['BPQ100D'].isin(medBPList)]
+    st.sidebar.write(f"After BP meds, records= {df2.shape}")
+    return df2
+
 def ui_choose(df, debugging):
     if debugging:
         st.write(gender)
@@ -199,11 +232,29 @@ def ui_choose(df, debugging):
     medBPFilter = [medBPOptions[medBP]]
 
     df2 = df.copy()
+    # st.write(f"Intial, records= {df2.shape}")
+
     df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
+    # st.write(f"After Gender, records= {df2.shape}")
+
     df2 = df2[df2['Age_Group'].isin(ageFilter)]
-    df2 = df2[df2['BPQ090D'].isin(medCholFilter)]
-    df2 = df2[df2['DIQ160'].isin(medDiabFilter)]
-    df2 = df2[df2['BPQ100D'].isin(medBPFilter)]
+    # st.write(f"After Age, records= {df2.shape}")
+
+    if medChol == 'Yes':
+        df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
+    elif medChol == 'No':
+        df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
+    # st.write(f"After Chol meds, records= {df2.shape}")
+    
+    df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
+    # st.write(f"After diabetes meds, records= {df2.shape}")
+
+    if medBP == 'Yes':
+        df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
+    elif medBP == 'No':
+        df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
+    
+    st.write(f"{len(df2)} records found.")
     return df2
 
 @st.experimental_dialog("More information")
@@ -253,7 +304,8 @@ def show_analysis(df):
 
         with cols[i].container():
 
-            col6, col7, col8, col9, col10, col11 = st.columns([.25, 1.6, .3, 5, 5, .25])
+            col6, col7, col8, col9, col10, col11 = st.columns([.25, 1.6, .3, 5, 5, .25], vertical_alignment='bottom')
+            
 
             with col7:
                 key = column
@@ -274,7 +326,7 @@ def show_analysis(df):
                 user_inputs[key] = st.number_input(f"{validation_labels[key]}", key=unique_key, step=1)
             
             with col8:
-                st.write("#")
+                # st.write("#")
                 more_info = st.button(label='ⓘ', key=column)
 
             with col9:
@@ -287,7 +339,7 @@ def show_analysis(df):
                     continue
 
                 if user_input == 0:
-                    st.write(f"### ")
+                    # st.write(f"### ")
                     st.write(f"Please enter a value for {columnName}")
                     continue
 
@@ -337,7 +389,12 @@ def show_analysis(df):
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
                 # else:
 
-                ax.scatter(user_percentile, 0.85, color='darkorange', zorder=5, label='Your Input', s=500)
+                if user_percentile < low_percentile:
+                    ax.scatter(user_percentile, 0.85, color=lightgreen, zorder=5, label='Your Input', s=500, edgecolors=['black'])
+                elif user_percentile > high_percentile:
+                    ax.scatter(user_percentile, 0.85, color=darkgreen, zorder=5, label='Your Input', s=500, edgecolors=['black'])
+                else:
+                    ax.scatter(user_percentile, 0.85, color=regugreen, zorder=5, label='Your Input', s=500, edgecolors=['black'])
 
                 ax.set_xlim(0, 100)
                 ax.set_ylim(0.4, 1.1)
@@ -357,8 +414,12 @@ def show_analysis(df):
 
                 plt.title(columnName)
 
-                plt.annotate(f'{user_input}', xy=(user_percentile, 0.85), xytext=(user_percentile, 0.8),
+                if user_percentile > high_percentile:
+                    plt.annotate(f'{user_input}', xy=(user_percentile, 0.85), xytext=(user_percentile, 0.8),
                               horizontalalignment='center', color = 'white', zorder=10, weight='bold')
+                else:
+                    plt.annotate(f'{user_input}', xy=(user_percentile, 0.85), xytext=(user_percentile, 0.8),
+                              horizontalalignment='center', color = 'black', zorder=10, weight='bold')
                 # plt.annotate(f'{user_percentile: .0f}%', xy=(user_percentile, 0.85), xytext=(user_percentile, 0.925),
                 #               horizontalalignment='center')
 
@@ -377,11 +438,10 @@ def show_analysis(df):
                 plt.annotate(f'{low_number}-{high_number}', xy=(low_percentile, 0.65), xytext=(low_percentile, 0.3),
                                   horizontalalignment='left')
 
-
                 for spine in ax.spines.values():
                     spine.set_visible(False)
 
-                # fig.patch.set_alpha(0)
+                # fig.patch.set_alpha(0) make background transparent
                 # ax.patch.set_alpha(0)
 
                 st.pyplot(fig)
@@ -407,17 +467,14 @@ def show_analysis(df):
                 #     suffix == 'rd'
                 # else:
                 #     suffix == 'th'
-
-                percentile = f'You are at {user_percentile: .0f}%ile for {columnName} compared to the general population per the NHANES dataset.'
-                range_status = f'Your value of {user_input} {units_map[column]} for {columnName} is considered {status} per the American Heart Association.'
                 
-                # css = r'''
-                # <style>
-                #     [data-testid="stButton"] {border: 0px}
-                # </style>
-                # '''
+                css = r'''
+                <style>
+                    [data-testid="stButton"] {border: 0px}
+                </style>
+                '''
 
-                # st.markdown(css, unsafe_allow_html=True)
+                st.markdown(css, unsafe_allow_html=True)
 
                 if more_info:
                     if "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
@@ -430,10 +487,12 @@ def show_analysis(df):
             with col10:
                 fig, ax = plt.subplots(figsize=(15, 1))
 
-                percentile_25 = np.percentile(sorted_array, 25)
-                percentile_50 = np.percentile(sorted_array, 50)
-                percentile_75 = np.percentile(sorted_array, 75)
-                percentile_90 = np.percentile(sorted_array, 90)
+                percentile_25 = int(np.percentile(sorted_array, 25))
+                percentile_50 = int(np.percentile(sorted_array, 50))
+                percentile_75 = int(np.percentile(sorted_array, 75))
+                percentile_90 = int(np.percentile(sorted_array, 90))
+
+                st.write(f"25: {percentile_25}, 50: {percentile_50}, 75: {percentile_75}, 90: {percentile_90}")
 
                 ax.plot([0, 100], [0.725, 0.725], color='grey', lw=20)
 
