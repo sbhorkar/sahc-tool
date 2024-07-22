@@ -4,11 +4,9 @@ import os
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
+# from streamlit_modal import Modal
 
-darkgreen = "#6E9E31"
-regugreen = "#86AD52"
-lightgreen = "#A1BE78"
+st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
 DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
@@ -17,13 +15,31 @@ OUTPUT_DIR = DIR + '/output/'
 
 image_path = os.path.join(LOGO_DIR, 'new pt 2.png')
 
-st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
+header = st.container()
+# header.title("Here is a sticky header")
+header.image(image_path, width=400)
+header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 
-im = Image.open(image_path)
-# st.title(":anatomical_heart:")
-st.image(image_path, width=400)
+st.markdown(
+    """
+<style>
+    div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
+        position: sticky;
+        top: 2.875rem;
+        background-color: white;
+        z-index: 999;
+    }
+    .fixed-header {
+        border-bottom: 1px solid grey;
+    }
+</style>
+    """,
+    unsafe_allow_html=True
+)
 
-st.divider()
+darkgreen = "#75975e"
+regugreen = "#95bb72"
+lightgreen = "#c7ddb5"
 
 USER_FILE = os.path.join(DATA_DIR, 'DEMO_P.XPT')
 DIQ_FILE = os.path.join(DATA_DIR, 'P_DIQ.XPT')
@@ -38,7 +54,7 @@ BPX_FILE = os.path.join(DATA_DIR, 'P_BPXO.XPT')
 NAME_MAP = {
     'LBXTR': 'Triglycerides (mg/dL)', 'LBDHDD': 'HDL (mg/dL)', 'LBDLDL': 'LDL (mg/dL)',
     'LBXTC': 'Total Cholesterol (mg/dL)', 'LBXGLU': 'Fasting Glucose (mg/dL)',
-    'BPXOSY1': 'Systolic (mmHg)', 'BPXODI1': 'Diastolic (mmHg)', 'BPXOPLS1': 'Pulse'
+    'BPXOSY1': 'Systolic Blood Pressure (mmHg)', 'BPXODI1': 'Diastolic Blood Pressure (mmHg)', 'BPXOPLS1': 'Pulse'
 }
 
 # Uniform AHA ranges regardless of gender and age
@@ -48,8 +64,8 @@ AHA_RANGES = {
     'LDL (mg/dL)': (None, 100, None),
     'Total Cholesterol (mg/dL)': (140, 160, None),
     'Fasting Glucose (mg/dL)': (None, 100, None),
-    'Systolic (mmHg)': (None, 120, None),
-    'Diastolic (mmHg)': (None, 80, None),
+    'Systolic Blood Pressure (mmHg)': (None, 120, None),
+    'Diastolic Blood Pressure(mmHg)': (None, 80, None),
     'Pulse': (60, 100, None)
 }
 
@@ -94,30 +110,63 @@ def map_age_to_group(age):
     else:
         return 79
 
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+demoExpand = st.expander("My demographics", expanded=True)
 
 genderOptions = {'Male': 1, 'Female': 2}
 # ageOptions = {'20-40': 20, '40-60': 40, '60-80': 60, '80+': 80}
 ageOptions = {'19-33': 19, '34-48': 34, '49-64': 49, '65-78': 65,'79-98': 79}
 dataSelection = ['NHANES', 'SAHC']
 
-with col1:
-    gender = st.selectbox('Gender', list(genderOptions.keys()))
-with col2:
-    age_group = st.selectbox('Age group', list(ageOptions.keys()))
-with col3:
-    data_select = st.selectbox('Data', dataSelection, disabled=True)
+with demoExpand:
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        # gender = st.selectbox('Gender', list(genderOptions.keys()))
+        gender_toggle = st.toggle('Male?', value=True)
+        if gender_toggle is True:
+            gender = 'Male'
+        else:
+            gender = 'Female'
+    with col2:
+        age_group = st.selectbox('Age group', list(ageOptions.keys()))
+    with col3:
+        # data_select = st.selectbox('Data', dataSelection, disabled=True)
+        data_toggle = st.toggle("South Asian?", disabled=True)
+        if data_toggle is True:
+            data_select = 'SAHC'
+        else:
+            data_select = 'NHANES'
 
 medCholOptions = {'Yes': 1, 'No': 2}
 medDiabOptions = {'Yes': 1, 'No': 2}
 medBPOptions = {'Yes': 1, 'No': 2}
 
-with col4:
-    medChol = st.selectbox('Cholesterol medication', options=list(medCholOptions.keys()), placeholder="No", disabled=True)
-with col5:
-    medDiab = st.selectbox('Diabetes medication', options=list(medDiabOptions.keys()), placeholder="No", disabled=True)
-with col6:
-    medBP = st.selectbox('Blood pressure medication', options=list(medBPOptions.keys()), placeholder="No", disabled=True)
+medsExpand = st.expander("### My medication use", expanded=True)
+
+with medsExpand:
+    col4, col5, col6 = st.columns(3)
+
+    with col4:
+        # medChol = st.selectbox('Cholesterol medication', options=list(medCholOptions.keys()), placeholder="No", disabled=True)
+        chol_toggle = st.toggle("On cholesterol-lowering medication?", value=False, disabled=True)
+        if chol_toggle is True:
+            medChol = 'Yes'
+        else:
+            medChol = 'No'
+    with col5:
+        # medDiab = st.selectbox('Diabetes medication', options=list(medDiabOptions.keys()), placeholder="No", disabled=True)
+        diab_toggle = st.toggle("On blood sugar-lowering medication?", value=False, disabled=True)
+        if diab_toggle is True:
+            medDiab = 'Yes'
+        else:
+            medDiab = 'No'
+    with col6:
+        # medBP = st.selectbox('Blood pressure medication', options=list(medBPOptions.keys()), placeholder="No", disabled=True)
+        bp_toggle = st.toggle("On blood pressure-lowering medication?", value=False, disabled=True)
+        if bp_toggle is True:
+            medBP = 'Yes'
+        else:
+            medBP = 'No'
 
 # @st.cache_data
 def load_files(debugging):
@@ -181,6 +230,16 @@ def ui_choose(df, debugging):
     # df2 = df2[df2['BPQ100D'].isin(medBPFilter)]
     return df2
 
+@st.experimental_dialog("More information")
+def popup(column, user_input, user_percentile, gender, age_range, med, on_med):
+    # st.write(f"### {column}")
+    if on_med:
+        st.write(f"An {column} of {user_input} is at {user_percentile: .0f}%ile for a {gender.lower()} between {age_range} who is on {med}-lowering medication.")
+    else:
+        st.write(f"An {column} of {user_input} is at {user_percentile: .0f}%ile for a {gender.lower()} between {age_range} who is not on {med}-lowering medication.")
+    # st.write(f"{text1}")
+    # st.write(f"{text2}")
+
 def show_analysis(df):
     st.markdown(f"### <u>Your risk profile markers</u>", unsafe_allow_html=True)
     
@@ -218,9 +277,9 @@ def show_analysis(df):
 
         with cols[i].container():
 
-            col6, col7, col8 = st.columns([2, .2, 5])
+            col6, col7, col8, col9, col10, col11 = st.columns([.1, 1.6, .3, 5, 2.5, .1])
 
-            with col6:
+            with col7:
                 key = column
                 columnName = NAME_MAP[column]
 
@@ -238,11 +297,11 @@ def show_analysis(df):
                 unique_key = f"{key}_{i}"
                 user_inputs[key] = st.number_input(f"{validation_labels[key]}", key=unique_key, step=1)
             
-            with col7:
+            with col8:
                 # st.write(f"#")
                 more_info = st.button(label='ⓘ', key=column)
-            
-            with col8:
+
+            with col9:
                 columnName = NAME_MAP[column]
                 user_input = user_inputs[column]  # Reference the user input from the dictionary
 
@@ -251,10 +310,10 @@ def show_analysis(df):
                     st.markdown(f"Not enough data available for {columnName}.")
                     continue
 
-                # if user_input == 0:
-                #     st.write(f"### ")
-                #     st.write(f"Please enter a value for {columnName}")
-                #     continue
+                if user_input == 0:
+                    st.write(f"### ")
+                    st.write(f"Please enter a value for {columnName}")
+                    continue
 
                 # st.write(f"####")
 
@@ -285,24 +344,24 @@ def show_analysis(df):
                 # ax.plot([0, 100], [.85, .85], color='grey', lw=10, alpha=0.5, label='Percentile Range')
 
                 # Green line from low_percentile to high_percentile
-                ax.plot([low_percentile, high_percentile], [0.725, 0.725], color='green', lw=20, label='Healthy Range')
+                ax.plot([low_percentile, high_percentile], [0.725, 0.725], color=regugreen, lw=20, label='Healthy Range')
 
                 if high_percentile < 100:
-                    ax.plot([high_percentile + 1, 100], [0.725, 0.725], color='red', lw=20, label='High')
+                    ax.plot([high_percentile + 1, 100], [0.725, 0.725], color=darkgreen, lw=20, label='High')
                 if low_percentile > 0:
-                    ax.plot([0, low_percentile - 1], [0.725, 0.725], color='orange', lw=20, label="Low")
+                    ax.plot([0, low_percentile - 1], [0.725, 0.725], color=lightgreen, lw=20, label="Low")
 
                 # Blue dot at user input position
                 user_percentile = np.mean(sorted_array <= user_input) * 100
-                if user_percentile == 100:
+                if int(user_percentile) == 100:
                     user_percentile == 99.99
-                if user_input > high_number or user_input < low_number:
+                if (user_input > high_number or user_input < low_number) and column is not 'LBDHDD':
                     # ax.scatter(user_percentile, 0.85, color='red', zorder=5, label='Your Input')
                     header_color = "red"
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
                 # else:
 
-                ax.scatter(user_percentile, 0.85, color='blue', zorder=5, label='Your Input', s=500)
+                ax.scatter(user_percentile, 0.85, color='darkorange', zorder=5, label='Your Input', s=500)
 
                 ax.set_xlim(0, 100)
                 ax.set_ylim(0.4, 1.1)
@@ -311,16 +370,16 @@ def show_analysis(df):
                 ax.xaxis.set_label_position('top') 
                 tick_positions = [0, 100, user_percentile]
 
-                if user_percentile - 2 > 0:
-                    tick_labels = ['0%ile', '99%ile', f'{user_percentile: .0f}%ile']
-                elif user_percentile + 2 < 99:
-                    tick_labels = ['0%ile', '99%ile', f'{user_percentile: .0f}']
-                else:
+                if user_percentile - 2 <= 0 or user_percentile + 2 >= 99:
                     tick_labels = ['0%ile', '99%ile', '']
+                else:
+                    tick_labels = ['0%ile', '99%ile', f'{user_percentile: .0f}%ile']
                 ax.set_xticks(tick_positions)
                 ax.set_xticklabels(tick_labels)
 
                 # ax.set_xlabel('Percentile (%)')
+
+                plt.title(columnName)
 
                 plt.annotate(f'{user_input}', xy=(user_percentile, 0.85), xytext=(user_percentile, 0.8),
                               horizontalalignment='center', color = 'white', zorder=10, weight='bold')
@@ -346,6 +405,9 @@ def show_analysis(df):
                 for spine in ax.spines.values():
                     spine.set_visible(False)
 
+                # fig.patch.set_alpha(0)
+                # ax.patch.set_alpha(0)
+
                 st.pyplot(fig)
                 plt.close()
 
@@ -356,9 +418,65 @@ def show_analysis(df):
                 else:
                     status = "NORMAL"
 
+                # digit = user_input % 10
+                # suffix = ''
+
+                # if digit == 0:
+                #     suffix == 'th'
+                # if digit == 1:
+                #     suffix = 'st'
+                # elif digit == 2:
+                #     suffix == 'nd'
+                # elif digit == 3:
+                #     suffix == 'rd'
+                # else:
+                #     suffix == 'th'
+
+                percentile = f'You are at {user_percentile: .0f}%ile for {columnName} compared to the general population per the NHANES dataset.'
+                range_status = f'Your value of {user_input} {units_map[column]} for {columnName} is considered {status} per the American Heart Association.'
+                
+                # css = r'''
+                # <style>
+                #     [data-testid="stButton"] {border: 0px}
+                # </style>
+                # '''
+
+                # st.markdown(css, unsafe_allow_html=True)
+
                 if more_info:
-                    st.write(f'You are at {user_percentile: .0f}%ile for {columnName} compared to the general population per the NHANES dataset.')
-                    st.write(f'Your value of {user_input} {units_map[column]} for {columnName} is considered {status} per the American Heart Association.')
+                    if "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
+                        popup(columnName, user_input, user_percentile, gender, age_group, "cholesterol", medChol)
+                    elif "Glucose" in columnName:
+                        popup(columnName, user_input, user_percentile, gender, age_group, "blood sugar", medDiab)   
+                    else:
+                        popup(columnName, user_input, user_percentile, gender, age_group, "blood pressure", medBP)
+            
+            # with col10:
+                # fig, ax = plt.subplots(figsize=(15, 1))
+
+                # percentile_25 = np.percentile(sorted_array, 25)
+                # percentile_50 = np.percentile(sorted_array, 50)
+                # percentile_75 = np.percentile(sorted_array, 75)
+                # percentile_90 = np.percentile(sorted_array, 90)
+
+                # ax.plot([0, 100], [0.725, 0.725], color='grey', lw=20)
+
+                # ax.set_xlim(0, 100)
+                # ax.set_ylim(0.4, 1.1)
+                # ax.set_yticks([]) 
+                # tick_positions = [0, 25, 50, 75, 90, 99]
+
+                # tick_labels = ['', '25th', '50th', '75th', '90th', '']
+                # ax.set_xticks(tick_positions)
+                # ax.set_xticklabels(tick_labels)
+
+                # ax.set_xlabel('Percentile (%)')
+
+                # for spine in ax.spines.values():
+                #     spine.set_visible(False)
+
+                # st.pyplot(fig)
+                # plt.close()
 
 # Main execution
 df_c = load_files(False)
