@@ -4,19 +4,23 @@ import os
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.stats as stats
+import statsmodels.api as sm
 
 # Example HDL values (replace with your dataset)
 hdl_values = np.array([50, 55, 60, 65, 70, 45, 40, 35, 30, 25, 20, 75, 80])
 
 # Fit a KDE model
-kde = stats.gaussian_kde(hdl_values, bw_method=0.5)
+kde = sm.nonparametric.KDEUnivariate(hdl_values)
+kde.fit(bw='scott')  # You can also specify bandwidth manually, e.g., bw=0.5
 
 # Evaluate the KDE at HDL = 34
 hdl_value = 34
 prob_density_value = kde.evaluate(hdl_value)
 
-st.write(prob_density_value[0])  # Retrieve the probability density value
+# Display the result in Streamlit
+st.write(f"Probability density value for HDL = {hdl_value}: {prob_density_value[0]}")
+
+
 
 
 st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
