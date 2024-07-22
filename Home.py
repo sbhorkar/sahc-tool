@@ -4,7 +4,6 @@ import os
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
-# from streamlit_modal import Modal
 
 st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
@@ -69,27 +68,6 @@ AHA_RANGES = {
     'Pulse': (60, 100, None)
 }
 
-def create_legend():
-    fig, ax = plt.subplots(figsize=(10, 1))  # Create a separate figure for the legend
-    ax.axis('off')  # Hide axes
-
-    # Create custom legend lines
-    custom_lines = [
-        Line2D([0], [0], color='grey', lw=10, alpha=0.5, label='Percentile Range'),
-        Line2D([0], [0], color='green', lw=10, label='Optimal per AHA Range'),
-        Line2D([0], [0], color='red', lw=10, label='High'),
-        Line2D([0], [0], color='orange', lw=10, label='Low'),
-        Line2D([0], [0], color='blue', marker='o', linestyle='None', label='Your Input')
-    ]
-
-    # Add the custom legend
-    ax.legend(handles=custom_lines, loc='center', ncol=5, frameon=False, bbox_to_anchor=(0.5, 0.5),
-              handletextpad=2, columnspacing=2, fontsize=14)
-    st.pyplot(fig)
-    plt.close()
-
-# create_legend()
-
 def map_age_to_group(age):
     if 0 <= age <= 2:
         return 1
@@ -121,7 +99,6 @@ with demoExpand:
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        # gender = st.selectbox('Gender', list(genderOptions.keys()))
         gender_toggle = st.toggle('Male?', value=True)
         if gender_toggle is True:
             gender = 'Male'
@@ -130,7 +107,6 @@ with demoExpand:
     with col2:
         age_group = st.selectbox('Age group', list(ageOptions.keys()))
     with col3:
-        # data_select = st.selectbox('Data', dataSelection, disabled=True)
         data_toggle = st.toggle("South Asian?", disabled=True)
         if data_toggle is True:
             data_select = 'SAHC'
@@ -148,7 +124,7 @@ with medsExpand:
 
     with col4:
         # medChol = st.selectbox('Cholesterol medication', options=list(medCholOptions.keys()), placeholder="No", disabled=True)
-        chol_toggle = st.toggle("On cholesterol-lowering medication?", value=False, disabled=True)
+        chol_toggle = st.toggle("On cholesterol-lowering medication?", value=False)
         if chol_toggle is True:
             medChol = 'Yes'
         else:
@@ -218,16 +194,16 @@ def ui_choose(df, debugging):
 
     genderFilter = [genderOptions[gender]]
     ageFilter = [ageOptions[age_group]]
-    # medCholFilter = [medCholOptions[medChol]]
-    # medDiabFilter = [medDiabOptions[medDiab]]
-    # medBPFilter = [medBPOptions[medBP]]
+    medCholFilter = [medCholOptions[medChol]]
+    medDiabFilter = [medDiabOptions[medDiab]]
+    medBPFilter = [medBPOptions[medBP]]
 
     df2 = df.copy()
     df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
     df2 = df2[df2['Age_Group'].isin(ageFilter)]
-    # df2 = df2[df2['BPQ090D'].isin(medCholFilter)]
-    # df2 = df2[df2['DIQ160'].isin(medDiabFilter)]
-    # df2 = df2[df2['BPQ100D'].isin(medBPFilter)]
+    df2 = df2[df2['BPQ090D'].isin(medCholFilter)]
+    df2 = df2[df2['DIQ160'].isin(medDiabFilter)]
+    df2 = df2[df2['BPQ100D'].isin(medBPFilter)]
     return df2
 
 @st.experimental_dialog("More information")
@@ -277,7 +253,7 @@ def show_analysis(df):
 
         with cols[i].container():
 
-            col6, col7, col8, col9, col10, col11 = st.columns([.1, 1.6, .3, 5, 2.5, .1])
+            col6, col7, col8, col9, col10, col11 = st.columns([.25, 1.6, .3, 5, 5, .25])
 
             with col7:
                 key = column
@@ -355,7 +331,7 @@ def show_analysis(df):
                 user_percentile = np.mean(sorted_array <= user_input) * 100
                 if int(user_percentile) == 100:
                     user_percentile == 99.99
-                if (user_input > high_number or user_input < low_number) and column is not 'LBDHDD':
+                if (user_input > high_number or user_input < low_number) and column != 'LBDHDD':
                     # ax.scatter(user_percentile, 0.85, color='red', zorder=5, label='Your Input')
                     header_color = "red"
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
@@ -451,32 +427,32 @@ def show_analysis(df):
                     else:
                         popup(columnName, user_input, user_percentile, gender, age_group, "blood pressure", medBP)
             
-            # with col10:
-                # fig, ax = plt.subplots(figsize=(15, 1))
+            with col10:
+                fig, ax = plt.subplots(figsize=(15, 1))
 
-                # percentile_25 = np.percentile(sorted_array, 25)
-                # percentile_50 = np.percentile(sorted_array, 50)
-                # percentile_75 = np.percentile(sorted_array, 75)
-                # percentile_90 = np.percentile(sorted_array, 90)
+                percentile_25 = np.percentile(sorted_array, 25)
+                percentile_50 = np.percentile(sorted_array, 50)
+                percentile_75 = np.percentile(sorted_array, 75)
+                percentile_90 = np.percentile(sorted_array, 90)
 
-                # ax.plot([0, 100], [0.725, 0.725], color='grey', lw=20)
+                ax.plot([0, 100], [0.725, 0.725], color='grey', lw=20)
 
-                # ax.set_xlim(0, 100)
-                # ax.set_ylim(0.4, 1.1)
-                # ax.set_yticks([]) 
-                # tick_positions = [0, 25, 50, 75, 90, 99]
+                ax.set_xlim(0, 100)
+                ax.set_ylim(0.4, 1.1)
+                ax.set_yticks([]) 
+                tick_positions = [0, 25, 50, 75, 90, 99]
 
-                # tick_labels = ['', '25th', '50th', '75th', '90th', '']
-                # ax.set_xticks(tick_positions)
-                # ax.set_xticklabels(tick_labels)
+                tick_labels = ['', '25th', '50th', '75th', '90th', '']
+                ax.set_xticks(tick_positions)
+                ax.set_xticklabels(tick_labels)
 
-                # ax.set_xlabel('Percentile (%)')
+                ax.set_xlabel('Percentile (%)')
 
-                # for spine in ax.spines.values():
-                #     spine.set_visible(False)
+                for spine in ax.spines.values():
+                    spine.set_visible(False)
 
-                # st.pyplot(fig)
-                # plt.close()
+                st.pyplot(fig)
+                plt.close()
 
 # Main execution
 df_c = load_files(False)
