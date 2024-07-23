@@ -6,24 +6,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.api as sm
 
+st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
+
 # Example HDL values (replace with your dataset)
 hdl_values = np.array([50, 55, 60, 65, 70, 45, 40, 35, 30, 25, 20, 75, 80])
 
 # Fit a KDE model
-kde = sm.nonparametric.KDEUnivariate(hdl_values)
-kde.fit(bw='scott')  # You can also specify bandwidth manually, e.g., bw=0.5
+# kde = sm.nonparametric.KDEUnivariate(hdl_values)
+# kde.fit(bw='scott')  # You can also specify bandwidth manually, e.g., bw=0.5
 
-# Evaluate the KDE at HDL = 34
-hdl_value = 34
-prob_density_value = kde.evaluate(hdl_value)
+# # Evaluate the KDE at HDL = 34
+# hdl_value = 34
+# prob_density_value = kde.evaluate(hdl_value)
 
-# Display the result in Streamlit
-st.write(f"Probability density value for HDL = {hdl_value}: {prob_density_value[0]}")
-
-
-
-
-st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
+# # Display the result in Streamlit
+# st.write(f"Probability density value for HDL = {hdl_value}: {prob_density_value[0]}")
 
 DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
@@ -110,7 +107,7 @@ demoExpand = st.expander("My demographics", expanded=True)
 
 genderOptions = {'Male': 1, 'Female': 2}
 # ageOptions = {'20-40': 20, '40-60': 40, '60-80': 60, '80+': 80}
-ageOptions = {'19-33': 19, '34-48': 34, '49-64': 49, '65-78': 65,'79-98': 79}
+ageOptions = {'19-33': 19, '34-48': 34, '49-64': 49, '65-78': 65,'79+': 79}
 dataSelection = ['NHANES', 'SAHC']
 
 with demoExpand:
@@ -260,14 +257,12 @@ def ui_choose(df, debugging):
     return df2
 
 @st.experimental_dialog("More information")
-def popup(column, user_input, user_percentile, gender, age_range, med, on_med):
-    # st.write(f"### {column}")
+def popup(column, user_input, user_percentile, gender, age_range, med, on_med, prob, value):
+    st.write(f"The estimated probability of an optimal {column} level >= {value} for a {gender.lower()} between {age_range} is {prob * 100: .0f}%.")
     if on_med:
         st.write(f"An {column} of {user_input} is at {user_percentile: .0f}%ile for a {gender.lower()} between {age_range} who is on {med}-lowering medication.")
     else:
         st.write(f"An {column} of {user_input} is at {user_percentile: .0f}%ile for a {gender.lower()} between {age_range} who is not on {med}-lowering medication.")
-    # st.write(f"{text1}")
-    # st.write(f"{text2}")
 
 def show_analysis(df):
     st.markdown(f"### <u>Your risk profile markers</u>", unsafe_allow_html=True)
@@ -306,9 +301,10 @@ def show_analysis(df):
 
         with cols[i].container():
 
-            col6, col7, col8, col9, col10, col11 = st.columns([.25, 1.6, .3, 5, 5, .25], vertical_alignment='bottom')
+            # col6, col7, col8, col9, col10, col11 = st.columns([.25, 1.6, .3, 5, 5, .25], vertical_alignment='bottom')
+            # col6, col7, col8, col9, col10, col11 = st.columns([0.1, 0.15, 0.05, 0.3, 0.3, 0.1], vertical_alignment='bottom')
+            col6, col7, col8, col9, col10, col11 = st.columns([0.1, 0.12, 0.03, 0.325, 0.325, 0.1], vertical_alignment='bottom')
             
-
             with col7:
                 key = column
                 columnName = NAME_MAP[column]
@@ -328,6 +324,17 @@ def show_analysis(df):
                 user_inputs[key] = st.number_input(f"{validation_labels[key]}", key=unique_key, step=1)
             
             with col8:
+                st.markdown("""
+                    <style>
+                        .stButton button {
+                            background-color: white;
+                            font-weight: bold;
+                            width: 50px;
+                            border: 0px solid green;
+                        }
+
+                    </style>
+                    """, unsafe_allow_html=True)
                 # st.write("#")
                 more_info = st.button(label='ⓘ', key=column)
 
@@ -370,10 +377,7 @@ def show_analysis(df):
 
                 fig, ax = plt.subplots(figsize=(15, 1))
 
-                # Grey line from 0 to 100
-                # ax.plot([0, 100], [.85, .85], color='grey', lw=10, alpha=0.5, label='Percentile Range')
-
-                # Green line from low_percentile to high_percentile
+                # lines from low_percentile to high_percentile
                 ax.plot([low_percentile, high_percentile], [0.725, 0.725], color=regugreen, lw=20, label='Healthy Range')
 
                 if high_percentile < 100:
@@ -381,7 +385,7 @@ def show_analysis(df):
                 if low_percentile > 0:
                     ax.plot([0, low_percentile - 1], [0.725, 0.725], color=lightgreen, lw=20, label="Low")
 
-                # Blue dot at user input position
+                # dot at user input position
                 user_percentile = np.mean(sorted_array <= user_input) * 100
                 if int(user_percentile) == 100:
                     user_percentile == 99.99
@@ -449,13 +453,6 @@ def show_analysis(df):
                 st.pyplot(fig)
                 plt.close()
 
-                if user_input > high_number:
-                    status = "HIGH"
-                elif user_input < low_number:
-                    status = "LOW"
-                else:
-                    status = "NORMAL"
-
                 # digit = user_input % 10
                 # suffix = ''
 
@@ -469,22 +466,38 @@ def show_analysis(df):
                 #     suffix == 'rd'
                 # else:
                 #     suffix == 'th'
-                
-                css = r'''
-                <style>
-                    [data-testid="stButton"] {border: 0px}
-                </style>
-                '''
 
-                st.markdown(css, unsafe_allow_html=True)
+                kde = sm.nonparametric.KDEUnivariate(array)
+                kde.fit(bw='scott')  # You can also specify bandwidth manually, e.g., bw=0.5
+
+                # Generate a range of HDL values to estimate the CDF
+                hdl_range = np.linspace(min(array), max(array), 1000)
+
+                # Evaluate the KDE over the range
+                pdf_values = kde.evaluate(hdl_range)
+
+                # Calculate the CDF by integrating the PDF
+                cdf_values = np.cumsum(pdf_values) * (hdl_range[1] - hdl_range[0])
+
+                # Find the CDF value at HDL = 35
+                value = user_input
+                cdf_at_35 = np.interp(value, hdl_range, cdf_values)
+
+                # Probability of HDL >= 35
+                prob_greater_than = 1 - cdf_at_35
+                prob_at = kde.evaluate(value)
+
+                # # Display the result in Streamlit
+                # st.write(f"Probability of HDL >= {value}: {probability_gte_35 * 100: .0f}%")
+                # st.write(f"Probability of HDL = {value}: {prob_density_value[0]}")
 
                 if more_info:
                     if "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
-                        popup(columnName, user_input, user_percentile, gender, age_group, "cholesterol", medChol)
+                        popup(columnName, user_input, user_percentile, gender, age_group, "cholesterol", medChol, prob_greater_than, value)
                     elif "Glucose" in columnName:
-                        popup(columnName, user_input, user_percentile, gender, age_group, "blood sugar", medDiab)   
+                        popup(columnName, user_input, user_percentile, gender, age_group, "blood sugar", medDiab, prob_greater_than, value)   
                     else:
-                        popup(columnName, user_input, user_percentile, gender, age_group, "blood pressure", medBP)
+                        popup(columnName, user_input, user_percentile, gender, age_group, "blood pressure", medBP, prob_greater_than, value)
             
             with col10:
                 fig, ax = plt.subplots(figsize=(15, 1))
@@ -494,7 +507,7 @@ def show_analysis(df):
                 percentile_75 = int(np.percentile(sorted_array, 75))
                 percentile_90 = int(np.percentile(sorted_array, 90))
 
-                st.write(f"25: {percentile_25}, 50: {percentile_50}, 75: {percentile_75}, 90: {percentile_90}")
+                # st.write(f"25: {percentile_25}, 50: {percentile_50}, 75: {percentile_75}, 90: {percentile_90}")
 
                 ax.plot([0, 100], [0.725, 0.725], color='grey', lw=20)
 
@@ -511,6 +524,9 @@ def show_analysis(df):
 
                 for spine in ax.spines.values():
                     spine.set_visible(False)
+
+                plt.annotate('Normal', xy=(low_percentile, 0.65), xytext=(low_percentile, 0.45),
+                                  horizontalalignment='left', weight='bold')
 
                 st.pyplot(fig)
                 plt.close()
