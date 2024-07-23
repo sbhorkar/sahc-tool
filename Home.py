@@ -7,6 +7,8 @@ import numpy as np
 import statsmodels.api as sm
 from fpdf import FPDF
 import base64
+import yagmail
+from io import BytesIO
 
 st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
@@ -29,17 +31,41 @@ with header:
         st.image(image_path, width=500)
     with col3:
         report_text = st.text_input("Download a PDF report!", placeholder='Your email')
-        export_as_pdf = st.button("Export Report")
+
+        if report_text == "":
+            button_disabled = True
+        else:
+            button_disabled = False
+
+        export_as_pdf = st.button("Export Report", disabled=button_disabled)
 
         if export_as_pdf:
-            pdf = FPDF()
+            pdf = FPDF('P','mm','A4');
             pdf.add_page()
             pdf.set_font('Arial', 'B', 16)
-            pdf.cell(40, 10, report_text)
-            
-            html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
+            # pdf.cell(40, 10, report_text)
+            pdf.image('LBDHDD.jpeg', x=5, y=30, w=200, h=25.633)  # Adjust 'x', 'y', 'w', and 'h' as needed
 
-            st.markdown(html, unsafe_allow_html=True)
+            pdf_file_path = 'test.pdf'  # Adjust the path and filename as needed
+            pdf.output(pdf_file_path)
+            
+            # html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
+
+            # st.markdown(html, unsafe_allow_html=True)
+
+            # Send the PDF via email with yagmail
+            yag = yagmail.SMTP('sanaa.bhorkar@gmail.com', 'txhamunwqrefciwl', host='smtp.gmail.com', port=587, smtp_starttls=True, smtp_ssl=False)
+
+            # Enclose the PDF
+            yag.send(
+                to=report_text,
+                subject="Your ARCH Report",
+                contents="Report attached.",
+                attachments=['test.pdf']
+            )
+
+            # Close SMTP connection
+            yag.close()
 
 header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 
@@ -464,7 +490,7 @@ def show_analysis(df):
 
                 # ax.set_xlabel('Percentile (%)')
 
-                plt.title(columnName)
+                ax.set_title(columnName)
 
                 if user_percentile > high_percentile:
                     plt.annotate(f'{user_input}', xy=(user_percentile, 0.85), xytext=(user_percentile, 0.8),
@@ -498,9 +524,8 @@ def show_analysis(df):
 
                 st.pyplot(fig)
 
-                plot_path = os.path.join(PLOT_DIR, f'{columnName}.png')
-                plt.savefig(plot_path)
-                plt.close()
+                fig.savefig(f'{column}.jpeg', bbox_inches='tight')
+                plt.close(fig)
 
                 # digit = user_input % 10
                 # suffix = ''
