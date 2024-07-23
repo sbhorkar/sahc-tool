@@ -8,20 +8,6 @@ import statsmodels.api as sm
 
 st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
-# Example HDL values (replace with your dataset)
-hdl_values = np.array([50, 55, 60, 65, 70, 45, 40, 35, 30, 25, 20, 75, 80])
-
-# Fit a KDE model
-# kde = sm.nonparametric.KDEUnivariate(hdl_values)
-# kde.fit(bw='scott')  # You can also specify bandwidth manually, e.g., bw=0.5
-
-# # Evaluate the KDE at HDL = 34
-# hdl_value = 34
-# prob_density_value = kde.evaluate(hdl_value)
-
-# # Display the result in Streamlit
-# st.write(f"Probability density value for HDL = {hdl_value}: {prob_density_value[0]}")
-
 DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
@@ -30,8 +16,15 @@ OUTPUT_DIR = DIR + '/output/'
 image_path = os.path.join(LOGO_DIR, 'new pt 2.png')
 
 header = st.container()
-# header.title("Here is a sticky header")
-header.image(image_path, width=400)
+with header:
+    col1, col2, col3 = st.columns([1, 3, 1], vertical_alignment='bottom')
+    with col1:
+        st.image(image_path, width=500)  # Adjust width as needed
+    with col3:
+        with st.form(key='my_form', border=False):
+            st.text_input("Send a PDF of this report to your inbox!", placeholder='Your email')
+            submit_button = st.form_submit_button(label='Submit')
+
 header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 
 st.markdown(
@@ -50,6 +43,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 darkgreen = "#75975e"
 regugreen = "#95bb72"
@@ -199,22 +193,20 @@ def load_files(debugging):
             df_combined.to_csv(os.path.join(OUTPUT_DIR, 'nhanes_combined.csv'), index=False)
         return df_combined
 
-def filter_df(df,genderList,ageList,diabetesList,medCholList,medDiabList,medBPList):
-    df2=df.copy()
-    st.sidebar.write(f"Intial, records= {df2.shape}")
-    df2=df2[df2['RIAGENDR'].isin(genderList)]
-    st.sidebar.write(f"After Gender, records= {df2.shape}")
-    df2=df2[df2['Age_Group'].isin(ageList)]
-    st.sidebar.write(f"After Age, records= {df2.shape}")
-    df2=df2[df2['DIQ010'].isin(diabetesList)]
-    st.sidebar.write(f"After Diabetes diagnosis, records= {df2.shape}")
-    df2=df2[df2['DIQ160'].isin(medDiabList)]
-    st.sidebar.write(f"After diabetes meds, records= {df2.shape}")
-    df2=df2[df2['BPQ090D'].isin(medCholList)]
-    st.sidebar.write(f"After Chol meds, records= {df2.shape}")
-    df2=df2[df2['BPQ100D'].isin(medBPList)]
-    st.sidebar.write(f"After BP meds, records= {df2.shape}")
-    return df2
+def get_next_age_group(age_group, direction='up'):
+    age_groups = list(ageOptions.keys())
+    current_index = age_groups.index(age_group)
+    
+    if direction == 'up':
+        if current_index < len(age_groups) - 1:
+            return age_groups[current_index + 1]
+        else:
+            return age_groups[current_index - 1]
+    elif direction == 'down':
+        if current_index > 0:
+            return age_groups[current_index - 1]
+        else:
+            return age_groups[current_index + 1]
 
 def ui_choose(df, debugging):
     if debugging:
@@ -231,38 +223,67 @@ def ui_choose(df, debugging):
     medBPFilter = [medBPOptions[medBP]]
 
     df2 = df.copy()
-    # st.write(f"Intial, records= {df2.shape}")
-
     df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
-    # st.write(f"After Gender, records= {df2.shape}")
-
     df2 = df2[df2['Age_Group'].isin(ageFilter)]
-    # st.write(f"After Age, records= {df2.shape}")
 
     if medChol == 'Yes':
         df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
     elif medChol == 'No':
         df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
-    # st.write(f"After Chol meds, records= {df2.shape}")
     
     df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
-    # st.write(f"After diabetes meds, records= {df2.shape}")
 
     if medBP == 'Yes':
         df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
     elif medBP == 'No':
         df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
-    
+
     st.write(f"{len(df2)} records found.")
+
+    if len(df2) < 15:
+        next_age_group = get_next_age_group(age_group)
+        ageFilter.append(ageOptions[next_age_group])
+        df2 = df[df['RIAGENDR'].isin(genderFilter)]
+        df2 = df2[df2['Age_Group'].isin(ageFilter)]
+
+        if medChol == 'Yes':
+            df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
+        elif medChol == 'No':
+            df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
+        
+        df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
+
+        if medBP == 'Yes':
+            df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
+        elif medBP == 'No':
+            df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
+
+        st.write(f"{len(df2)} records found after expanding age group.")
+
     return df2
 
+
 @st.experimental_dialog("More information")
-def popup(column, user_input, user_percentile, gender, age_range, med, on_med, prob, value):
+def popup(column, user_input, user_percentile, gender, age_range, med, on_med, prob, value, p25, p50, p75, p90):
     st.write(f"The estimated probability of an optimal {column} level >= {value} for a {gender.lower()} between {age_range} is {prob * 100: .0f}%.")
     if on_med:
         st.write(f"An {column} of {user_input} is at {user_percentile: .0f}%ile for a {gender.lower()} between {age_range} who is on {med}-lowering medication.")
     else:
         st.write(f"An {column} of {user_input} is at {user_percentile: .0f}%ile for a {gender.lower()} between {age_range} who is not on {med}-lowering medication.")
+
+    data = {
+        '25th': [p25],
+        '50th': [p50],
+        '75th': [p75],
+        '90th': [p90]
+    }
+
+    # Convert the dictionary to a DataFrame
+    df = pd.DataFrame(data)
+
+    if column == 'HDL (mg/dL)':
+        st.write('### Percentiles and HDL levels:')
+        st.dataframe(df, hide_index=True)
 
 def show_analysis(df):
     st.markdown(f"### <u>Your risk profile markers</u>", unsafe_allow_html=True)
@@ -305,6 +326,9 @@ def show_analysis(df):
             # col6, col7, col8, col9, col10, col11 = st.columns([0.1, 0.15, 0.05, 0.3, 0.3, 0.1], vertical_alignment='bottom')
             # col6, col7, col8, col9, col10, col11 = st.columns([0.1, 0.12, 0.03, 0.325, 0.325, 0.1], vertical_alignment='bottom')
             col6, col7, col8, col9, col10, col11 = st.columns([0.05, 0.15, 0.03, 0.36, 0.36, 0.05], vertical_alignment='bottom')
+
+            if column == 'LBDHDD':
+                col6, col7, col8, col9, col10 = st.columns([0.08, 0.15, 0.03, 0.6, 0.08], vertical_alignment='bottom')
             
             with col7:
                 key = column
@@ -327,17 +351,22 @@ def show_analysis(df):
             with col8:
                 st.markdown("""
                     <style>
-                        .stButton button {
+                        button[kind="primary"] {
                             background-color: white;
                             font-weight: bold;
+                            color: black;
                             width: 50px;
                             border: 0px solid green;
                         }
 
+                        button[kind="primary"]:hover {
+                            background-color: white; /* Slightly different background on hover */
+                            color: #FF4B4B; /* Ensure text color remains visible on hover */
+                        }
                     </style>
                     """, unsafe_allow_html=True)
                 # st.write("#")
-                more_info = st.button(label='ⓘ', key=column)
+                more_info = st.button(label='ⓘ', key=column, type='primary')
 
             with col9:
                 columnName = NAME_MAP[column]
@@ -492,55 +521,64 @@ def show_analysis(df):
                 # st.write(f"Probability of HDL >= {value}: {probability_gte_35 * 100: .0f}%")
                 # st.write(f"Probability of HDL = {value}: {prob_density_value[0]}")
 
-                if more_info:
-                    if "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
-                        popup(columnName, user_input, user_percentile, gender, age_group, "cholesterol", medChol, prob_greater_than, value)
-                    elif "Glucose" in columnName:
-                        popup(columnName, user_input, user_percentile, gender, age_group, "blood sugar", medDiab, prob_greater_than, value)   
-                    else:
-                        popup(columnName, user_input, user_percentile, gender, age_group, "blood pressure", medBP, prob_greater_than, value)
-            
-            with col10:
-                fig, ax = plt.subplots(figsize=(15, 1))
-
                 percentile_25 = int(np.percentile(sorted_array, 25))
                 percentile_50 = int(np.percentile(sorted_array, 50))
                 percentile_75 = int(np.percentile(sorted_array, 75))
                 percentile_90 = int(np.percentile(sorted_array, 90))
 
-                # st.write(f"25: {percentile_25}, 50: {percentile_50}, 75: {percentile_75}, 90: {percentile_90}")
+                if more_info:
+                    if "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
+                        popup(columnName, user_input, user_percentile, gender, age_group, "cholesterol", medChol, prob_greater_than, value, 
+                              percentile_25, percentile_50, percentile_75, percentile_90)
+                    elif "Glucose" in columnName:
+                        popup(columnName, user_input, user_percentile, gender, age_group, "blood sugar", medDiab, prob_greater_than, value, 
+                              percentile_25, percentile_50, percentile_75, percentile_90)   
+                    else:
+                        popup(columnName, user_input, user_percentile, gender, age_group, "blood pressure", medBP, prob_greater_than, value, 
+                              percentile_25, percentile_50, percentile_75, percentile_90)
+            
+            if column != 'LBDHDD':
+                with col10:
+                    fig, ax = plt.subplots(figsize=(15, 1))
 
-                ax.plot([0, 100], [0.725, 0.725], color='grey', lw=20)
+                    percentile_25 = int(np.percentile(sorted_array, 25))
+                    percentile_50 = int(np.percentile(sorted_array, 50))
+                    percentile_75 = int(np.percentile(sorted_array, 75))
+                    percentile_90 = int(np.percentile(sorted_array, 90))
 
-                ax.set_xlim(0, 100)
-                ax.set_ylim(0.4, 1.1)
-                ax.set_yticks([]) 
-                tick_positions = [0, 25, 50, 75, 90, 99]
+                    # st.write(f"25: {percentile_25}, 50: {percentile_50}, 75: {percentile_75}, 90: {percentile_90}")
 
-                tick_labels = ['', '25th', '50th', '75th', '90th', '']
-                ax.set_xticks(tick_positions)
-                ax.set_xticklabels(tick_labels)
+                    ax.plot([0, 100], [0.725, 0.725], color='grey', lw=20)
 
-                ax.set_xlabel('Percentile (%)')
+                    ax.set_xlim(0, 100)
+                    ax.set_ylim(0.4, 1.1)
+                    ax.set_yticks([]) 
+                    tick_positions = [0, 25, 50, 75, 90, 99]
 
-                for spine in ax.spines.values():
-                    spine.set_visible(False)
+                    tick_labels = ['', '25th', '50th', '75th', '90th', '']
+                    ax.set_xticks(tick_positions)
+                    ax.set_xticklabels(tick_labels)
 
-                ax.scatter(25, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
-                plt.annotate(f'{percentile_25}', xy=(25, 0.65), xytext=(25, 0.81),
-                                  horizontalalignment='center', weight='bold', color='white', zorder=10)
-                ax.scatter(50, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
-                plt.annotate(f'{percentile_50}', xy=(50, 0.65), xytext=(50, 0.81),
-                                  horizontalalignment='center', weight='bold', color='white', zorder=10)
-                ax.scatter(75, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
-                plt.annotate(f'{percentile_75}', xy=(75, 0.65), xytext=(75, 0.81),
-                                  horizontalalignment='center', weight='bold', color='white', zorder=10)
-                ax.scatter(90, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
-                plt.annotate(f'{percentile_90}', xy=(90, 0.65), xytext=(90, 0.81),
-                                  horizontalalignment='center', weight='bold', color='white', zorder=10)
+                    ax.set_xlabel('Percentile (%)')
 
-                st.pyplot(fig)
-                plt.close()
+                    for spine in ax.spines.values():
+                        spine.set_visible(False)
+
+                    ax.scatter(25, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
+                    plt.annotate(f'{percentile_25}', xy=(25, 0.65), xytext=(25, 0.81),
+                                    horizontalalignment='center', weight='bold', color='white', zorder=10)
+                    ax.scatter(50, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
+                    plt.annotate(f'{percentile_50}', xy=(50, 0.65), xytext=(50, 0.81),
+                                    horizontalalignment='center', weight='bold', color='white', zorder=10)
+                    ax.scatter(75, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
+                    plt.annotate(f'{percentile_75}', xy=(75, 0.65), xytext=(75, 0.81),
+                                    horizontalalignment='center', weight='bold', color='white', zorder=10)
+                    ax.scatter(90, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
+                    plt.annotate(f'{percentile_90}', xy=(90, 0.65), xytext=(90, 0.81),
+                                    horizontalalignment='center', weight='bold', color='white', zorder=10)
+
+                    st.pyplot(fig)
+                    plt.close()
 
 # Main execution
 df_c = load_files(False)
