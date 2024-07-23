@@ -5,25 +5,41 @@ from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.api as sm
+from fpdf import FPDF
+import base64
 
 st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
 DIR = os.getcwd()
+PLOT_DIR = DIR + '/plots'
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
 
 image_path = os.path.join(LOGO_DIR, 'new pt 2.png')
 
+def create_download_link(val, filename):
+    b64 = base64.b64encode(val)  # val looks like b'...'
+    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Download file</a>'
+
 header = st.container()
 with header:
     col1, col2, col3 = st.columns([1, 3, 1], vertical_alignment='bottom')
     with col1:
-        st.image(image_path, width=500)  # Adjust width as needed
+        st.image(image_path, width=500)
     with col3:
-        with st.form(key='my_form', border=False):
-            st.text_input("Send a PDF of this report to your inbox!", placeholder='Your email')
-            submit_button = st.form_submit_button(label='Submit')
+        report_text = st.text_input("Download a PDF report!", placeholder='Your email')
+        export_as_pdf = st.button("Export Report")
+
+        if export_as_pdf:
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font('Arial', 'B', 16)
+            pdf.cell(40, 10, report_text)
+            
+            html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
+
+            st.markdown(html, unsafe_allow_html=True)
 
 header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 
@@ -481,6 +497,9 @@ def show_analysis(df):
                 # ax.patch.set_alpha(0)
 
                 st.pyplot(fig)
+
+                plot_path = os.path.join(PLOT_DIR, f'{columnName}.png')
+                plt.savefig(plot_path)
                 plt.close()
 
                 # digit = user_input % 10
