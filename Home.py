@@ -79,7 +79,7 @@ AHA_RANGES = {
     'Total Cholesterol (mg/dL)': (140, 160, None),
     'Fasting Glucose (mg/dL)': (None, 100, None),
     'Systolic Blood Pressure (mmHg)': (None, 120, None),
-    'Diastolic Blood Pressure(mmHg)': (None, 80, None),
+    'Diastolic Blood Pressure (mmHg)': (None, 80, None),
     'Pulse': (60, 100, None)
 }
 
@@ -303,7 +303,8 @@ def show_analysis(df):
 
             # col6, col7, col8, col9, col10, col11 = st.columns([.25, 1.6, .3, 5, 5, .25], vertical_alignment='bottom')
             # col6, col7, col8, col9, col10, col11 = st.columns([0.1, 0.15, 0.05, 0.3, 0.3, 0.1], vertical_alignment='bottom')
-            col6, col7, col8, col9, col10, col11 = st.columns([0.1, 0.12, 0.03, 0.325, 0.325, 0.1], vertical_alignment='bottom')
+            # col6, col7, col8, col9, col10, col11 = st.columns([0.1, 0.12, 0.03, 0.325, 0.325, 0.1], vertical_alignment='bottom')
+            col6, col7, col8, col9, col10, col11 = st.columns([0.05, 0.15, 0.03, 0.36, 0.36, 0.05], vertical_alignment='bottom')
             
             with col7:
                 key = column
@@ -435,10 +436,10 @@ def show_analysis(df):
                     plt.annotate(f'>{high_number}', xy=(high_percentile, 0.65), xytext=(high_percentile, 0.3),
                                   horizontalalignment='left')
                 if low_number > 0:
-                    plt.annotate('Low', xy=(0, 0.65), xytext=(0, 0.45),
-                                  horizontalalignment='left', weight='bold')
-                    plt.annotate(f'<{low_number}', xy=(0, 0.65), xytext=(0, 0.3),
-                                  horizontalalignment='left')
+                    plt.annotate('Low', xy=(low_percentile - 1, 0.65), xytext=(low_percentile - 1, 0.45),
+                                  horizontalalignment='right', weight='bold')
+                    plt.annotate(f'<{low_number}', xy=(low_percentile - 1, 0.65), xytext=(low_percentile - 1, 0.3),
+                                  horizontalalignment='right')
                 plt.annotate('Normal', xy=(low_percentile, 0.65), xytext=(low_percentile, 0.45),
                                   horizontalalignment='left', weight='bold')
                 plt.annotate(f'{low_number}-{high_number}', xy=(low_percentile, 0.65), xytext=(low_percentile, 0.3),
@@ -525,8 +526,18 @@ def show_analysis(df):
                 for spine in ax.spines.values():
                     spine.set_visible(False)
 
-                plt.annotate('Normal', xy=(low_percentile, 0.65), xytext=(low_percentile, 0.45),
-                                  horizontalalignment='left', weight='bold')
+                ax.scatter(25, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
+                plt.annotate(f'{percentile_25}', xy=(25, 0.65), xytext=(25, 0.81),
+                                  horizontalalignment='center', weight='bold', color='white', zorder=10)
+                ax.scatter(50, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
+                plt.annotate(f'{percentile_50}', xy=(50, 0.65), xytext=(50, 0.81),
+                                  horizontalalignment='center', weight='bold', color='white', zorder=10)
+                ax.scatter(75, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
+                plt.annotate(f'{percentile_75}', xy=(75, 0.65), xytext=(75, 0.81),
+                                  horizontalalignment='center', weight='bold', color='white', zorder=10)
+                ax.scatter(90, 0.85, color='grey', zorder=5, label='Your Input', s=500, edgecolors=['black'])
+                plt.annotate(f'{percentile_90}', xy=(90, 0.65), xytext=(90, 0.81),
+                                  horizontalalignment='center', weight='bold', color='white', zorder=10)
 
                 st.pyplot(fig)
                 plt.close()
