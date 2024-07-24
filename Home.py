@@ -18,7 +18,7 @@ LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
 
-image_path = os.path.join(LOGO_DIR, 'new pt 2.png')
+image_path = os.path.join(LOGO_DIR, '4.svg')
 
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
@@ -50,7 +50,6 @@ with header:
             pdf.output(pdf_file_path)
             
             # html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
-
             # st.markdown(html, unsafe_allow_html=True)
 
             # Send the PDF via email with yagmail
