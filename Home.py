@@ -21,7 +21,7 @@ DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
 
-image_path = os.path.join(LOGO_DIR, 'sahc colors.svg')
+image_path = os.path.join(LOGO_DIR, 'CORE caps.svg')
 
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
@@ -86,7 +86,7 @@ st.markdown(
         z-index: 999;
     }
     .fixed-header {
-        border-bottom: 1px solid grey;
+        border-bottom: 1px solid lightgrey;
     }
 </style>
     """,
@@ -107,11 +107,13 @@ GLU_FILE = os.path.join(DATA_DIR, 'P_GLU.XPT')
 GHB_FILE = os.path.join(DATA_DIR, 'P_GHB.XPT')
 BPX_FILE = os.path.join(DATA_DIR, 'P_BPXO.XPT')
 CBC_FILE = os.path.join(DATA_DIR, 'P_CBC.XPT')
-SAHC_FILE = os.path.join(SAHC_DATA_DIR, 'tblCleanedConcatNoPID.csv')
+BMX_FILE = os.path.join(DATA_DIR, 'P_BMX.XPT')
+# SAHC_FILE = os.path.join(SAHC_DATA_DIR, 'tblCleanedConcatNoPID.csv')
+SAHC_FILE = os.path.join(SAHC_DATA_DIR, 'merged_data_noPID.csv')
 
 UNITS_MAP = {
-    'LBDHDD': "mg/dL", 'LBDLDL': "mg/dL", 'LBXTC': "mg/dL", 'LBXTR': "mg/dL", 'DIQ280': "%",
-    'LBXGLU': "mg/dL", 'BPXOSY1': "mmHg", 'BPXODI1': "mmHg", 'LBXHGB': "g/dL", 'TotHDLRat': ""
+    'LBDHDD': "mg/dL", 'LBDLDL': "mg/dL", 'LBXTC': "mg/dL", 'LBXTR': "mg/dL", 'LBXGH': "%",
+    'LBXGLU': "mg/dL", 'BPXOSY1': "mmHg", 'BPXODI1': "mmHg", 'LBXHGB': "g/dL", 'TotHDLRat': "", 'BMXBMI': "kg/m\u00b2"
 }
 
 
@@ -119,21 +121,34 @@ NAME_MAP = {
     'LBXTR': 'Triglycerides', 'LBDHDD': 'HDL', 'LBDLDL': 'LDL',
     'LBXTC': 'Total Cholesterol', 'LBXGLU': 'Fasting Glucose',
     'BPXOSY1': 'Systolic Blood Pressure', 'BPXODI1': 'Diastolic Blood Pressure', 
-    'TotHDLRat': 'Total Cholesterol to HDL Ratio', 'LBXHGB': 'Hemoglobin', 'DIQ280': 'A1C'
+    'TotHDLRat': 'Total Cholesterol to HDL Ratio', 'LBXHGB': 'Hemoglobin', 'LBXGH': 'Hemoglobin A1C', 
+    'BMXBMI': 'Body Mass Index'
 }
 
-# Uniform AHA ranges regardless of gender and age
 AHA_RANGES = {
-    'Triglycerides (mg/dL)': (None, 150, None),
-    'HDL (mg/dL)': (40, 60, None),
-    'LDL (mg/dL)': (None, 100, None),
-    'Total Cholesterol (mg/dL)': (140, 160, None),
-    'Fasting Glucose (mg/dL)': (None, 100, None),
-    'Systolic Blood Pressure (mmHg)': (None, 120, None),
-    'Diastolic Blood Pressure (mmHg)': (None, 80, None),
-    'Total Cholesterol to HDL Ratio': (3.5, 5, None),
-    'Hemoglobin (g/dL)': (13.5, 18, None),
-    'A1C (%)': (None, 5.7, None)
+    'Triglycerides (mg/dL)': (None, 150),
+    'HDL (mg/dL)': (40, 60),
+    'LDL (mg/dL)': (None, 100),
+    'Total Cholesterol (mg/dL)': (140, 160),
+    'Fasting Glucose (mg/dL)': (None, 100),
+    'Systolic Blood Pressure (mmHg)': (None, 120),
+    'Diastolic Blood Pressure (mmHg)': (None, 80),
+    'Total Cholesterol to HDL Ratio': (3.5, 5),
+    'Hemoglobin A1C (%)': (None, 5.7),
+    'Body Mass Index (kg/m\u00b2)': (None, 25)
+}
+
+AHA_RANGES = {
+    'Triglycerides (mg/dL)': ("Normal", 150, "Borderline", 200, "High"),
+    'HDL (mg/dL)': ("Low", 40, "Normal", 60, "High"),
+    'LDL (mg/dL)': ("Optimal", 100, "", 160, "High"),
+    'Total Cholesterol (mg/dL)': ("Optimal", 150, "", 200, "High"),
+    'Fasting Glucose (mg/dL)': ("Normal", 100, "Borderline", 125, "High"),
+    'Systolic Blood Pressure (mmHg)': ("Normal", 120, "High", None, None, None),
+    'Diastolic Blood Pressure (mmHg)': ("Normal", 80, "High", None, None, None),
+    'Total Cholesterol to HDL Ratio': ("Low", 3.5, "Normal", 5, "High"),
+    'Hemoglobin A1C (%)': ("Normal", 5.7, "Borderline", 6.4, "High"),
+    'Body Mass Index (kg/m\u00b2)': ("Low", 18.5, "Normal", 25, "High")
 }
 
 def map_age_to_group(age):
@@ -180,12 +195,7 @@ with aboutMe_expand:
     with col3:
         ethnicity = st.selectbox('Ethnicity', ['Other', 'South Asian'])
     with col4:
-        global dis
-        if ethnicity == 'South Asian':
-            dis = True
-        else:
-            dis = False
-        medications_select = st.multiselect(label="Select your medication use", options=['Cholesterol', 'Diabetes', 'Blood Pressure'], disabled=dis)
+        medications_select = st.multiselect(label="Select your medication use", options=['Cholesterol', 'Diabetes', 'Blood Pressure'])
 
         medChol = 'No'
         medDiab = 'No'
@@ -213,17 +223,18 @@ def load_files(debugging):
         df_glu = pd.read_sas(GLU_FILE, format='xport')
         df_ghb = pd.read_sas(GHB_FILE, format='xport')
         df_bpx = pd.read_sas(BPX_FILE, format='xport')
-        df_cbc = pd.read_sas(CBC_FILE, format='xport')
+        df_bmx = pd.read_sas(BMX_FILE, format='xport')
 
         df_combined = df_user[['SEQN', 'RIAGENDR', 'RIDAGEYR', 'RIDRETH3']]
-        df_combined = pd.merge(df_combined, df_diq[['SEQN', 'DIQ010', 'DIQ160', 'DIQ050', 'DIQ070', 'DIQ280']], on='SEQN', how='left')
+        df_combined = pd.merge(df_combined, df_diq[['SEQN', 'DIQ010', 'DIQ160', 'DIQ050', 'DIQ070']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_bpq[['SEQN', 'BPQ090D', 'BPQ100D', 'BPQ040A', 'BPQ050A', 'BPQ020']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_hdl[['SEQN', 'LBDHDD']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_tgl[['SEQN', 'LBXTR', 'LBDLDL']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_tch[['SEQN', 'LBXTC']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_glu[['SEQN', 'LBXGLU']], on='SEQN', how='left')
+        df_combined = pd.merge(df_combined, df_ghb[['SEQN', 'LBXGH']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_bpx[['SEQN', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1', 'BPXOSY2', 'BPXODI2', 'BPXOPLS2', 'BPXOSY3', 'BPXODI3', 'BPXOPLS3']], on='SEQN', how='left')
-        df_combined = pd.merge(df_combined, df_cbc[['SEQN', 'LBXHGB']], on='SEQN', how='left')
+        df_combined = pd.merge(df_combined, df_bmx[['SEQN', 'BMXBMI']], on='SEQN', how='left')
 
         # df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(lambda age: 20 * int(age / 20))
         df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(map_age_to_group)
@@ -251,14 +262,16 @@ def load_files(debugging):
             'gender': 'RIAGENDR',
             'race': 'RIDRETH3',
             'age': 'RIDAGEYR',
-            'heartRate': 'BPXOPLS1',
             'bpSyst': 'BPXOSY1',
             'bpDiast': 'BPXODI1',
             'cholTot': 'LBXTC',
             'cholLDL': 'LBDLDL',
             'cholHDL': 'LBDHDD',
             'cholTrig': 'LBXTR',
+            'Total:HDL': 'TotHDLRat',
             'bloodSugar': 'LBXGLU',
+            'hg1ac': 'LBXGH',
+            'bmi': 'BMXBMI'
         })
 
         df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(map_age_to_group)
@@ -298,20 +311,26 @@ def ui_choose(df, debugging):
     df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
     df2 = df2[df2['Age_Group'].isin(ageFilter)]
 
-    if dis == False:
-        if medChol == 'Yes':
-            df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
-        elif medChol == 'No':
-            df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
-        
+    if ethnicity == 'South Asian':
+        df2 = df2[df2['cholMeds'].isin(medCholFilter)]
+    elif medChol == 'Yes':
+        df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
+    elif medChol == 'No':
+        df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
+    
+    if ethnicity == 'South Asian':
+        df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
+    else:
         df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
 
-        if medBP == 'Yes':
-            df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
-        elif medBP == 'No':
-            df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
+    if ethnicity == 'South Asian':
+        df2 = df2[df2['bpMeds'].isin(medBPFilter)]
+    elif medBP == 'Yes':
+        df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
+    elif medBP == 'No':
+        df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
 
-        # st.write(f"{len(df2)} records found.")
+    # st.write(f"{len(df2)} records found.")
 
     if len(df2) < 15:
         next_age_group = get_next_age_group(age_group)
@@ -319,19 +338,24 @@ def ui_choose(df, debugging):
         df2 = df[df['RIAGENDR'].isin(genderFilter)]
         df2 = df2[df2['Age_Group'].isin(ageFilter)]
 
-        if dis == False:
-
-            if medChol == 'Yes':
-                df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
-            elif medChol == 'No':
-                df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
-            
+        if ethnicity == 'South Asian':
+            df2 = df2[df2['cholMeds'].isin(medCholFilter)]
+        elif medChol == 'Yes':
+            df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
+        elif medChol == 'No':
+            df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
+        
+        if ethnicity == 'South Asian':
+            df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
+        else:
             df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
 
-            if medBP == 'Yes':
-                df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
-            elif medBP == 'No':
-                df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
+        if ethnicity == 'South Asian':
+            df2 = df2[df2['bpMeds'].isin(medBPFilter)]
+        elif medBP == 'Yes':
+            df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
+        elif medBP == 'No':
+            df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
 
         # st.write(f"{len(df2)} records found after expanding age group.")
 
@@ -361,6 +385,8 @@ def popup(acro, column, user_input, user_percentile, gender, age_range, med, on_
     df = pd.DataFrame(data)
     st.dataframe(df, hide_index=True)
 
+    st.write("Based on the AHA guidlelines, the optimal value for HDL >= 40 for males. “>= 45 for females")
+
 def show_analysis(df):
     st.markdown(f"### <u>My risk profile markers</u>", unsafe_allow_html=True)
     
@@ -378,14 +404,14 @@ def show_analysis(df):
         'LBXGLU': "Value should be between 50-150",
         'BPXOSY1': "Value should be between 90-200",
         'BPXODI1': "Value should be between 60-130",
-        'LBXHGB': "Value should be between 5-30",
         'TotHDLRat': "Value should be between 0.5-10",
-        'DIQ280': "Value should be between 1 and 20",
+        'LBXGH': "Value should be between 1 and 20",
+        'BMXBMI': "Value should be between 10 and 50"
     }
 
     user_inputs = {}
 
-    for i, column in enumerate(['LBXTC', 'LBDLDL', 'LBDHDD', 'LBXTR', 'TotHDLRat', 'LBXGLU', 'LBXHGB', 'DIQ280', 'BPXOSY1', 'BPXODI1']):
+    for i, column in enumerate(['LBXTC', 'LBDLDL', 'LBDHDD', 'LBXTR', 'TotHDLRat', 'LBXGLU', 'LBXGH', 'BMXBMI', 'BPXOSY1', 'BPXODI1']):
 
         with cols[i].container():
 
@@ -457,35 +483,26 @@ def show_analysis(df):
                 # st.write(f"####")
 
                 if columnName in AHA_RANGES:
-                    low_number = AHA_RANGES[columnName][0]
-                    high_number = AHA_RANGES[columnName][1]
+                    low_number = AHA_RANGES[columnName][1]
+                    high_number = AHA_RANGES[columnName][3]
                 else:
                     st.write(f"No AHA prescribed range available for {columnName}.")
                     continue
+                if columnName == 'HDL (mg/dL)' and gender == 'Female':
+                    low_number = 50
 
                 sorted_array = np.sort(array)
 
                 # Calculate the percentile
                 if high_number == None:
                     high_number = 1000
-                    high_percentile = 101
+                    high_percentile = 99
                 else:
                     high_percentile = np.mean(sorted_array <= high_number) * 100
-                if low_number == None:
-                    low_number = 0
-                    low_percentile = 0
-                else:
-                    low_percentile = np.mean(sorted_array <= low_number) * 100
+
+                low_percentile = np.mean(sorted_array <= low_number) * 100
 
                 fig, ax = plt.subplots(figsize=(16, 1))
-
-                # lines from low_percentile to high_percentile
-                ax.plot([low_percentile, high_percentile], [0.775, 0.775], color=regugreen, lw=20, label='Healthy Range')
-
-                if high_percentile < 100:
-                    ax.plot([high_percentile + 1, 100], [0.775, 0.775], color=darkgreen, lw=20, label='High')
-                if low_percentile > 0:
-                    ax.plot([0, low_percentile - 1], [0.775, 0.775], color=lightgreen, lw=20, label="Low")
 
                 # dot at user input position
                 user_percentile = np.mean(sorted_array <= user_input) * 100
@@ -497,12 +514,33 @@ def show_analysis(df):
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
                 # else:
 
-                if user_percentile < low_percentile:
-                    ax.scatter(user_percentile, 0.9, color=lightgreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
-                elif user_percentile > high_percentile:
-                    ax.scatter(user_percentile, 0.9, color=darkgreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                if AHA_RANGES[columnName][0] == 'Optimal':
+                    ax.plot([high_percentile + 1, 100], [0.775, 0.775], color=darkgreen, lw=20, label='High')
+                    ax.plot([0, low_percentile - 1], [0.775, 0.775], color=regugreen, lw=20, label="Low")
+                    ax.plot([low_percentile, high_percentile], [0.775, 0.775], color=lightgreen, lw=20, label='Healthy Range')
+
+                    if user_percentile < low_percentile:
+                        ax.scatter(user_percentile, 0.9, color=regugreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                    elif user_percentile > high_percentile:
+                        ax.scatter(user_percentile, 0.9, color=darkgreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                    else:
+                        ax.scatter(user_percentile, 0.9, color=lightgreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+
                 else:
-                    ax.scatter(user_percentile, 0.9, color=regugreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                    # lines from low_percentile to high_percentile
+                    ax.plot([low_percentile, high_percentile], [0.775, 0.775], color=regugreen, lw=20, label='Healthy Range')
+
+                    if high_percentile < 100:
+                        ax.plot([high_percentile + 1, 100], [0.775, 0.775], color=darkgreen, lw=20, label='High')
+                    if low_percentile > 0:
+                        ax.plot([0, low_percentile - 1], [0.775, 0.775], color=lightgreen, lw=20, label="Low")
+
+                    if user_percentile < low_percentile:
+                        ax.scatter(user_percentile, 0.9, color=lightgreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                    elif user_percentile > high_percentile:
+                        ax.scatter(user_percentile, 0.9, color=darkgreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                    else:
+                        ax.scatter(user_percentile, 0.9, color=regugreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
 
                 ax.set_xlim(0, 100)
                 ax.set_ylim(0.4, 1.1)
@@ -527,16 +565,16 @@ def show_analysis(df):
                              horizontalalignment='center')
 
                 if high_number < 1000:
-                    plt.annotate('High', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.5),
+                    plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.5),
                                   horizontalalignment='left', weight='bold')
                     plt.annotate(f'>{high_number}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.35),
                                   horizontalalignment='left')
                 if low_number > 0:
-                    plt.annotate('Low', xy=(low_percentile - 1, 0.675), xytext=(low_percentile - 1, 0.5),
+                    plt.annotate(f'{AHA_RANGES[columnName][0]}', xy=(low_percentile - 1, 0.675), xytext=(low_percentile - 1, 0.5),
                                   horizontalalignment='right', weight='bold')
                     plt.annotate(f'<{low_number}', xy=(low_percentile - 1, 0.657), xytext=(low_percentile - 1, 0.35),
                                   horizontalalignment='right')
-                plt.annotate('Normal', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.5),
+                plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.5),
                                   horizontalalignment='left', weight='bold')
                 plt.annotate(f'{low_number}-{high_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.35),
                                   horizontalalignment='left')
