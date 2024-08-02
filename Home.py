@@ -113,7 +113,7 @@ SAHC_FILE = os.path.join(SAHC_DATA_DIR, 'merged_data_noPID.csv')
 
 UNITS_MAP = {
     'LBDHDD': "mg/dL", 'LBDLDL': "mg/dL", 'LBXTC': "mg/dL", 'LBXTR': "mg/dL", 'LBXGH': "%",
-    'LBXGLU': "mg/dL", 'BPXOSY1': "mmHg", 'BPXODI1': "mmHg", 'LBXHGB': "g/dL", 'TotHDLRat': "", 'BMXBMI': "kg/m\u00b2"
+    'LBXGLU': "mg/dL", 'BPXOSY1': "mmHg", 'BPXODI1': "mmHg", 'LBXHGB': "g/dL", 'TotHDLRat': "", 'BMXBMI': ""
 }
 
 
@@ -126,19 +126,6 @@ NAME_MAP = {
 }
 
 AHA_RANGES = {
-    'Triglycerides (mg/dL)': (None, 150),
-    'HDL (mg/dL)': (40, 60),
-    'LDL (mg/dL)': (None, 100),
-    'Total Cholesterol (mg/dL)': (140, 160),
-    'Fasting Glucose (mg/dL)': (None, 100),
-    'Systolic Blood Pressure (mmHg)': (None, 120),
-    'Diastolic Blood Pressure (mmHg)': (None, 80),
-    'Total Cholesterol to HDL Ratio': (3.5, 5),
-    'Hemoglobin A1C (%)': (None, 5.7),
-    'Body Mass Index (kg/m\u00b2)': (None, 25)
-}
-
-AHA_RANGES = {
     'Triglycerides (mg/dL)': ("Normal", 150, "Borderline", 200, "High"),
     'HDL (mg/dL)': ("Low", 40, "Normal", 60, "High"),
     'LDL (mg/dL)': ("Optimal", 100, "", 160, "High"),
@@ -148,7 +135,7 @@ AHA_RANGES = {
     'Diastolic Blood Pressure (mmHg)': ("Normal", 80, "High", None, None, None),
     'Total Cholesterol to HDL Ratio': ("Low", 3.5, "Normal", 5, "High"),
     'Hemoglobin A1C (%)': ("Normal", 5.7, "Borderline", 6.4, "High"),
-    'Body Mass Index (kg/m\u00b2)': ("Low", 18.5, "Normal", 25, "High")
+    'Body Mass Index': ("Low", 18.5, "Normal", 25, "High")
 }
 
 def map_age_to_group(age):
@@ -362,16 +349,16 @@ def ui_choose(df, debugging):
     return df2
 
 @st.dialog("Your marker compared to your peers")
-def popup(acro, column, user_input, user_percentile, gender, age_range, med, on_med, prob, value, p25, p50, p75, p90, side, suffix):
+def popup(acro, column, user_input, user_percentile, gender, age_range, med, on_med, prob, value, p25, p50, p75, p90, side, suffix, low_number, high_number):
     
     if side == 'greater':
         st.write(f"The estimated probability of an optimal {column} ≥ {value} {UNITS_MAP[acro]} for a {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
     else:
         st.write(f"The estimated probability of an optimal {column} ≤ {value} {UNITS_MAP[acro]} for a {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
     if on_med:
-        st.write(f"An {column} of {user_input} is at the {user_percentile: .0f}{suffix} percentile for a {gender.lower()} aged between {age_range} years who is on {med}-lowering medication.")
+        st.write(f"An {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {gender.lower()} aged between {age_range} years who is on {med}-lowering medication.")
     else:
-        st.write(f"An {column} of {user_input} is at the {user_percentile: .0f}{suffix} percentile for a {gender.lower()} aged between {age_range} years who is not on {med}-lowering medication.")
+        st.write(f"An {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {gender.lower()} aged between {age_range} years who is not on {med}-lowering medication.")
 
     data = {
         'Percentile': [f'{column} Level'],
@@ -385,8 +372,14 @@ def popup(acro, column, user_input, user_percentile, gender, age_range, med, on_
     df = pd.DataFrame(data)
     st.dataframe(df, hide_index=True)
 
-    st.write("Based on the AHA guidlelines, the optimal value for HDL >= 40 for males. “>= 45 for females")
+    if 'Triglyc' in column or 'LDL' in column or 'Total Cholesterol (mg/dL)' in column or 'Glucose' in column or 'Pressure' in column or 'A1C' in column:
+        st.write(f"Based on the American Heart Association guidlelines, the optimal value for {column} is ≤ {low_number} for {gender.lower()}s.")
+    elif 'to HDL' in column or 'Body Mass' in column:
+        st.write(f"Based on the American Heart Association guidlelines, the optimal value for {column} is between {low_number}-{high_number} for {gender.lower()}s.")
+    elif 'HDL' in column:
+        st.write(f"Based on the American Heart Association guidlelines, the optimal value for {column} is ≥ {low_number} for {gender.lower()}s.")
 
+    
 def show_analysis(df):
     st.markdown(f"### <u>My risk profile markers</u>", unsafe_allow_html=True)
     
@@ -411,42 +404,83 @@ def show_analysis(df):
 
     user_inputs = {}
 
+    STEP_SIZE = {
+        'LBDHDD': 1,
+        'LBDLDL': 1,
+        'LBXTC': 1,
+        'LBXTR': 1,
+        'LBXGLU': 1,
+        'BPXOSY1': 1,
+        'BPXODI1': 1,
+        'TotHDLRat': .1,
+        'LBXGH': .1,
+        'BMXBMI': 1,
+    }
+
     for i, column in enumerate(['LBXTC', 'LBDLDL', 'LBDHDD', 'LBXTR', 'TotHDLRat', 'LBXGLU', 'LBXGH', 'BMXBMI', 'BPXOSY1', 'BPXODI1']):
+
+        global header
+        global placeholder
+        global header_color
 
         with cols[i].container():
 
             # col6, col7, col8, col9, col10, col11 = st.columns([.25, 1.6, .3, 5, 5, .25], vertical_alignment='bottom')
             # col6, col7, col8, col9, col10, col11 = st.columns([0.1, 0.15, 0.05, 0.3, 0.3, 0.1], vertical_alignment='bottom')
             # col6, col7, col8, col9, col10, col11 = st.columns([0.1, 0.12, 0.03, 0.325, 0.325, 0.1], vertical_alignment='bottom')
-            col6, col7, col8, col9, col10 = st.columns([0.05, 0.17, 0.05, 0.68, 0.05], vertical_alignment='center')
-            
-            columnName = f"{NAME_MAP[column]} ({UNITS_MAP[column]})"
-            if column == 'TotHDLRat':
+            if column == 'BMXBMI':
                 columnName = f"{NAME_MAP[column]}"
 
-            with col7:
-                key = column
+                header_col6, header_col7, header_col8, header_col9, header_col10 = st.columns([0.05, 0.17, 0.05, 0.68, 0.05])
 
+                # Ensure the placeholder is above col7 and col71
+                with header_col7:
 
-                global header
-                header = columnName
+                    header = columnName
+                    header_color = "black"
+                    placeholder = st.empty()
+                    placeholder.write(f"#### {header}")
 
-                global header_color
-                header_color = "black"
+                col6, col7, col71, col8, col9, col10 = st.columns([0.05, 0.085, 0.085, 0.05, 0.68, 0.05], vertical_alignment='center')
 
-                global placeholder
-                placeholder = st.empty()
+                with col7:
+                    key = column
 
-                placeholder.write(f"#### {header}")
+                    unique_key = f"{key}_{i}"
+                    weight = st.number_input('Weight (lbs)', key=unique_key, step=STEP_SIZE[column], value = 1)
 
-                unique_key = f"{key}_{i}"
-                user_inputs[key] = st.number_input('user input', key=unique_key, step=1, label_visibility="collapsed")
+                global height
 
-                st.caption(f'{validation_labels[key]}')
+                with col71:
+                    key = column
+
+                    unique_key = f"{key}_{i} + 1"
+                    height = st.number_input('Height (in)', key=unique_key, step=STEP_SIZE[column], value = 1)
+
+                user_inputs[key] = (weight / (height ** 2)) * 703
+                
+            else:
+                col6, col7, col8, col9, col10 = st.columns([0.05, 0.17, 0.05, 0.68, 0.05], vertical_alignment='center')
+            
+                columnName = f"{NAME_MAP[column]} ({UNITS_MAP[column]})"
+                if column == 'TotHDLRat':
+                    columnName = f"{NAME_MAP[column]}"
+
+                with col7:
+                    key = column
+
+                    header = columnName
+                    header_color = "black"
+                    placeholder = st.empty()
+
+                    placeholder.write(f"#### {header}")
+
+                    unique_key = f"{key}_{i}"
+                    user_inputs[key] = st.number_input('user input', key=unique_key, step=STEP_SIZE[column], label_visibility="collapsed")
+
+                    st.caption(f'{validation_labels[key]}')
             
             with col8:
-
-                
                 st.markdown("""
                     <style>
                         button[kind="primary"] {
@@ -459,7 +493,7 @@ def show_analysis(df):
 
                         button[kind="primary"]:hover {
                             background-color: white; /* Slightly different background on hover */
-                            color: #5D2C82; /* Ensure text color remains visible on hover */
+                            color: #7D343C; /* Ensure text color remains visible on hover */
                         }
                     </style>
                     """, unsafe_allow_html=True)
@@ -475,7 +509,7 @@ def show_analysis(df):
                     st.markdown(f"Not enough data available for {columnName}.")
                     continue
 
-                if user_input == 0:
+                if user_input == 0 or user_input >= 500:
                     # st.write(f"### ")
                     st.write(f"Please enter a value for {columnName}.")
                     continue
@@ -508,26 +542,39 @@ def show_analysis(df):
                 user_percentile = np.mean(sorted_array <= user_input) * 100
                 if int(user_percentile) == 100:
                     user_percentile == 99.99
-                if (user_input > high_number or user_input < low_number) and column != 'LBDHDD':
+                if (user_input > high_number and high_number != 1000) and column != 'LBDHDD':
+                    # ax.scatter(user_percentile, 0.85, color='red', zorder=5, label='Your Input')
+                    header_color = "red"
+                    placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
+                if (user_input > low_number and high_number == 1000) and column != 'LBDHDD':
+                    # ax.scatter(user_percentile, 0.85, color='red', zorder=5, label='Your Input')
+                    header_color = "red"
+                    placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
+                if user_input < low_number and column == 'LBDHDD':
                     # ax.scatter(user_percentile, 0.85, color='red', zorder=5, label='Your Input')
                     header_color = "red"
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
                 # else:
 
+                normal_color = regugreen
+                high_color = darkgreen
+                other_color = lightgreen
+
                 if AHA_RANGES[columnName][0] == 'Optimal':
-                    ax.plot([high_percentile + 1, 100], [0.775, 0.775], color=darkgreen, lw=20, label='High')
-                    ax.plot([0, low_percentile - 1], [0.775, 0.775], color=regugreen, lw=20, label="Low")
-                    ax.plot([low_percentile, high_percentile], [0.775, 0.775], color=lightgreen, lw=20, label='Healthy Range')
+                    ax.plot([high_percentile + 1, 100], [0.775, 0.775], color=high_color, lw=20, label='High')
+                    ax.plot([0, low_percentile], [0.775, 0.775], color=normal_color, lw=20, label="Low")
+                    ax.plot([low_percentile, high_percentile - 1], [0.775, 0.775], color=other_color, lw=20, label='Healthy Range')
 
                     if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.9, color=regugreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.9, color=regugreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
                     elif user_percentile > high_percentile:
-                        ax.scatter(user_percentile, 0.9, color=darkgreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.9, color=darkgreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
                     else:
-                        ax.scatter(user_percentile, 0.9, color=lightgreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.9, color=lightgreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
 
                 else:
                     # lines from low_percentile to high_percentile
+
                     ax.plot([low_percentile, high_percentile], [0.775, 0.775], color=regugreen, lw=20, label='Healthy Range')
 
                     if high_percentile < 100:
@@ -536,11 +583,11 @@ def show_analysis(df):
                         ax.plot([0, low_percentile - 1], [0.775, 0.775], color=lightgreen, lw=20, label="Low")
 
                     if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.9, color=lightgreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.9, color=lightgreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
                     elif user_percentile > high_percentile:
-                        ax.scatter(user_percentile, 0.9, color=darkgreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.9, color=darkgreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
                     else:
-                        ax.scatter(user_percentile, 0.9, color=regugreen, zorder=5, label='Your Input', s=600, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.9, color=regugreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
 
                 ax.set_xlim(0, 100)
                 ax.set_ylim(0.4, 1.1)
@@ -557,11 +604,18 @@ def show_analysis(df):
 
                 ax.set_title(columnName)
 
-                plt.annotate(f'{user_input}', xy=(user_percentile, 0.875), xytext=(user_percentile, 0.85),
-                              horizontalalignment='center', color = 'black', zorder=10, weight='bold')
+                if STEP_SIZE[column] == .1 or column == 'BMXBMI':
+                    ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.875), xytext=(user_percentile - 0.2, 0.85),
+                                horizontalalignment='center', color = 'black', zorder=10, weight='bold', fontsize=11.5)
+                else:
+                    ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.875), xytext=(user_percentile - 0.2, 0.84),
+                                horizontalalignment='center', color = 'black', zorder=10, weight='bold', fontsize=13.5)
+                
+                # ax.annotate("hello", (0.5, 0.5), fontsize=100)
+                
                 if int(user_percentile) == 100:
                     user_percentile = 99
-                plt.annotate(f'({user_percentile: .0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile + 5, 0.935), 
+                plt.annotate(f'({user_percentile:.0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile + 5, 0.935), 
                              horizontalalignment='center')
 
                 if high_number < 1000:
@@ -574,10 +628,16 @@ def show_analysis(df):
                                   horizontalalignment='right', weight='bold')
                     plt.annotate(f'<{low_number}', xy=(low_percentile - 1, 0.657), xytext=(low_percentile - 1, 0.35),
                                   horizontalalignment='right')
-                plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.5),
-                                  horizontalalignment='left', weight='bold')
-                plt.annotate(f'{low_number}-{high_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.35),
-                                  horizontalalignment='left')
+                if high_number == 1000:
+                    plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.5),
+                                    horizontalalignment='left', weight='bold')
+                    plt.annotate(f'>{low_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.35),
+                                    horizontalalignment='left')
+                else:
+                    plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.5),
+                                    horizontalalignment='left', weight='bold')
+                    plt.annotate(f'{low_number}-{high_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.35),
+                                    horizontalalignment='left')
 
                 for spine in ax.spines.values():
                     spine.set_visible(False)
@@ -613,7 +673,7 @@ def show_analysis(df):
                 cdf_values = np.cumsum(pdf_values) * (hdl_range[1] - hdl_range[0])
 
                 # Find the CDF value at HDL = 35
-                if "HDL" in columnName:
+                if "HDL" in columnName or high_number == 1000:
                     value = low_number
                 else:
                     value = high_number
@@ -640,16 +700,16 @@ def show_analysis(df):
                 if more_info:
                     if "HDL" in columnName:
                         popup(column, popup_column, user_input, user_percentile, gender, age_group, "cholesterol", medChol, prob, value, 
-                              percentile_25, percentile_50, percentile_75, percentile_90, "greater", suffix)
+                              percentile_25, percentile_50, percentile_75, percentile_90, "greater", suffix, low_number, high_number)
                     elif "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
                         popup(column, popup_column, user_input, user_percentile, gender, age_group, "cholesterol", medChol, prob, value, 
-                              percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix)
+                              percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix, low_number, high_number)
                     elif "Glucose" in columnName:
                         popup(column, popup_column, user_input, user_percentile, gender, age_group, "blood sugar", medDiab, prob, value, 
-                              percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix)   
+                              percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix, low_number, high_number)   
                     else:
                         popup(column, popup_column, user_input, user_percentile, gender, age_group, "blood pressure", medBP, prob, value, 
-                              percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix)
+                              percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix, low_number, high_number)
 
 # Main execution
 df_c = load_files(False)
