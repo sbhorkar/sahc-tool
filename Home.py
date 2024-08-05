@@ -30,9 +30,9 @@ def create_download_link(val, filename):
 
 header = st.container()
 with header:
-    col_image, col_empty, col_pdf = st.columns([1, 3, 1], vertical_alignment='bottom')
-    with col_image:
-        st.image(image_path, width=500)
+    # col_image, col_empty, col_pdf = st.columns([1, 3, 1], vertical_alignment='bottom')
+    # with col_image:
+    st.image(image_path, width=500)
     # with col_pdf:
     #     email = st.text_input("Download a PDF report!", placeholder='Email')
 
@@ -490,7 +490,7 @@ def show_analysis(df):
                         button[kind="primary"] {
                             background-color: white;
                             color: black;
-                            width: 80px;
+                            width: 100px;
                             border: 1px solid #7D343C;
                         }
 
@@ -507,7 +507,7 @@ def show_analysis(df):
                 sorted_array = np.sort(array)
                 user_percentile = np.mean(sorted_array <= user_input) * 100
 
-                more_info = st.button(label=f'{user_percentile:.0f}%ile', key=column, type='primary')
+                more_info = st.button(label=f'ⓘ {user_percentile:.0f}%ile', key=column, type='primary')
                 # st.caption(' Press for more info')
 
             with col9:
