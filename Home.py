@@ -632,27 +632,59 @@ def show_analysis(df):
                 else:
                     plt.annotate(f'({user_percentile:.0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile + 5, 0.98), 
                              horizontalalignment='center')
-
-                if high_number < 1000:
-                    plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.45),
-                                  horizontalalignment='left', weight='bold')
-                    plt.annotate(f'>{high_number}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.3),
-                                  horizontalalignment='left')
-                if low_number > 0:
+                    
+                if columnName == 'Body Mass Index':
                     plt.annotate(f'{AHA_RANGES[columnName][0]}', xy=(low_percentile, 0.675), xytext=(low_percentile - 1, 0.45),
-                                  horizontalalignment='right', weight='bold')
-                    plt.annotate(f'<{low_number}', xy=(low_percentile - 1, 0.657), xytext=(low_percentile - 1, 0.3),
-                                  horizontalalignment='right')
-                if high_number == 1000:
-                    plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
-                                    horizontalalignment='left', weight='bold')
-                    plt.annotate(f'>{low_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
-                                    horizontalalignment='left')
+                                horizontalalignment='right', weight='bold')
+                    plt.annotate(f'<18.5', xy=(low_percentile - 1, 0.657), xytext=(low_percentile - 1, 0.3),
+                            horizontalalignment='right')
+                    if ethnicity == 'South Asian':
+                        plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
+                                horizontalalignment='left', weight='bold')
+                        plt.annotate(f'18.5-23', xy=(low_percentile, 0.657), xytext=(low_percentile, 0.3),
+                                horizontalalignment='left')
+                        plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(low_percentile, 0.675), xytext=(high_percentile, 0.45),
+                                horizontalalignment='left', weight='bold')
+                        plt.annotate(f'23-25', xy=(high_percentile - 1, 0.657), xytext=(high_percentile, 0.3),
+                                horizontalalignment='left')
+                        plt.annotate(f'{AHA_RANGES[columnName][6]}', xy=(low_percentile, 0.675), xytext=(extra_high_percentile, 0.45),
+                                horizontalalignment='left', weight='bold')
+                        plt.annotate('>25', xy=(extra_high_percentile - 1, 0.657), xytext=(extra_high_percentile, 0.3),
+                                horizontalalignment='left')
+                    else:
+                        plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
+                                horizontalalignment='left', weight='bold')
+                        plt.annotate(f'18.5-25', xy=(low_percentile, 0.657), xytext=(low_percentile, 0.3),
+                                horizontalalignment='left')
+                        plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(low_percentile, 0.675), xytext=(high_percentile, 0.45),
+                                horizontalalignment='left', weight='bold')
+                        plt.annotate(f'25-30', xy=(high_percentile - 1, 0.657), xytext=(high_percentile, 0.3),
+                                horizontalalignment='left')
+                        plt.annotate(f'{AHA_RANGES[columnName][6]}', xy=(low_percentile, 0.675), xytext=(extra_high_percentile, 0.45),
+                                horizontalalignment='left', weight='bold')
+                        plt.annotate('>30', xy=(extra_high_percentile - 1, 0.657), xytext=(extra_high_percentile, 0.3),
+                                horizontalalignment='left')
                 else:
-                    plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
+                    if high_number < 1000:
+                        plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.45),
                                     horizontalalignment='left', weight='bold')
-                    plt.annotate(f'{low_number}-{high_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
+                        plt.annotate(f'>{high_number}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.3),
                                     horizontalalignment='left')
+                    if low_number > 0:
+                        plt.annotate(f'{AHA_RANGES[columnName][0]}', xy=(low_percentile, 0.675), xytext=(low_percentile - 1, 0.45),
+                                    horizontalalignment='right', weight='bold')
+                        plt.annotate(f'<{low_number}', xy=(low_percentile - 1, 0.657), xytext=(low_percentile - 1, 0.3),
+                                    horizontalalignment='right')
+                    if high_number == 1000:
+                        plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
+                                        horizontalalignment='left', weight='bold')
+                        plt.annotate(f'>{low_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
+                                        horizontalalignment='left')
+                    else:
+                        plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
+                                        horizontalalignment='left', weight='bold')
+                        plt.annotate(f'{low_number}-{high_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
+                                        horizontalalignment='left')
 
                 for spine in ax.spines.values():
                     spine.set_visible(False)
