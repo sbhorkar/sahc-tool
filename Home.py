@@ -435,7 +435,7 @@ def show_analysis(df):
             if column == 'BMXBMI':
                 columnName = f"{NAME_MAP[column]}"
 
-                header_col6, header_col7, header_col8, header_col9, header_col10 = st.columns([0.05, 0.17, 0.05, 0.68, 0.05])
+                header_col6, header_col7, header_col8, header_col9, header_col10 = st.columns([0.05, 0.17, 0.08, 0.65, 0.05])
 
                 # Ensure the placeholder is above col7 and col71
                 with header_col7:
@@ -445,7 +445,7 @@ def show_analysis(df):
                     placeholder = st.empty()
                     placeholder.write(f"#### {header}")
 
-                col6, col7, col71, col8, col9, col10 = st.columns([0.05, 0.085, 0.085, 0.05, 0.68, 0.05], vertical_alignment='center')
+                col6, col7, col71, col8, col9, col10 = st.columns([0.05, 0.085, 0.085, 0.08, 0.65, 0.05], vertical_alignment='center')
 
                 with col7:
                     key = column
@@ -464,7 +464,7 @@ def show_analysis(df):
                 user_inputs[key] = (weight / (height ** 2)) * 703
                 
             else:
-                col6, col7, col8, col9, col10 = st.columns([0.05, 0.17, 0.05, 0.68, 0.05], vertical_alignment='center')
+                col6, col7, col8, col9, col10 = st.columns([0.05, 0.17, 0.08, 0.65, 0.05], vertical_alignment='center')
             
                 columnName = f"{NAME_MAP[column]} ({UNITS_MAP[column]})"
                 if column == 'TotHDLRat':
@@ -489,10 +489,9 @@ def show_analysis(df):
                     <style>
                         button[kind="primary"] {
                             background-color: white;
-                            font-weight: bold;
                             color: black;
-                            width: 50px;
-                            border: 0px solid green;
+                            width: 80px;
+                            border: 1px solid #7D343C;
                         }
 
                         button[kind="primary"]:hover {
@@ -501,8 +500,14 @@ def show_analysis(df):
                         }
                     </style>
                     """, unsafe_allow_html=True)
-                # st.write("#### hi")
-                more_info = st.button(label='ⓘ', key=column, type='primary')
+                
+                user_input = user_inputs[column]  # Reference the user input from the dictionary
+
+                array = df[column].dropna()
+                sorted_array = np.sort(array)
+                user_percentile = np.mean(sorted_array <= user_input) * 100
+
+                more_info = st.button(label=f'{user_percentile:.0f}%ile', key=column, type='primary')
                 # st.caption(' Press for more info')
 
             with col9:
