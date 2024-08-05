@@ -9,10 +9,11 @@ from fpdf import FPDF
 import base64
 import yagmail
 import datetime
+from matplotlib.patches import Rectangle
 
 st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
-st.write('####')
+# st.caption('####')
 
 DIR = os.getcwd()
 PLOT_DIR = DIR + '/plots'
@@ -21,7 +22,7 @@ DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
 
-image_path = os.path.join(LOGO_DIR, 'CORE caps.svg')
+image_path = os.path.join(LOGO_DIR, 'CORE without cardiometabolic.svg')
 
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
@@ -72,7 +73,7 @@ with header:
     #         with open("emails.txt", "a") as f: # save emails to a text file
     #             date = datetime.datetime.now()
     #             f.write(f"{date}, {email}\n")
-    st.write("Use this tool to assess your risk for cardiovascular disease. Enter your cardiometabolic metrics and compare your markers with your peers.")
+    st.write("CORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity.")
 
 header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 
@@ -81,9 +82,9 @@ st.markdown(
 <style>
     div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
         position: sticky;
-        top: 2.875rem;
+        top: 3.3rem;
         background-color: white;
-        z-index: 999;
+        z-index: 9999;
     }
     .fixed-header {
         border-bottom: 1px solid lightgrey;
@@ -126,16 +127,16 @@ NAME_MAP = {
 }
 
 AHA_RANGES = {
-    'Triglycerides (mg/dL)': ("Normal", 150, "Borderline", 200, "High"),
-    'HDL (mg/dL)': ("Low", 40, "Normal", 60, "High"),
-    'LDL (mg/dL)': ("Optimal", 100, "", 160, "High"),
-    'Total Cholesterol (mg/dL)': ("Optimal", 150, "", 200, "High"),
-    'Fasting Glucose (mg/dL)': ("Normal", 100, "Borderline", 125, "High"),
-    'Systolic Blood Pressure (mmHg)': ("Normal", 120, "High", None, None, None),
-    'Diastolic Blood Pressure (mmHg)': ("Normal", 80, "High", None, None, None),
-    'Total Cholesterol to HDL Ratio': ("Low", 3.5, "Normal", 5, "High"),
-    'Hemoglobin A1C (%)': ("Normal", 5.7, "Borderline", 6.4, "High"),
-    'Body Mass Index': ("Low", 18.5, "Normal", 25, "High")
+    'Triglycerides (mg/dL)': ("Optimal", 150, "Borderline", 200, "At risk", None, None),
+    'HDL (mg/dL)': ("At risk", 40, "Optimal", None, None, None, None),
+    'LDL (mg/dL)': ("Optimal", 100, "Borderline", 160, "At risk", None, None),
+    'Total Cholesterol (mg/dL)': ("Optimal", 150, "Borderline", 200, "At risk", None, None),
+    'Fasting Glucose (mg/dL)': ("Optimal", 100, "Borderline", 125, "At risk", None, None),
+    'Systolic Blood Pressure (mmHg)': ("Optimal", 120, "At risk", None, None, None, None),
+    'Diastolic Blood Pressure (mmHg)': ("Optimal", 80, "At risk", None, None, None, None),
+    'Total Cholesterol to HDL Ratio': ("Optimal", 3.5, "Borderline", 5, "At risk", None, None),
+    'Hemoglobin A1C (%)': ("Optimal", 5.7, "Borderline", 6.4, "High", None, None),
+    'Body Mass Index': ("Low", 18.5, "Optimal", 25, "Borderline", 30, "At risk")
 }
 
 def map_age_to_group(age):
@@ -161,7 +162,7 @@ def map_age_to_group(age):
 aboutMe_placeholder = st.empty()
 aboutMe_placeholder.markdown(f"### <u>About Me</u>", unsafe_allow_html=True)
 
-aboutMe_expand = st.expander("Enter your information here", expanded=True)
+aboutMe_expand = st.expander("Please enter your details below", expanded=True)
 
 genderOptions = {'Male': 1, 'Female': 2}
 ageOptions = {'19-33': 19, '34-48': 34, '49-64': 49, '65-78': 65,'79+': 79}
@@ -174,13 +175,12 @@ with aboutMe_expand:
     medDiabOptions = {'Yes': 1, 'No': 2}
     medBPOptions = {'Yes': 1, 'No': 2}
 
-
     with col1:
         gender = st.selectbox('Gender', list(genderOptions.keys()))
     with col2:
         age_group = st.selectbox('Age group', list(ageOptions.keys()), index=2)
     with col3:
-        ethnicity = st.selectbox('Ethnicity', ['Other', 'South Asian'])
+        ethnicity = st.selectbox('Ethnicity', ['Non-South Asian', 'South Asian'])
     with col4:
         medications_select = st.multiselect(label="Select your medication use", options=['Cholesterol', 'Diabetes', 'Blood Pressure'])
 
@@ -195,12 +195,16 @@ with aboutMe_expand:
         if 'Blood Pressure' in medications_select:
             medBP = 'Yes'
 
-aboutMe_label = f"About me: {gender}, {age_group}, {ethnicity}, Cholesterol meds: {medChol}, Diabetes meds: {medDiab}, Blood Pressure meds: {medBP}"
+meds = ", ".join(medications_select)
+if meds == '':
+    meds = "None"
+
+aboutMe_label = f"About me: {gender}, Age: {age_group}, {ethnicity}, Current medications: {meds}"
 aboutMe_placeholder.markdown(f"### <u>{aboutMe_label}</u>", unsafe_allow_html=True)
                                             
 # @st.cache_data
 def load_files(debugging):
-    if ethnicity == 'Other':
+    if ethnicity == 'Non-South Asian':
         df_user = pd.read_sas(USER_FILE, format='xport')
         df_diq = pd.read_sas(DIQ_FILE, format='xport')
         df_bpq = pd.read_sas(BPQ_FILE, format='xport')
@@ -317,7 +321,7 @@ def ui_choose(df, debugging):
     elif medBP == 'No':
         df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
 
-    # st.write(f"{len(df2)} records found.")
+    st.write(f"{len(df2)} records found.")
 
     if len(df2) < 15:
         next_age_group = get_next_age_group(age_group)
@@ -393,7 +397,7 @@ def show_analysis(df):
         'LBDHDD': "Value should be between 20-100",
         'LBDLDL': "Value should be between 30-300",
         'LBXTC': "Value should be between 100-320",
-        'LBXTR': "Value should be between 50-500",
+        'LBXTR': "Value should be between 50-300",
         'LBXGLU': "Value should be between 50-150",
         'BPXOSY1': "Value should be between 90-200",
         'BPXODI1': "Value should be between 60-130",
@@ -519,6 +523,8 @@ def show_analysis(df):
                 if columnName in AHA_RANGES:
                     low_number = AHA_RANGES[columnName][1]
                     high_number = AHA_RANGES[columnName][3]
+                    if ethnicity == 'South Asian' and columnName == 'Body Mass Index':
+                        high_number = 23
                 else:
                     st.write(f"No AHA prescribed range available for {columnName}.")
                     continue
@@ -533,61 +539,63 @@ def show_analysis(df):
                     high_percentile = 99
                 else:
                     high_percentile = np.mean(sorted_array <= high_number) * 100
+                    extra_high_number = AHA_RANGES[columnName][5]
+                    if extra_high_number is not None:
+                        extra_high_percentile = np.mean(sorted_array <= extra_high_number) * 100
 
                 low_percentile = np.mean(sorted_array <= low_number) * 100
 
-                fig, ax = plt.subplots(figsize=(16, 1))
+                fig, ax = plt.subplots(figsize=(16, 1.15))
 
                 # dot at user input position
                 user_percentile = np.mean(sorted_array <= user_input) * 100
                 if int(user_percentile) == 100:
-                    user_percentile == 99.99
+                    user_percentile == 99
                 if (user_input > high_number and high_number != 1000) and column != 'LBDHDD':
-                    # ax.scatter(user_percentile, 0.85, color='red', zorder=5, label='Your Input')
                     header_color = "red"
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
                 if (user_input > low_number and high_number == 1000) and column != 'LBDHDD':
-                    # ax.scatter(user_percentile, 0.85, color='red', zorder=5, label='Your Input')
                     header_color = "red"
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
                 if user_input < low_number and column == 'LBDHDD':
-                    # ax.scatter(user_percentile, 0.85, color='red', zorder=5, label='Your Input')
                     header_color = "red"
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
-                # else:
+                
+                if high_percentile < 99:
+                    ax.plot([high_percentile, high_percentile], [0.6, 0.95], color='white', lw=1, label='Demarcation', zorder=999)
+                ax.plot([low_percentile, low_percentile], [0.6, 0.95], color='white', lw=1, label='Demarcation', zorder=999)
+                if columnName == 'Body Mass Index':
+                    ax.plot([extra_high_percentile, extra_high_percentile], [0.6, 0.95], color='white', lw=1, label='Demarcation', zorder=999)
+                
+                if columnName != 'HDL (mg/dL)':
+                    ax.add_patch(Rectangle((0, 0.6), 
+                                    low_percentile, 0.35, 
+                                    color=lightgreen, fill=True, zorder=90))
+                    ax.add_patch(Rectangle((low_percentile, 0.6), 
+                                (high_percentile - low_percentile), 0.35, 
+                                color=darkgreen, fill=True, zorder=90))
+                else:   
+                    ax.add_patch(Rectangle((0, 0.6), 
+                                    low_percentile, 0.35, 
+                                    color=darkgreen, fill=True, zorder=90))
+                    ax.add_patch(Rectangle((low_percentile, 0.6), 
+                                (high_percentile - low_percentile), 0.35, 
+                                color=lightgreen, fill=True, zorder=90))
+                if high_percentile < 99:
+                    ax.add_patch(Rectangle((high_percentile, 0.6), 
+                                    (100 - high_percentile), 0.35, 
+                                    color=darkgreen, fill=True, zorder=90))
 
-                normal_color = regugreen
-                high_color = darkgreen
-                other_color = lightgreen
-
-                if AHA_RANGES[columnName][0] == 'Optimal':
-                    ax.plot([high_percentile + 1, 100], [0.775, 0.775], color=high_color, lw=20, label='High')
-                    ax.plot([0, low_percentile], [0.775, 0.775], color=normal_color, lw=20, label="Low")
-                    ax.plot([low_percentile, high_percentile - 1], [0.775, 0.775], color=other_color, lw=20, label='Healthy Range')
-
-                    if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.9, color=regugreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
-                    elif user_percentile > high_percentile:
-                        ax.scatter(user_percentile, 0.9, color=darkgreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
+                if user_percentile > low_percentile:
+                    if columnName == 'HDL (mg/dL)':
+                        ax.scatter(user_percentile, 0.865, color=lightgreen, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
                     else:
-                        ax.scatter(user_percentile, 0.9, color=lightgreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
-
+                        ax.scatter(user_percentile, 0.865, color=darkgreen, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
                 else:
-                    # lines from low_percentile to high_percentile
-
-                    ax.plot([low_percentile, high_percentile], [0.775, 0.775], color=regugreen, lw=20, label='Healthy Range')
-
-                    if high_percentile < 100:
-                        ax.plot([high_percentile + 1, 100], [0.775, 0.775], color=darkgreen, lw=20, label='High')
-                    if low_percentile > 0:
-                        ax.plot([0, low_percentile - 1], [0.775, 0.775], color=lightgreen, lw=20, label="Low")
-
-                    if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.9, color=lightgreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
-                    elif user_percentile > high_percentile:
-                        ax.scatter(user_percentile, 0.9, color=darkgreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
+                    if columnName == 'HDL (mg/dL)':
+                        ax.scatter(user_percentile, 0.865, color=darkgreen, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
                     else:
-                        ax.scatter(user_percentile, 0.9, color=regugreen, zorder=5, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=lightgreen, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
 
                 ax.set_xlim(0, 100)
                 ax.set_ylim(0.4, 1.1)
@@ -605,38 +613,40 @@ def show_analysis(df):
                 ax.set_title(columnName)
 
                 if STEP_SIZE[column] == .1 or column == 'BMXBMI':
-                    ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.875), xytext=(user_percentile - 0.2, 0.85),
-                                horizontalalignment='center', color = 'black', zorder=10, weight='bold', fontsize=11.5)
+                    ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.2, 0.81),
+                                horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=12)
                 else:
-                    ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.875), xytext=(user_percentile - 0.2, 0.84),
-                                horizontalalignment='center', color = 'black', zorder=10, weight='bold', fontsize=13.5)
-                
-                # ax.annotate("hello", (0.5, 0.5), fontsize=100)
+                    ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.2, 0.81),
+                                horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=14)
                 
                 if int(user_percentile) == 100:
                     user_percentile = 99
-                plt.annotate(f'({user_percentile:.0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile + 5, 0.935), 
+                if user_percentile > 90:
+                    plt.annotate(f'({user_percentile:.0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile - 5, 0.98), 
+                             horizontalalignment='center')
+                else:
+                    plt.annotate(f'({user_percentile:.0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile + 5, 0.98), 
                              horizontalalignment='center')
 
                 if high_number < 1000:
-                    plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.5),
+                    plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.45),
                                   horizontalalignment='left', weight='bold')
-                    plt.annotate(f'>{high_number}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.35),
+                    plt.annotate(f'>{high_number}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.3),
                                   horizontalalignment='left')
                 if low_number > 0:
-                    plt.annotate(f'{AHA_RANGES[columnName][0]}', xy=(low_percentile - 1, 0.675), xytext=(low_percentile - 1, 0.5),
+                    plt.annotate(f'{AHA_RANGES[columnName][0]}', xy=(low_percentile, 0.675), xytext=(low_percentile - 1, 0.45),
                                   horizontalalignment='right', weight='bold')
-                    plt.annotate(f'<{low_number}', xy=(low_percentile - 1, 0.657), xytext=(low_percentile - 1, 0.35),
+                    plt.annotate(f'<{low_number}', xy=(low_percentile - 1, 0.657), xytext=(low_percentile - 1, 0.3),
                                   horizontalalignment='right')
                 if high_number == 1000:
-                    plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.5),
+                    plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
                                     horizontalalignment='left', weight='bold')
-                    plt.annotate(f'>{low_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.35),
+                    plt.annotate(f'>{low_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
                                     horizontalalignment='left')
                 else:
-                    plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.5),
+                    plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
                                     horizontalalignment='left', weight='bold')
-                    plt.annotate(f'{low_number}-{high_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.35),
+                    plt.annotate(f'{low_number}-{high_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
                                     horizontalalignment='left')
 
                 for spine in ax.spines.values():
