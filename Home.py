@@ -77,25 +77,25 @@ with header:
     #             date = datetime.datetime.now()
     #             f.write(f"{date}, {email}\n")
     st.write("CORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity.")
-
+    st.divider()
 header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 
-st.markdown(
-    """
-<style>
-    div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
-        position: sticky;
-        top: 3.3rem;
-        background-color: white;
-        z-index: 9999;
-    }
-    .fixed-header {
-        border-bottom: 1px solid lightgrey;
-    }
-</style>
-    """,
-    unsafe_allow_html=True
-)
+# st.markdown(
+#     """
+# <style>
+#     div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
+#         position: sticky;
+#         top: 3.3rem;
+#         background-color: white;
+#         z-index: 9999;
+#     }
+#     .fixed-header {
+#         border-bottom: 1px solid lightgrey;
+#     }
+# </style>
+#     """,
+#     unsafe_allow_html=True
+# )
 
 red = "#ee3942"
 orange = "#fec423"
