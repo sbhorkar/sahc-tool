@@ -11,7 +11,7 @@ import yagmail
 import datetime
 from matplotlib.patches import Rectangle
 
-st.set_page_config(page_title="SAHC Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
+st.set_page_config(page_title="CORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
 # st.caption('####')
 
@@ -30,9 +30,12 @@ def create_download_link(val, filename):
 
 header = st.container()
 with header:
-    # col_image, col_empty, col_pdf = st.columns([1, 3, 1], vertical_alignment='bottom')
-    # with col_image:
-    st.image(image_path, width=500)
+    col_image, col_empty, col_color = st.columns([1, 2, 1], vertical_alignment='top')
+    with col_image:
+        st.image(image_path, width=500)
+    with col_color:
+        colorblind_mode = st.toggle("High Contrast Mode")
+        st.caption("Contrast and colorblindness improvements")
     # with col_pdf:
     #     email = st.text_input("Download a PDF report!", placeholder='Email')
 
@@ -94,8 +97,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+red = "#ee3942"
+orange = "#fec423"
+green = "#67bd4a"
 darkgreen = "#75975e"
-regugreen = "#95bb72"
+regugreen = "#9dba82"
 lightgreen = "#c7ddb5"
 
 USER_FILE = os.path.join(DATA_DIR, 'DEMO_P.XPT')
@@ -109,7 +115,7 @@ GHB_FILE = os.path.join(DATA_DIR, 'P_GHB.XPT')
 BPX_FILE = os.path.join(DATA_DIR, 'P_BPXO.XPT')
 CBC_FILE = os.path.join(DATA_DIR, 'P_CBC.XPT')
 BMX_FILE = os.path.join(DATA_DIR, 'P_BMX.XPT')
-# SAHC_FILE = os.path.join(SAHC_DATA_DIR, 'tblCleanedConcatNoPID.csv')
+MCQ_FILE = os.path.join(DATA_DIR, 'P_MCQ.XPT')
 SAHC_FILE = os.path.join(SAHC_DATA_DIR, 'merged_data_noPID.csv')
 
 UNITS_MAP = {
@@ -135,7 +141,7 @@ AHA_RANGES = {
     'Systolic Blood Pressure (mmHg)': ("Optimal", 120, "At risk", None, None, None, None),
     'Diastolic Blood Pressure (mmHg)': ("Optimal", 80, "At risk", None, None, None, None),
     'Total Cholesterol to HDL Ratio': ("Optimal", 3.5, "Borderline", 5, "At risk", None, None),
-    'Hemoglobin A1C (%)': ("Optimal", 5.7, "Borderline", 6.4, "High", None, None),
+    'Hemoglobin A1C (%)': ("Optimal", 5.7, "Borderline", 6.4, "At risk", None, None),
     'Body Mass Index': ("Low", 18.5, "Optimal", 25, "Borderline", 30, "At risk")
 }
 
@@ -182,7 +188,7 @@ with aboutMe_expand:
     with col3:
         ethnicity = st.selectbox('Ethnicity', ['Non-South Asian', 'South Asian'])
     with col4:
-        medications_select = st.multiselect(label="Select your medication use", options=['Cholesterol', 'Diabetes', 'Blood Pressure'])
+        medications_select = st.multiselect(label="Select your medication use", options=['None', 'Cholesterol', 'Diabetes', 'Blood Pressure'])
 
         medChol = 'No'
         medDiab = 'No'
@@ -215,10 +221,11 @@ def load_files(debugging):
         df_ghb = pd.read_sas(GHB_FILE, format='xport')
         df_bpx = pd.read_sas(BPX_FILE, format='xport')
         df_bmx = pd.read_sas(BMX_FILE, format='xport')
+        df_mcq = pd.read_sas(MCQ_FILE, format='xport')
 
         df_combined = df_user[['SEQN', 'RIAGENDR', 'RIDAGEYR', 'RIDRETH3']]
         df_combined = pd.merge(df_combined, df_diq[['SEQN', 'DIQ010', 'DIQ160', 'DIQ050', 'DIQ070']], on='SEQN', how='left')
-        df_combined = pd.merge(df_combined, df_bpq[['SEQN', 'BPQ090D', 'BPQ100D', 'BPQ040A', 'BPQ050A', 'BPQ020']], on='SEQN', how='left')
+        df_combined = pd.merge(df_combined, df_bpq[['SEQN', 'BPQ090D', 'BPQ100D', 'BPQ040A', 'BPQ020']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_hdl[['SEQN', 'LBDHDD']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_tgl[['SEQN', 'LBXTR', 'LBDLDL']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_tch[['SEQN', 'LBXTC']], on='SEQN', how='left')
@@ -226,6 +233,7 @@ def load_files(debugging):
         df_combined = pd.merge(df_combined, df_ghb[['SEQN', 'LBXGH']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_bpx[['SEQN', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1', 'BPXOSY2', 'BPXODI2', 'BPXOPLS2', 'BPXOSY3', 'BPXODI3', 'BPXOPLS3']], on='SEQN', how='left')
         df_combined = pd.merge(df_combined, df_bmx[['SEQN', 'BMXBMI']], on='SEQN', how='left')
+        df_combined = pd.merge(df_combined, df_mcq[['SEQN', 'MCQ160E']], on='SEQN', how='left')
 
         # df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(lambda age: 20 * int(age / 20))
         df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(map_age_to_group)
@@ -298,6 +306,8 @@ def ui_choose(df, debugging):
     medDiabFilter = [medDiabOptions[medDiab]]
     medBPFilter = [medBPOptions[medBP]]
 
+    # st.dataframe(df, hide_index=True)
+
     df2 = df.copy()
     df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
     df2 = df2[df2['Age_Group'].isin(ageFilter)]
@@ -320,8 +330,6 @@ def ui_choose(df, debugging):
         df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
     elif medBP == 'No':
         df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
-
-    st.write(f"{len(df2)} records found.")
 
     if len(df2) < 15:
         next_age_group = get_next_age_group(age_group)
@@ -349,6 +357,11 @@ def ui_choose(df, debugging):
             df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
 
         # st.write(f"{len(df2)} records found after expanding age group.")
+    
+    if len(df2) == 0:
+        st.write(f"No records found to compare.")
+    else:
+        st.write(f"{len(df2)} records found.")
 
     return df2
 
@@ -359,7 +372,7 @@ def popup(acro, column, user_input, user_percentile, gender, age_range, med, on_
         st.write(f"The estimated probability of an optimal {column} ≥ {value} {UNITS_MAP[acro]} for a {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
     else:
         st.write(f"The estimated probability of an optimal {column} ≤ {value} {UNITS_MAP[acro]} for a {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
-    if on_med:
+    if on_med == 'Yes':
         st.write(f"An {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {gender.lower()} aged between {age_range} years who is on {med}-lowering medication.")
     else:
         st.write(f"An {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {gender.lower()} aged between {age_range} years who is not on {med}-lowering medication.")
@@ -572,35 +585,99 @@ def show_analysis(df):
                 if columnName == 'Body Mass Index':
                     ax.plot([extra_high_percentile, extra_high_percentile], [0.6, 0.95], color='white', lw=1, label='Demarcation', zorder=999)
                 
-                if columnName != 'HDL (mg/dL)':
-                    ax.add_patch(Rectangle((0, 0.6), 
-                                    low_percentile, 0.35, 
-                                    color=lightgreen, fill=True, zorder=90))
-                    ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                (high_percentile - low_percentile), 0.35, 
-                                color=darkgreen, fill=True, zorder=90))
-                else:   
-                    ax.add_patch(Rectangle((0, 0.6), 
-                                    low_percentile, 0.35, 
-                                    color=darkgreen, fill=True, zorder=90))
-                    ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                (high_percentile - low_percentile), 0.35, 
-                                color=lightgreen, fill=True, zorder=90))
-                if high_percentile < 99:
-                    ax.add_patch(Rectangle((high_percentile, 0.6), 
-                                    (100 - high_percentile), 0.35, 
-                                    color=darkgreen, fill=True, zorder=90))
-
-                if user_percentile > low_percentile:
-                    if columnName == 'HDL (mg/dL)':
-                        ax.scatter(user_percentile, 0.865, color=lightgreen, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
-                    else:
-                        ax.scatter(user_percentile, 0.865, color=darkgreen, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                if colorblind_mode == True:
+                    optimal = lightgreen
+                    borderline = darkgreen
+                    at_risk = darkgreen
                 else:
-                    if columnName == 'HDL (mg/dL)':
-                        ax.scatter(user_percentile, 0.865, color=darkgreen, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                    optimal = green
+                    borderline = orange
+                    at_risk = red
+
+                # if columnName != 'HDL (mg/dL)':
+                #     ax.add_patch(Rectangle((0, 0.6), 
+                #                     low_percentile, 0.35, 
+                #                     color=optimal, fill=True, zorder=90))
+                #     ax.add_patch(Rectangle((low_percentile, 0.6), 
+                #                 (high_percentile - low_percentile), 0.35, 
+                #                 color=at_risk, fill=True, zorder=90))
+                # else:
+                #     ax.add_patch(Rectangle((0, 0.6), 
+                #                     low_percentile, 0.35, 
+                #                     color=at_risk, fill=True, zorder=90))
+                #     ax.add_patch(Rectangle((low_percentile, 0.6), 
+                #                 (high_percentile - low_percentile), 0.35, 
+                #                 color=optimal, fill=True, zorder=90))
+
+                # if high_percentile < 99:
+                #     ax.add_patch(Rectangle((high_percentile, 0.6), 
+                #                     (100 - high_percentile), 0.35, 
+                #                     color=at_risk, fill=True, zorder=90))
+
+                if columnName == 'HDL (mg/dL)':
+                    ax.add_patch(Rectangle((0, 0.6), 
+                                    low_percentile, 0.35, 
+                                    color=at_risk, fill=True, zorder=90))
+                    ax.add_patch(Rectangle((low_percentile, 0.6), 
+                                (high_percentile - low_percentile), 0.35, 
+                                color=optimal, fill=True, zorder=90))
+                elif "Blood Pressure" in columnName:
+                    ax.add_patch(Rectangle((0, 0.6), 
+                                    low_percentile, 0.35, 
+                                    color=optimal, fill=True, zorder=90))
+                    ax.add_patch(Rectangle((low_percentile, 0.6), 
+                                (high_percentile - low_percentile), 0.35, 
+                                color=at_risk, fill=True, zorder=90))
+                elif columnName == 'Body Mass Index':
+                    ax.add_patch(Rectangle((0, 0.6), 
+                                    low_percentile, 0.35, 
+                                    color=at_risk, fill=True, zorder=90))
+                    ax.add_patch(Rectangle((low_percentile, 0.6), 
+                                (high_percentile - low_percentile), 0.35, 
+                                color=optimal, fill=True, zorder=90))
+                    ax.add_patch(Rectangle((high_percentile, 0.6), 
+                                (extra_high_percentile - high_percentile), 0.35, 
+                                color=borderline, fill=True, zorder=90))
+                    ax.add_patch(Rectangle((extra_high_percentile, 0.6), 
+                                (100 - extra_high_percentile), 0.35, 
+                                color=at_risk, fill=True, zorder=90))
+                else:
+                    ax.add_patch(Rectangle((0, 0.6), 
+                                    low_percentile, 0.35, 
+                                    color=optimal, fill=True, zorder=90))
+                    ax.add_patch(Rectangle((low_percentile, 0.6), 
+                                (high_percentile - low_percentile), 0.35, 
+                                color=borderline, fill=True, zorder=90))
+                    ax.add_patch(Rectangle((high_percentile, 0.6), 
+                                (100 - high_percentile), 0.35, 
+                                color=at_risk, fill=True, zorder=90))
+
+                if columnName == 'HDL (mg/dL)':
+                    if user_percentile < low_percentile:
+                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
                     else:
-                        ax.scatter(user_percentile, 0.865, color=lightgreen, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                elif 'Blood Pressure' in columnName:
+                    if user_percentile < low_percentile:
+                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                    else:
+                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                elif columnName == 'Body Mass Index':
+                    if user_percentile < low_percentile:
+                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                    elif user_percentile < high_percentile:
+                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                    elif user_percentile < extra_high_percentile:
+                        ax.scatter(user_percentile, 0.865, color=borderline, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                    else:
+                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                else:
+                    if user_percentile < low_percentile:
+                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                    elif user_percentile <= high_percentile:
+                        ax.scatter(user_percentile, 0.865, color=borderline, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                    elif user_percentile > high_percentile:
+                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
 
                 ax.set_xlim(0, 100)
                 ax.set_ylim(0.4, 1.1)
@@ -745,13 +822,13 @@ def show_analysis(df):
                 popup_column = NAME_MAP[column]
 
                 if more_info:
-                    if "HDL" in columnName:
+                    if "HDL (mg/dL)" in columnName:
                         popup(column, popup_column, user_input, user_percentile, gender, age_group, "cholesterol", medChol, prob, value, 
                               percentile_25, percentile_50, percentile_75, percentile_90, "greater", suffix, low_number, high_number)
                     elif "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
                         popup(column, popup_column, user_input, user_percentile, gender, age_group, "cholesterol", medChol, prob, value, 
                               percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix, low_number, high_number)
-                    elif "Glucose" in columnName:
+                    elif "Glucose" in columnName or "A1C" in columnName:
                         popup(column, popup_column, user_input, user_percentile, gender, age_group, "blood sugar", medDiab, prob, value, 
                               percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix, low_number, high_number)   
                     else:
@@ -765,4 +842,4 @@ show_analysis(df_d)
 
 st.divider()
 st.markdown('<div style="text-align: center"> Please email <a href="mailto:sanaa.bhorkar@gmail.com">sanaa.bhorkar@gmail.com</a> with any feedback! </div>', unsafe_allow_html=True)
-st.markdown('<div style="text-align: center"> Version 0.3 </div>', unsafe_allow_html=True)
+st.markdown('<div style="text-align: center"> Version 1.1 </div>', unsafe_allow_html=True)
