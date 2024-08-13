@@ -138,19 +138,17 @@ UNITS_MAP = {
 
 
 NAME_MAP = {
-    'LBXTR': 'Triglycerides', 'LBDHDD': 'HDL', 'LBDLDL': 'LDL',
-    'LBXTC': 'Total Cholesterol', 'LBXGLU': 'Fasting Glucose',
-    'BPXOSY1': 'Systolic Blood Pressure', 'BPXODI1': 'Diastolic Blood Pressure', 
-    'TotHDLRat': 'Total Cholesterol to HDL Ratio', 'LBXHGB': 'Hemoglobin', 'LBXGH': 'Hemoglobin A1C', 
-    'BMXBMI': 'Body Mass Index'
+    'LBXTC': 'Total Cholesterol', 'LBDLDL': 'LDL', 'LBDHDD': 'HDL', 
+    'LBXTR': 'Triglycerides', 'TotHDLRat': 'Total Cholesterol to HDL Ratio', 
+    'LBXGLU': 'Fasting Glucose', 'LBXGH': 'Hemoglobin A1C',
+    'BMXBMI': 'Body Mass Index', 'BPXOSY1': 'Systolic Blood Pressure', 'BPXODI1': 'Diastolic Blood Pressure', 
 }
 
 DROPDOWN_SELECTION = {
-    'Triglycerides': 'LBXTR', 'HDL': 'LBDHDD', 'LDL': 'LBDLDL',
-    'Total Cholesterol': 'LBXTC', 'Fasting Glucose': 'LBXGLU',
-    'Systolic Blood Pressure': 'BPXOSY1', 'Diastolic Blood Pressure': 'BPXODI1', 
-    'Total Cholesterol to HDL Ratio': 'TotHDLRat', 'Hemoglobin': 'LBXHGB', 'Hemoglobin A1C': 'LBXGH', 
-    'Body Mass Index': 'BMXBMI'
+    'Total Cholesterol': 'LBXTC', 'LDL': 'LBDLDL', 'HDL': 'LBDHDD',
+    'Triglycerides': 'LBXTR', 'Total Cholesterol to HDL Ratio': 'TotHDLRat',
+    'Fasting Glucose': 'LBXGLU', 'Hemoglobin A1C': 'LBXGH',
+    'Body Mass Index': 'BMXBMI', 'Systolic Blood Pressure': 'BPXOSY1', 'Diastolic Blood Pressure': 'BPXODI1', 
 }
 
 AHA_RANGES = {
