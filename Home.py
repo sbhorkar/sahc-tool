@@ -10,10 +10,14 @@ import base64
 import yagmail
 import datetime
 from matplotlib.patches import Rectangle
+from collections import deque 
 
 st.set_page_config(page_title="CORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
 # st.caption('####')
+@st.cache_resource
+def get_app_queue():
+    return deque()
 
 DIR = os.getcwd()
 PLOT_DIR = DIR + '/plots'
@@ -21,8 +25,9 @@ LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
+VERSION = 1.3
 
-image_path = os.path.join(LOGO_DIR, 'CORE without cardiometabolic.svg')
+image_path = os.path.join(LOGO_DIR, 'CORE larger size.svg')
 
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
@@ -32,7 +37,7 @@ header = st.container()
 with header:
     col_image, col_empty, col_color = st.columns([1, 2, 1], vertical_alignment='top')
     with col_image:
-        st.image(image_path, width=500)
+        st.image(image_path)
     with col_color:
         colorblind_mode = st.toggle("High Contrast Mode")
         st.caption("Contrast and colorblindness improvements")
@@ -79,6 +84,14 @@ with header:
     st.write("CORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity.")
     st.divider()
 header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
+
+st.markdown(""" 
+        <style>
+        *:not(fixed-header)::before, 
+            *|not(fixed-header)::after {
+           box-sizing: inherit;
+        }
+        </style>""", unsafe_allow_html=True)
 
 # st.markdown(
 #     """
@@ -130,6 +143,14 @@ NAME_MAP = {
     'BPXOSY1': 'Systolic Blood Pressure', 'BPXODI1': 'Diastolic Blood Pressure', 
     'TotHDLRat': 'Total Cholesterol to HDL Ratio', 'LBXHGB': 'Hemoglobin', 'LBXGH': 'Hemoglobin A1C', 
     'BMXBMI': 'Body Mass Index'
+}
+
+DROPDOWN_SELECTION = {
+    'Triglycerides': 'LBXTR', 'HDL': 'LBDHDD', 'LDL': 'LBDLDL',
+    'Total Cholesterol': 'LBXTC', 'Fasting Glucose': 'LBXGLU',
+    'Systolic Blood Pressure': 'BPXOSY1', 'Diastolic Blood Pressure': 'BPXODI1', 
+    'Total Cholesterol to HDL Ratio': 'TotHDLRat', 'Hemoglobin': 'LBXHGB', 'Hemoglobin A1C': 'LBXGH', 
+    'Body Mass Index': 'BMXBMI'
 }
 
 AHA_RANGES = {
@@ -365,18 +386,18 @@ def ui_choose(df, debugging):
 
     return df2
 
-@st.dialog("Your marker compared to your peers")
-def popup(acro, column, user_input, user_percentile, gender, age_range, med, on_med, prob, value, p25, p50, p75, p90, side, suffix, low_number, high_number):
-    
-    if side == 'greater':
-        st.write(f"The estimated probability of an optimal {column} ≥ {value} {UNITS_MAP[acro]} for a {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
-    else:
-        st.write(f"The estimated probability of an optimal {column} ≤ {value} {UNITS_MAP[acro]} for a {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
+@st.dialog(" ")
+def popup(acro, column, user_input, user_percentile, gender, race, age_range, med, on_med, prob, value, p25, p50, p75, p90, side, suffix, low_number, high_number):
+    st.header(f"Your {column} value compared to others in your peer group")
     if on_med == 'Yes':
-        st.write(f"An {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {gender.lower()} aged between {age_range} years who is on {med}-lowering medication.")
+        st.write(f"An {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {race} {gender.lower()} aged between {age_range} years who is ON {med}-lowering medication.")
     else:
-        st.write(f"An {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {gender.lower()} aged between {age_range} years who is not on {med}-lowering medication.")
-
+        st.write(f"An {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {race} {gender.lower()} aged between {age_range} years who is NOT ON {med}-lowering medication.")
+    if side == 'greater':
+        st.write(f"The estimated probability of an optimal {column} ≥ {value} {UNITS_MAP[acro]} for a {race} {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
+    else:
+        st.write(f"The estimated probability of an optimal {column} ≤ {value} {UNITS_MAP[acro]} for a {race} {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
+    
     data = {
         'Percentile': [f'{column} Level'],
         '25th': [p25],
@@ -396,16 +417,11 @@ def popup(acro, column, user_input, user_percentile, gender, age_range, med, on_
     elif 'HDL' in column:
         st.write(f"Based on the American Heart Association guidlelines, the optimal value for {column} is ≥ {low_number} for {gender.lower()}s.")
 
-    
-def show_analysis(df):
-    st.markdown(f"### <u>My risk profile markers</u>", unsafe_allow_html=True)
-    
-    # Number of elements
-    num_elements = 10
+metric_list = get_app_queue()
 
-    # Create placeholders for columns
-    cols = [st.empty() for _ in range(num_elements)]
-        
+
+def show_analysis(df):
+    # st.write("show_analysis entered", datetime.datetime.now())
     validation_labels = {
         'LBDHDD': "Value should be between 20-100",
         'LBDLDL': "Value should be between 30-300",
@@ -415,11 +431,9 @@ def show_analysis(df):
         'BPXOSY1': "Value should be between 90-200",
         'BPXODI1': "Value should be between 60-130",
         'TotHDLRat': "Value should be between 0.5-10",
-        'LBXGH': "Value should be between 1 and 20",
+        'LBXGH': "Value should be between 0 and 20",
         'BMXBMI': "Value should be between 10 and 50"
     }
-
-    user_inputs = {}
 
     STEP_SIZE = {
         'LBDHDD': 1,
@@ -434,106 +448,100 @@ def show_analysis(df):
         'BMXBMI': 1,
     }
 
-    for i, column in enumerate(['LBXTC', 'LBDLDL', 'LBDHDD', 'LBXTR', 'TotHDLRat', 'LBXGLU', 'LBXGH', 'BMXBMI', 'BPXOSY1', 'BPXODI1']):
+    validation_range = {
+        'LBDHDD': [20, 100],
+        'LBDLDL': [30, 300],
+        'LBXTC': [100, 320],
+        'LBXTR': [50, 300],
+        'LBXGLU': [50, 150],
+        'BPXOSY1': [90, 200],
+        'BPXODI1': [60,130],
+        'TotHDLRat': [0.5, 10.0],
+        'LBXGH': [0.0, 20.0],
+        'BMXBMI': [10, 50]
+    }
+
+    user_inputs = {}
+
+    st.markdown(f"### <u>My risk profile markers</u>", unsafe_allow_html=True)
+
+    col_dropdown, col_empty, col_input, col_input2, col_empty = st.columns([0.25, 0.1, 0.2, 0.2, 0.25], gap='medium', vertical_alignment='center')
+
+    with col_dropdown:
+        metric = st.selectbox('Metric', list(DROPDOWN_SELECTION.keys()))
+    
+    column = DROPDOWN_SELECTION[metric]
+
+    if column == 'BMXBMI':
+        with col_input:
+            weight = st.number_input('Weight (lbs)', key="weight", step=STEP_SIZE[column], value = 1)
+        with col_input2:
+            height = st.number_input('Height (in)', key="height", step=STEP_SIZE[column], value = 1)
+
+        user_inputs[column] = (weight / (height ** 2)) * 703
+        columnName = metric
+
+    else:
+        columnName = metric + f" ({UNITS_MAP[column]})"
+
+        with col_input:
+            user_inputs[column] = st.number_input(f'{metric} ({UNITS_MAP[column]})', key='user_input', step=STEP_SIZE[column])
+        
+        with col_input2:
+            st.caption(f"{validation_labels[column]}")
+
+    if len(metric_list) == 0:
+        metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
+    else:
+        exists = False
+        delete = -1
+        for index, selection in enumerate(metric_list):
+            if selection['column'] == column:
+                exists = True
+                delete = index
+                break
+        if exists:
+            del metric_list[delete]
+        metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
+
+    # Number of elements
+    num_elements = 10
+
+    # Create placeholders for columns
+    cols = [st.empty() for _ in range(num_elements)]
+
+    for i, column_dict in enumerate(metric_list):
 
         global header
         global placeholder
         global header_color
 
+        column = column_dict['column']
+        columnName = column_dict['columnName']
+        #st.write(column)
+
         with cols[i].container():
-
-            # col6, col7, col8, col9, col10, col11 = st.columns([.25, 1.6, .3, 5, 5, .25], vertical_alignment='bottom')
-            # col6, col7, col8, col9, col10, col11 = st.columns([0.1, 0.15, 0.05, 0.3, 0.3, 0.1], vertical_alignment='bottom')
-            # col6, col7, col8, col9, col10, col11 = st.columns([0.1, 0.12, 0.03, 0.325, 0.325, 0.1], vertical_alignment='bottom')
-            if column == 'BMXBMI':
-                columnName = f"{NAME_MAP[column]}"
-
-                header_col6, header_col7, header_col8, header_col9, header_col10 = st.columns([0.05, 0.17, 0.08, 0.65, 0.05])
-
-                # Ensure the placeholder is above col7 and col71
-                with header_col7:
-
-                    header = columnName
-                    header_color = "black"
-                    placeholder = st.empty()
-                    placeholder.write(f"#### {header}")
-
-                col6, col7, col71, col8, col9, col10 = st.columns([0.05, 0.085, 0.085, 0.08, 0.65, 0.05], vertical_alignment='center')
-
-                with col7:
-                    key = column
-
-                    unique_key = f"{key}_{i}"
-                    weight = st.number_input('Weight (lbs)', key=unique_key, step=STEP_SIZE[column], value = 1)
-
-                global height
-
-                with col71:
-                    key = column
-
-                    unique_key = f"{key}_{i} + 1"
-                    height = st.number_input('Height (in)', key=unique_key, step=STEP_SIZE[column], value = 1)
-
-                user_inputs[key] = (weight / (height ** 2)) * 703
-                
-            else:
-                col6, col7, col8, col9, col10 = st.columns([0.05, 0.17, 0.08, 0.65, 0.05], vertical_alignment='center')
             
-                columnName = f"{NAME_MAP[column]} ({UNITS_MAP[column]})"
-                if column == 'TotHDLRat':
-                    columnName = f"{NAME_MAP[column]}"
+            placeholder = st.empty()
 
-                with col7:
-                    key = column
+            header = f"{columnName}"
+            placeholder.markdown(f"#### {header}", unsafe_allow_html=True)
 
-                    header = columnName
-                    header_color = "black"
-                    placeholder = st.empty()
-
-                    placeholder.write(f"#### {header}")
-
-                    unique_key = f"{key}_{i}"
-                    user_inputs[key] = st.number_input('user input', key=unique_key, step=STEP_SIZE[column], label_visibility="collapsed")
-
-                    st.caption(f'{validation_labels[key]}')
+            col7, col8, col9, col10 = st.columns([0.025, 0.3, 0.65, 0.025], vertical_alignment='center')
             
-            with col8:
-                st.markdown("""
-                    <style>
-                        button[kind="primary"] {
-                            background-color: white;
-                            color: black;
-                            width: 100px;
-                            border: 1px solid #7D343C;
-                        }
-
-                        button[kind="primary"]:hover {
-                            background-color: white; /* Slightly different background on hover */
-                            color: #7D343C; /* Ensure text color remains visible on hover */
-                        }
-                    </style>
-                    """, unsafe_allow_html=True)
-                
-                user_input = user_inputs[column]  # Reference the user input from the dictionary
-
-                array = df[column].dropna()
-                sorted_array = np.sort(array)
-                user_percentile = np.mean(sorted_array <= user_input) * 100
-
-                more_info = st.button(label=f'ⓘ {user_percentile:.0f}%ile', key=column, type='primary')
-                # st.caption(' Press for more info')
-
             with col9:
-                user_input = user_inputs[column]  # Reference the user input from the dictionary
+                #user_input = user_inputs[column]  # Reference the user input from the dictionary
+                user_input = column_dict['input']
+
 
                 array = df[column].dropna()
                 if len(array.index) < 5:
                     st.markdown(f"Not enough data available for {columnName}.")
                     continue
 
-                if user_input == 0 or user_input >= 500:
+                if user_input <= validation_range[column][0] or user_input >= validation_range[column][1]:
                     # st.write(f"### ")
-                    st.write(f"Please enter a value for {columnName}.")
+                    st.write(f"Please enter a :red[**valid**] value for {columnName}.")
                     continue
 
                 # st.write(f"####")
@@ -568,7 +576,8 @@ def show_analysis(df):
                 # dot at user input position
                 user_percentile = np.mean(sorted_array <= user_input) * 100
                 if int(user_percentile) == 100:
-                    user_percentile == 99
+                    user_percentile = 99
+
                 if (user_input > high_number and high_number != 1000) and column != 'LBDHDD':
                     header_color = "red"
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
@@ -655,29 +664,42 @@ def show_analysis(df):
                 if columnName == 'HDL (mg/dL)':
                     if user_percentile < low_percentile:
                         ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        header_color = at_risk
                     else:
                         ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        header_color = optimal
                 elif 'Blood Pressure' in columnName:
                     if user_percentile < low_percentile:
                         ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        header_color = optimal
                     else:
                         ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        header_color = at_risk
                 elif columnName == 'Body Mass Index':
                     if user_percentile < low_percentile:
                         ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        header_color = at_risk
                     elif user_percentile < high_percentile:
                         ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        header_color = optimal
                     elif user_percentile < extra_high_percentile:
                         ax.scatter(user_percentile, 0.865, color=borderline, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        header_color = borderline
                     else:
                         ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        header_color = at_risk
                 else:
                     if user_percentile < low_percentile:
                         ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        header_color = optimal
                     elif user_percentile <= high_percentile:
                         ax.scatter(user_percentile, 0.865, color=borderline, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        header_color = borderline
                     elif user_percentile > high_percentile:
                         ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        header_color = at_risk
+
+                placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
 
                 ax.set_xlim(0, 100)
                 ax.set_ylim(0.4, 1.1)
@@ -821,19 +843,46 @@ def show_analysis(df):
 
                 popup_column = NAME_MAP[column]
 
-                if more_info:
+            with col8:
+                st.markdown("""
+                    <style>
+                        button[kind="primary"] {
+                            background-color: white;
+                            color: black;
+                            border: 1px solid #7D343C;
+                        }
+
+                        button[kind="primary"]:hover {
+                            background-color: white; /* Slightly different background on hover */
+                            color: #7D343C; /* Ensure text color remains visible on hover */
+                        }
+                    </style>
+                    """, unsafe_allow_html=True)
+                
+                #user_input = user_inputs[]  # Reference the user input from the dictionary
+                user_input = column_dict['input']
+
+                array = df[column].dropna()
+                sorted_array = np.sort(array)
+                user_percentile = np.mean(sorted_array <= user_input) * 100
+
+                more_info = st.button(label=f'ⓘ {user_percentile: .0f}{suffix} percentile compared to peers in your group', key=column, type='primary')
+                # st.caption(' Press for more info')
+
+            if more_info:
                     if "HDL (mg/dL)" in columnName:
-                        popup(column, popup_column, user_input, user_percentile, gender, age_group, "cholesterol", medChol, prob, value, 
+                        popup(column, popup_column, user_input, user_percentile, gender, ethnicity, age_group, "cholesterol", medChol, prob, value, 
                               percentile_25, percentile_50, percentile_75, percentile_90, "greater", suffix, low_number, high_number)
                     elif "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
-                        popup(column, popup_column, user_input, user_percentile, gender, age_group, "cholesterol", medChol, prob, value, 
+                        popup(column, popup_column, user_input, user_percentile, gender, ethnicity, age_group, "cholesterol", medChol, prob, value, 
                               percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix, low_number, high_number)
                     elif "Glucose" in columnName or "A1C" in columnName:
-                        popup(column, popup_column, user_input, user_percentile, gender, age_group, "blood sugar", medDiab, prob, value, 
+                        popup(column, popup_column, user_input, user_percentile, gender, ethnicity, age_group, "blood sugar", medDiab, prob, value, 
                               percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix, low_number, high_number)   
                     else:
-                        popup(column, popup_column, user_input, user_percentile, gender, age_group, "blood pressure", medBP, prob, value, 
+                        popup(column, popup_column, user_input, user_percentile, gender, ethnicity, age_group, "blood pressure", medBP, prob, value, 
                               percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix, low_number, high_number)
+            
 
 # Main execution
 df_c = load_files(False)
@@ -842,4 +891,4 @@ show_analysis(df_d)
 
 st.divider()
 st.markdown('<div style="text-align: center"> Please email <a href="mailto:sanaa.bhorkar@gmail.com">sanaa.bhorkar@gmail.com</a> with any feedback! </div>', unsafe_allow_html=True)
-st.markdown('<div style="text-align: center"> Version 1.1 </div>', unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: center'> Version {VERSION}</div>", unsafe_allow_html=True)
