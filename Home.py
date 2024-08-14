@@ -25,7 +25,7 @@ LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 1.3
+VERSION = 1.4
 
 image_path = os.path.join(LOGO_DIR, 'CORE larger size.svg')
 
