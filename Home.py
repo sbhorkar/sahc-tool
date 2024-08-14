@@ -159,10 +159,23 @@ AHA_RANGES = {
     'Fasting Glucose (mg/dL)': ("Optimal", 100, "Borderline", 125, "At risk", None, None),
     'Systolic Blood Pressure (mmHg)': ("Optimal", 120, "At risk", None, None, None, None),
     'Diastolic Blood Pressure (mmHg)': ("Optimal", 80, "At risk", None, None, None, None),
-    'Total Cholesterol to HDL Ratio': ("Optimal", 3.5, "Borderline", 5, "At risk", None, None),
+    'Total Cholesterol to HDL Ratio ()': ("Optimal", 3.5, "Borderline", 5, "At risk", None, None),
     'Hemoglobin A1C (%)': ("Optimal", 5.7, "Borderline", 6.4, "At risk", None, None),
     'Body Mass Index': ("Low", 18.5, "Optimal", 25, "Borderline", 30, "At risk")
 }
+
+STEP_SIZE = {
+        'LBDHDD': 1,
+        'LBDLDL': 1,
+        'LBXTC': 1,
+        'LBXTR': 1,
+        'LBXGLU': 1,
+        'BPXOSY1': 1,
+        'BPXODI1': 1,
+        'TotHDLRat': .1,
+        'LBXGH': .1,
+        'BMXBMI': 1,
+    }
 
 def map_age_to_group(age):
     if 0 <= age <= 2:
@@ -388,20 +401,30 @@ def ui_choose(df, debugging):
 def popup(acro, column, user_input, user_percentile, gender, race, age_range, med, on_med, prob, value, p25, p50, p75, p90, side, suffix, low_number, high_number):
     st.header(f"Your {column} value compared to others in your peer group")
     if on_med == 'Yes':
-        st.write(f"An {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {race} {gender.lower()} aged between {age_range} years who is ON {med}-lowering medication.")
+        st.write(f"Your {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {race} {gender.lower()} aged between {age_range} years who is ON {med}-lowering medication.")
     else:
-        st.write(f"An {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {race} {gender.lower()} aged between {age_range} years who is NOT ON {med}-lowering medication.")
+        st.write(f"Your {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {race} {gender.lower()} aged between {age_range} years who is NOT ON {med}-lowering medication.")
+    
     if side == 'greater':
         st.write(f"The estimated probability of an optimal {column} ≥ {value} {UNITS_MAP[acro]} for a {race} {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
     else:
         st.write(f"The estimated probability of an optimal {column} ≤ {value} {UNITS_MAP[acro]} for a {race} {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
     
-    data = {
+    if STEP_SIZE[acro] == 0.1:
+        data = {
+            'Percentile': [f'{column} Level'],
+            '25th': [round(p25, 1)],
+            '50th': [round(p50, 1)],
+            '75th': [round(p75, 1)],
+            '90th': [round(p90, 1)]
+        }
+    else:
+        data = {
         'Percentile': [f'{column} Level'],
-        '25th': [p25],
-        '50th': [p50],
-        '75th': [p75],
-        '90th': [p90]
+        '25th': [int(p25)],
+        '50th': [int(p50)],
+        '75th': [int(p75)],
+        '90th': [int(p90)]
     }
 
     # Convert the dictionary to a DataFrame
@@ -431,19 +454,6 @@ def show_analysis(df):
         'TotHDLRat': "Value should be between 0.5-10",
         'LBXGH': "Value should be between 0 and 20",
         'BMXBMI': "Value should be between 10 and 50"
-    }
-
-    STEP_SIZE = {
-        'LBDHDD': 1,
-        'LBDLDL': 1,
-        'LBXTC': 1,
-        'LBXTR': 1,
-        'LBXGLU': 1,
-        'BPXOSY1': 1,
-        'BPXODI1': 1,
-        'TotHDLRat': .1,
-        'LBXGH': .1,
-        'BMXBMI': 1,
     }
 
     validation_range = {
@@ -483,8 +493,11 @@ def show_analysis(df):
         columnName = metric + f" ({UNITS_MAP[column]})"
 
         with col_input:
-            user_inputs[column] = st.number_input(f'{metric} ({UNITS_MAP[column]})', key='user_input', step=STEP_SIZE[column])
-        
+            if column == 'TotHDLRat':
+                user_inputs[column] = st.number_input(f'{metric}', key='user_input', step=STEP_SIZE[column])
+            else:
+                user_inputs[column] = st.number_input(f'{metric} ({UNITS_MAP[column]})', key='user_input', step=STEP_SIZE[column])
+
         with col_input2:
             st.caption(f"{validation_labels[column]}")
 
@@ -500,7 +513,8 @@ def show_analysis(df):
                 break
         if exists:
             del metric_list[delete]
-        metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
+        if user_inputs[column] > validation_range[column][0] and user_inputs[column] < validation_range[column][1]:
+            metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
 
     # Number of elements
     num_elements = 10
@@ -522,7 +536,7 @@ def show_analysis(df):
             
             placeholder = st.empty()
 
-            header = f"{columnName}"
+            header = f"{NAME_MAP[column]}"
             placeholder.markdown(f"#### {header}", unsafe_allow_html=True)
 
             col7, col8, col9, col10 = st.columns([0.025, 0.3, 0.65, 0.025], vertical_alignment='center')
@@ -541,6 +555,8 @@ def show_analysis(df):
                     # st.write(f"### ")
                     st.write(f"Please enter a :red[**valid**] value for {columnName}.")
                     continue
+                else:
+                    header = f"{NAME_MAP[column]}: {user_input} {UNITS_MAP[column]}"
 
                 # st.write(f"####")
 
@@ -575,16 +591,6 @@ def show_analysis(df):
                 user_percentile = np.mean(sorted_array <= user_input) * 100
                 if int(user_percentile) == 100:
                     user_percentile = 99
-
-                if (user_input > high_number and high_number != 1000) and column != 'LBDHDD':
-                    header_color = "red"
-                    placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
-                if (user_input > low_number and high_number == 1000) and column != 'LBDHDD':
-                    header_color = "red"
-                    placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
-                if user_input < low_number and column == 'LBDHDD':
-                    header_color = "red"
-                    placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
                 
                 if high_percentile < 99:
                     ax.plot([high_percentile, high_percentile], [0.6, 0.95], color='white', lw=1, label='Demarcation', zorder=999)
@@ -834,10 +840,10 @@ def show_analysis(df):
                 # st.write(f"Probability of HDL >= {value}: {probability_gte_35 * 100: .0f}%")
                 # st.write(f"Probability of HDL = {value}: {prob_density_value[0]}")
 
-                percentile_25 = int(np.percentile(sorted_array, 25))
-                percentile_50 = int(np.percentile(sorted_array, 50))
-                percentile_75 = int(np.percentile(sorted_array, 75))
-                percentile_90 = int(np.percentile(sorted_array, 90))
+                percentile_25 = np.percentile(sorted_array, 25)
+                percentile_50 = np.percentile(sorted_array, 50)
+                percentile_75 = np.percentile(sorted_array, 75)
+                percentile_90 = np.percentile(sorted_array, 90)
 
                 popup_column = NAME_MAP[column]
 
