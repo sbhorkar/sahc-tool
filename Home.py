@@ -557,8 +557,10 @@ def show_analysis(df):
                     # st.write(f"### ")
                     st.write(f"Please enter a :red[**valid**] value for {columnName}.")
                     continue
-                else:
+                elif STEP_SIZE[column] == 0.1 or column == 'BMXBMI':
                     header = f"{NAME_MAP[column]}: {user_input:.1f} {UNITS_MAP[column]}"
+                else:
+                    header = f"{NAME_MAP[column]}: {user_input:.0f} {UNITS_MAP[column]}"
 
                 # st.write(f"####")
 
