@@ -15,7 +15,7 @@ from collections import deque
 st.set_page_config(page_title="CORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
 # st.caption('####')
-@st.cache_resource
+@st.cache_resource(ttl=600)
 def get_app_queue():
     return deque()
 
@@ -25,7 +25,7 @@ LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 1.4
+VERSION = 1.5
 
 image_path = os.path.join(LOGO_DIR, 'CORE larger size.svg')
 
