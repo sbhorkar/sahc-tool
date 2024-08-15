@@ -15,9 +15,9 @@ from collections import deque
 st.set_page_config(page_title="CORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
 # st.caption('####')
-# @st.cache_resource(ttl=600)
-# def get_app_queue():
-#     return deque()
+@st.cache_resource(ttl=600)
+def get_app_queue():
+    return deque()
 
 DIR = os.getcwd()
 PLOT_DIR = DIR + '/plots'
@@ -25,7 +25,7 @@ LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 1.6
+VERSION = 1.5
 
 image_path = os.path.join(LOGO_DIR, 'CORE larger size.svg')
 
@@ -438,9 +438,7 @@ def popup(acro, column, user_input, user_percentile, gender, race, age_range, me
     elif 'HDL' in column:
         st.write(f"Based on the American Heart Association guidlelines, the optimal value for {column} is ≥ {low_number} for {gender.lower()}s.")
 
-# metric_list = get_app_queue()
-if 'metric_list' not in st.session_state:
-    st.session_state.metric_list = deque()
+metric_list = get_app_queue()
 
 
 def show_analysis(df):
@@ -503,20 +501,20 @@ def show_analysis(df):
         with col_input2:
             st.caption(f"{validation_labels[column]}")
 
-    if len(st.session_state.metric_list) == 0:
-        st.session_state.metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
+    if len(metric_list) == 0:
+        metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
     else:
         exists = False
         delete = -1
-        for index, selection in enumerate(st.session_state.metric_list):
+        for index, selection in enumerate(metric_list):
             if selection['column'] == column:
                 exists = True
                 delete = index
                 break
         if exists:
-            del st.session_state.metric_list[delete]
+            del metric_list[delete]
         if user_inputs[column] > validation_range[column][0] and user_inputs[column] < validation_range[column][1]:
-            st.session_state.metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
+            metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
 
     # Number of elements
     num_elements = 10
@@ -524,7 +522,7 @@ def show_analysis(df):
     # Create placeholders for columns
     cols = [st.empty() for _ in range(num_elements)]
 
-    for i, column_dict in enumerate(st.session_state.metric_list):
+    for i, column_dict in enumerate(metric_list):
 
         global header
         global placeholder
@@ -558,7 +556,7 @@ def show_analysis(df):
                     st.write(f"Please enter a :red[**valid**] value for {columnName}.")
                     continue
                 else:
-                    header = f"{NAME_MAP[column]}: {user_input:.1f} {UNITS_MAP[column]}"
+                    header = f"{NAME_MAP[column]}: {user_input} {UNITS_MAP[column]}"
 
                 # st.write(f"####")
 
