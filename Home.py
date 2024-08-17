@@ -14,6 +14,16 @@ from collections import deque
 
 st.set_page_config(page_title="CORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
+deploy = True
+# Hide the hamburger menu for deployment
+hide_menu_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        </style>
+        """
+if deploy:
+    st.markdown(hide_menu_style, unsafe_allow_html=True)
+
 # st.caption('####')
 # @st.cache_resource(ttl=600)
 # def get_app_queue():
@@ -25,7 +35,7 @@ LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 1.6
+VERSION = 1.7
 
 image_path = os.path.join(LOGO_DIR, 'CORE larger size.svg')
 
@@ -82,7 +92,6 @@ with header:
     #             date = datetime.datetime.now()
     #             f.write(f"{date}, {email}\n")
     st.write("CORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity.")
-    st.divider()
 header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 
 st.markdown(""" 
@@ -198,9 +207,11 @@ def map_age_to_group(age):
         return 79
 
 aboutMe_placeholder = st.empty()
-aboutMe_placeholder.markdown(f"### <u>About Me</u>", unsafe_allow_html=True)
+# aboutMe_placeholder.markdown(f"### <u>About Me</u>", unsafe_allow_html=True)
 
-aboutMe_expand = st.expander("Please enter your details below", expanded=True)
+expand_label = "About Me"
+
+aboutMe_expand = st.expander(expand_label, expanded=True)
 
 genderOptions = {'Male': 1, 'Female': 2}
 ageOptions = {'19-33': 19, '34-48': 34, '49-64': 49, '65-78': 65,'79+': 79}
@@ -214,11 +225,12 @@ with aboutMe_expand:
     medBPOptions = {'Yes': 1, 'No': 2}
 
     with col1:
-        gender = st.selectbox('Gender', list(genderOptions.keys()))
+        gender = st.selectbox('Gender', list(genderOptions.keys()), key=None) # fix these SANAA
+        # index = None will keep default empty
     with col2:
-        age_group = st.selectbox('Age group', list(ageOptions.keys()), index=2)
+        age_group = st.selectbox('Age group', list(ageOptions.keys()), index=2, key=None)
     with col3:
-        ethnicity = st.selectbox('Ethnicity', ['Non-South Asian', 'South Asian'])
+        ethnicity = st.selectbox('Ethnicity', ['Non-South Asian', 'South Asian'], key=None)
     with col4:
         medications_select = st.multiselect(label="Select your medication use", options=['None', 'Cholesterol', 'Diabetes', 'Blood Pressure'])
 
@@ -332,68 +344,81 @@ def ui_choose(df, debugging):
         st.write(medDiab)
         st.write(medBP)
 
-    genderFilter = [genderOptions[gender]]
-    ageFilter = [ageOptions[age_group]]
-    medCholFilter = [medCholOptions[medChol]]
-    medDiabFilter = [medDiabOptions[medDiab]]
-    medBPFilter = [medBPOptions[medBP]]
-
-    # st.dataframe(df, hide_index=True)
-
     df2 = df.copy()
-    df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
-    df2 = df2[df2['Age_Group'].isin(ageFilter)]
 
-    if ethnicity == 'South Asian':
-        df2 = df2[df2['cholMeds'].isin(medCholFilter)]
-    elif medChol == 'Yes':
-        df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
-    elif medChol == 'No':
-        df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
+    if gender is not None:
+        genderFilter = [genderOptions[gender]]
+        df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
+    if age_group is not None:
+        ageFilter = [ageOptions[age_group]]
+        df2 = df2[df2['Age_Group'].isin(ageFilter)]
     
-    if ethnicity == 'South Asian':
-        df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
-    else:
-        df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
-
-    if ethnicity == 'South Asian':
-        df2 = df2[df2['bpMeds'].isin(medBPFilter)]
-    elif medBP == 'Yes':
-        df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
-    elif medBP == 'No':
-        df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
+    if ethnicity is not None and ethnicity == 'South Asian':
+        if medChol is not None:
+            medCholFilter = [medCholOptions[medChol]]
+            df2 = df2[df2['cholMeds'].isin(medCholFilter)]
+        if medDiab is not None:
+            medDiabFilter = [medDiabOptions[medDiab]]
+            df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
+        if medBP is not None:
+           medBPFilter = [medBPOptions[medBP]]
+           df2 = df2[df2['bpMeds'].isin(medBPFilter)]
+    elif ethnicity is None or ethnicity != 'South Asian':
+        if medChol is not None:
+            medCholFilter = [medCholOptions[medChol]]
+            if medChol == 'Yes':
+                df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
+            elif medChol == 'No':
+                df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
+        if medDiab is not None:
+            medDiabFilter = [medDiabOptions[medDiab]]
+            df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
+        if medBP is not None:
+            medBPFilter = [medBPOptions[medBP]]
+            if medBP == 'Yes':
+                df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
+            elif medBP == 'No':
+                df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
 
     if len(df2) < 15:
-        next_age_group = get_next_age_group(age_group)
-        ageFilter.append(ageOptions[next_age_group])
-        df2 = df[df['RIAGENDR'].isin(genderFilter)]
-        df2 = df2[df2['Age_Group'].isin(ageFilter)]
+        if age_group is not None:
+            next_age_group = get_next_age_group(age_group)
+            ageFilter.append(ageOptions[next_age_group])
 
-        if ethnicity == 'South Asian':
-            df2 = df2[df2['cholMeds'].isin(medCholFilter)]
-        elif medChol == 'Yes':
-            df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
-        elif medChol == 'No':
-            df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
-        
-        if ethnicity == 'South Asian':
-            df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
-        else:
-            df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
-
-        if ethnicity == 'South Asian':
-            df2 = df2[df2['bpMeds'].isin(medBPFilter)]
-        elif medBP == 'Yes':
-            df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
-        elif medBP == 'No':
-            df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
-
-        # st.write(f"{len(df2)} records found after expanding age group.")
+            if gender is not None:
+                genderFilter = [genderOptions[gender]]
+                df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
+            
+            if ethnicity is not None and ethnicity == 'South Asian':
+                if medChol is not None:
+                    medCholFilter = [medCholOptions[medChol]]
+                    df2 = df2[df2['cholMeds'].isin(medCholFilter)]
+                if medDiab is not None:
+                    medDiabFilter = [medDiabOptions[medDiab]]
+                    df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
+                if medBP is not None:
+                    medBPFilter = [medBPOptions[medBP]]
+                    df2 = df2[df2['bpMeds'].isin(medBPFilter)]
+            elif ethnicity is None or ethnicity != 'South Asian':
+                if medChol is not None:
+                    if medChol == 'Yes':
+                        df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
+                    elif medChol == 'No':
+                        df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
+                if medDiab is not None:
+                    df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
+                if medBP is not None:
+                    if medBP == 'Yes':
+                        df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
+                    elif medBP == 'No':
+                        df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
     
-    if len(df2) == 0:
-        st.write(f"No records found to compare.")
+    if len(df2) < 15:
+        st.write(f"Not enough records found to compare. Please remove medication usage and try again.")
     else:
-        st.write(f"{len(df2)} records found.")
+        length = len(df2)
+        st.markdown(f"<span style='color:white;'>{length} records found.</span>", unsafe_allow_html=True)
+        
 
     return df2
 
@@ -483,25 +508,29 @@ def show_analysis(df):
     column = DROPDOWN_SELECTION[metric]
 
     if column == 'BMXBMI':
-        with col_input:
-            weight = st.number_input('Weight (lbs)', key="weight", step=STEP_SIZE[column], value = 1)
-        with col_input2:
-            height = st.number_input('Height (in)', key="height", step=STEP_SIZE[column], value = 1)
-
-        user_inputs[column] = (weight / (height ** 2)) * 703
         columnName = metric
+
+        with col_input:
+            weight = st.number_input('Weight (lbs)', key="weight", step=STEP_SIZE[column], value=None)
+        with col_input2:
+            height = st.number_input('Height (in)', key="height", step=STEP_SIZE[column], value=None)
+
+        if weight is not None and height is not None:
+            user_inputs[column] = (weight / (height ** 2)) * 703
+        else:
+            user_inputs[column] = -1
 
     else:
         columnName = metric + f" ({UNITS_MAP[column]})"
 
         with col_input:
             if column == 'TotHDLRat':
-                user_inputs[column] = st.number_input(f'{metric}', key='user_input', step=STEP_SIZE[column])
+                user_inputs[column] = st.number_input(f'{metric}', key='user_input', step=STEP_SIZE[column], value=None)
             else:
-                user_inputs[column] = st.number_input(f'{metric} ({UNITS_MAP[column]})', key='user_input', step=STEP_SIZE[column])
+                user_inputs[column] = st.number_input(f'{metric} ({UNITS_MAP[column]})', key='user_input', step=STEP_SIZE[column], value=None)
 
-        with col_input2:
-            st.caption(f"{validation_labels[column]}")
+        # with col_input2:
+        #     st.caption(f"{validation_labels[column]}")
 
     if len(st.session_state.metric_list) == 0:
         st.session_state.metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
@@ -515,9 +544,11 @@ def show_analysis(df):
                 break
         if exists:
             del st.session_state.metric_list[delete]
-        if user_inputs[column] > validation_range[column][0] and user_inputs[column] < validation_range[column][1]:
+        if user_inputs[column] is not None and user_inputs[column] >= 0:
             st.session_state.metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
 
+    st.divider()
+    
     # Number of elements
     num_elements = 10
 
@@ -535,29 +566,32 @@ def show_analysis(df):
         #st.write(column)
 
         with cols[i].container():
-            
+
             placeholder = st.empty()
-
             header = f"{NAME_MAP[column]}"
-            placeholder.markdown(f"#### {header}", unsafe_allow_html=True)
 
-            col7, col8, col9, col10 = st.columns([0.025, 0.3, 0.65, 0.025], vertical_alignment='center')
+            col8, col9, col10 = st.columns([0.65, 0.3, 0.05], vertical_alignment='center')
             
-            with col9:
+            with col8:
                 #user_input = user_inputs[column]  # Reference the user input from the dictionary
                 user_input = column_dict['input']
 
+                if user_input == None:
+                    break
+
+                placeholder.markdown(f"#### {header}", unsafe_allow_html=True)
 
                 array = df[column].dropna()
                 if len(array.index) < 5:
                     st.markdown(f"Not enough data available for {columnName}.")
                     continue
 
-                if user_input <= validation_range[column][0] or user_input >= validation_range[column][1]:
-                    # st.write(f"### ")
-                    st.write(f"Please enter a :red[**valid**] value for {columnName}.")
-                    continue
-                elif STEP_SIZE[column] == 0.1 or column == 'BMXBMI':
+                # if user_input <= validation_range[column][0] or user_input >= validation_range[column][1]:
+                #     # st.write(f"### ")
+                #     st.write(f"Please enter a :red[**valid**] value for {columnName}.")
+                #     continue
+                # el
+                if STEP_SIZE[column] == 0.1 or column == 'BMXBMI':
                     header = f"{NAME_MAP[column]}: {user_input:.1f} {UNITS_MAP[column]}"
                 else:
                     header = f"{NAME_MAP[column]}: {user_input:.0f} {UNITS_MAP[column]}"
@@ -592,8 +626,8 @@ def show_analysis(df):
                 fig, ax = plt.subplots(figsize=(16, 1.15))
 
                 # dot at user input position
-                user_percentile = np.mean(sorted_array <= user_input) * 100
-                if int(user_percentile) == 100:
+                user_percentile = int(np.mean(sorted_array <= user_input) * 100)
+                if user_percentile == 100:
                     user_percentile = 99
                 
                 if high_percentile < 99:
@@ -669,42 +703,44 @@ def show_analysis(df):
                                 (100 - high_percentile), 0.35, 
                                 color=at_risk, fill=True, zorder=90))
 
+                scatter_size = 1500
+
                 if columnName == 'HDL (mg/dL)':
                     if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = at_risk
                     else:
-                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = optimal
                 elif 'Blood Pressure' in columnName:
                     if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = optimal
                     else:
-                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = at_risk
                 elif columnName == 'Body Mass Index':
                     if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = at_risk
                     elif user_percentile < high_percentile:
-                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = optimal
                     elif user_percentile < extra_high_percentile:
-                        ax.scatter(user_percentile, 0.865, color=borderline, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=borderline, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = borderline
                     else:
-                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = at_risk
                 else:
                     if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = optimal
                     elif user_percentile <= high_percentile:
-                        ax.scatter(user_percentile, 0.865, color=borderline, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=borderline, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = borderline
                     elif user_percentile > high_percentile:
-                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=950, edgecolors=['black'])
+                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = at_risk
 
                 placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
@@ -722,14 +758,14 @@ def show_analysis(df):
 
                 # ax.set_xlabel('Percentile (%)')
 
-                ax.set_title(columnName)
+                # ax.set_title(columnName)
 
                 if STEP_SIZE[column] == .1 or column == 'BMXBMI':
-                    ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.2, 0.81),
-                                horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=12)
+                    ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.25, 0.81),
+                                horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=17)
                 else:
-                    ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.2, 0.81),
-                                horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=14)
+                    ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.25, 0.81),
+                                horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=17)
                 
                 if int(user_percentile) == 100:
                     user_percentile = 99
@@ -804,16 +840,6 @@ def show_analysis(df):
                 fig.savefig(f'{column}.jpeg', bbox_inches='tight')
                 plt.close(fig)
 
-                digit = user_percentile % 10
-                suffix = 'th'
-
-                if digit == 1:
-                    suffix = 'st'
-                elif digit == 2:
-                    suffix == 'nd'
-                elif digit == 3:
-                    suffix == 'rd'
-
                 kde = sm.nonparametric.KDEUnivariate(array)
                 kde.fit(bw='scott')  # You can also specify bandwidth manually, e.g., bw=0.5
 
@@ -851,7 +877,7 @@ def show_analysis(df):
 
                 popup_column = NAME_MAP[column]
 
-            with col8:
+            with col9:
                 st.markdown("""
                     <style>
                         button[kind="primary"] {
@@ -861,8 +887,8 @@ def show_analysis(df):
                         }
 
                         button[kind="primary"]:hover {
-                            background-color: white; /* Slightly different background on hover */
-                            color: #7D343C; /* Ensure text color remains visible on hover */
+                            background-color: #7D343C; /* Slightly different background on hover */
+                            color: white; /* Ensure text color remains visible on hover */
                         }
                     </style>
                     """, unsafe_allow_html=True)
@@ -872,7 +898,18 @@ def show_analysis(df):
 
                 array = df[column].dropna()
                 sorted_array = np.sort(array)
-                user_percentile = np.mean(sorted_array <= user_input) * 100
+                user_percentile = int(np.mean(sorted_array <= user_input) * 100)
+
+                digit = user_percentile % 10
+                # st.write(digit)
+                suffix = 'th'
+
+                if digit == 1:
+                    suffix = 'st'
+                elif digit == 2:
+                    suffix == 'nd'
+                elif digit == 3:
+                    suffix == 'rd'
 
                 more_info = st.button(label=f'ⓘ {user_percentile: .0f}{suffix} percentile compared to peers in your group', key=column, type='primary')
                 # st.caption(' Press for more info')
