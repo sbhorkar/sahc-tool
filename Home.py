@@ -12,7 +12,7 @@ import datetime
 from matplotlib.patches import Rectangle
 from collections import deque 
 
-st.set_page_config(page_title="CORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
+st.set_page_config(page_title="SCORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
 deploy = True
 # Hide the hamburger menu for deployment
@@ -37,7 +37,7 @@ OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
 VERSION = 1.7
 
-image_path = os.path.join(LOGO_DIR, 'CORE larger size.svg')
+image_path = os.path.join(LOGO_DIR, 'SCORE.svg')
 
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
