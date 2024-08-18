@@ -92,7 +92,7 @@ with header:
     #             date = datetime.datetime.now()
     #             f.write(f"{date}, {email}\n")
     st.write("CORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity.")
-header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
+# header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 
 st.markdown(""" 
         <style>
@@ -149,14 +149,14 @@ UNITS_MAP = {
 NAME_MAP = {
     'LBXTC': 'Total Cholesterol', 'LBDLDL': 'LDL', 'LBDHDD': 'HDL', 
     'LBXTR': 'Triglycerides', 'TotHDLRat': 'Total Cholesterol to HDL Ratio', 
-    'LBXGLU': 'Fasting Glucose', 'LBXGH': 'Hemoglobin A1C',
+    'LBXGLU': 'Fasting Glucose', 'LBXGH': 'HbA1c',
     'BMXBMI': 'Body Mass Index', 'BPXOSY1': 'Systolic Blood Pressure', 'BPXODI1': 'Diastolic Blood Pressure', 
 }
 
 DROPDOWN_SELECTION = {
     'Total Cholesterol': 'LBXTC', 'LDL': 'LBDLDL', 'HDL': 'LBDHDD',
     'Triglycerides': 'LBXTR', 'Total Cholesterol to HDL Ratio': 'TotHDLRat',
-    'Fasting Glucose': 'LBXGLU', 'Hemoglobin A1C': 'LBXGH',
+    'Fasting Glucose': 'LBXGLU', 'HbA1c': 'LBXGH',
     'Body Mass Index': 'BMXBMI', 'Systolic Blood Pressure': 'BPXOSY1', 'Diastolic Blood Pressure': 'BPXODI1', 
 }
 
@@ -169,7 +169,7 @@ AHA_RANGES = {
     'Systolic Blood Pressure (mmHg)': ("Optimal", 120, "At risk", None, None, None, None),
     'Diastolic Blood Pressure (mmHg)': ("Optimal", 80, "At risk", None, None, None, None),
     'Total Cholesterol to HDL Ratio ()': ("Optimal", 3.5, "Borderline", 5, "At risk", None, None),
-    'Hemoglobin A1C (%)': ("Optimal", 5.7, "Borderline", 6.4, "At risk", None, None),
+    'HbA1c (%)': ("Optimal", 5.7, "Borderline", 6.4, "At risk", None, None),
     'Body Mass Index': ("Low", 18.5, "Optimal", 25, "Borderline", 30, "At risk")
 }
 
@@ -206,18 +206,63 @@ def map_age_to_group(age):
     else:
         return 79
 
-aboutMe_placeholder = st.empty()
+# aboutMe_placeholder = st.empty()
 # aboutMe_placeholder.markdown(f"### <u>About Me</u>", unsafe_allow_html=True)
 
 expand_label = "About Me"
 
-aboutMe_expand = st.expander(expand_label, expanded=True)
+# aboutMe_expand = st.expander(expand_label, expanded=True)
+
+if 'title_list' not in st.session_state:
+    st.session_state.title_list = []
+
+if "title_expander" not in st.session_state:
+    st.session_state.title_expander = "About Me"
+
+if "selected_gender" not in st.session_state:
+    st.session_state.selected_gender = None
+
+if "selected_age" not in st.session_state:
+    st.session_state.selected_age = None
+
+if "selected_ethnicity" not in st.session_state:
+    st.session_state.selected_ethnicity = None
+
+if "selected_meds" not in st.session_state:
+    st.session_state.selected_meds = []
 
 genderOptions = {'Male': 1, 'Female': 2}
 ageOptions = {'19-33': 19, '34-48': 34, '49-64': 49, '65-78': 65,'79+': 79}
 dataSelection = ['NHANES', 'SAHC']
 
-with aboutMe_expand:
+def update_title():
+    st.session_state.title_list = []  # Clear the title list on each update
+    
+    selected_gender = st.session_state.selected_gender
+    selected_age = st.session_state.selected_age
+    selected_ethnicity = st.session_state.selected_ethnicity
+    selected_meds = st.session_state.selected_meds
+    
+    if selected_gender:
+        st.session_state.title_list.append(selected_gender)
+    if selected_age:
+        st.session_state.title_list.append(f"Age: {selected_age}")
+    if selected_ethnicity:
+        st.session_state.title_list.append(selected_ethnicity)
+    if selected_meds:
+        if 'None' in selected_meds:
+            selected_meds.remove('None')
+        if selected_meds != []:
+            selected_meds = ', '.join(selected_meds)
+            st.session_state.title_list.append(f"Current medications: {selected_meds}")
+    
+    if st.session_state.title_list:
+        st.session_state.title_expander = f"About Me: {', '.join(st.session_state.title_list)}"
+    else:
+        st.session_state.title_expander = "About Me"
+
+with st.expander(st.session_state.title_expander or expand_label, expanded=True):
+    # option = st.selectbox("Select an option", ["One", "Two", "Tres"], key="title_expander")
     col1, col12, col2, col22, col3, col32, col4, col42 = st.columns([.2, .1, .2, .1, .2, .1, .2, .1], vertical_alignment='top')
 
     medCholOptions = {'Yes': 1, 'No': 2}
@@ -225,14 +270,20 @@ with aboutMe_expand:
     medBPOptions = {'Yes': 1, 'No': 2}
 
     with col1:
-        gender = st.selectbox('Gender', list(genderOptions.keys()), key=None) # fix these SANAA
+        # gender = st.selectbox('Gender', list(genderOptions.keys()), key=None) # fix these SANAA
+        # gender = st.selectbox('Gender', list(genderOptions.keys()), key="selected_gender", on_change=update_title(), index=None)
+        gender = st.selectbox('Gender', list(genderOptions.keys()), key="selected_gender", on_change=update_title, index=None)
         # index = None will keep default empty
     with col2:
-        age_group = st.selectbox('Age group', list(ageOptions.keys()), index=2, key=None)
+        # age_group = st.selectbox('Age group', list(ageOptions.keys()), index=2, key=None)
+        # age_group = st.selectbox('Age group', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None)
+        age_group = st.selectbox('Age group', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None)
     with col3:
-        ethnicity = st.selectbox('Ethnicity', ['Non-South Asian', 'South Asian'], key=None)
+        # ethnicity = st.selectbox('Ethnicity', ['Non-South Asian', 'South Asian'], key=None)
+        ethnicity = st.selectbox('Ethnicity', ['Non-South Asian', 'South Asian'], key="selected_ethnicity", on_change=update_title, index=None)
     with col4:
-        medications_select = st.multiselect(label="Select your medication use", options=['None', 'Cholesterol', 'Diabetes', 'Blood Pressure'])
+        med_options = ['None', 'Cholesterol', 'Diabetes', 'Blood Pressure']
+        medications_select = st.multiselect(label="Select your medication use", options=med_options, key="selected_meds", on_change=update_title)
 
         medChol = 'No'
         medDiab = 'No'
@@ -249,12 +300,12 @@ meds = ", ".join(medications_select)
 if meds == '':
     meds = "None"
 
-aboutMe_label = f"About me: {gender}, Age: {age_group}, {ethnicity}, Current medications: {meds}"
-aboutMe_placeholder.markdown(f"### <u>{aboutMe_label}</u>", unsafe_allow_html=True)
+# aboutMe_label = f"About me: {gender}, Age: {age_group}, {ethnicity}, Current medications: {meds}"
+# aboutMe_placeholder.markdown(f"### <u>{aboutMe_label}</u>", unsafe_allow_html=True)
                                             
 # @st.cache_data
 def load_files(debugging):
-    if ethnicity == 'Non-South Asian':
+    if ethnicity is None or ethnicity != 'South Asian':
         df_user = pd.read_sas(USER_FILE, format='xport')
         df_diq = pd.read_sas(DIQ_FILE, format='xport')
         df_bpq = pd.read_sas(BPQ_FILE, format='xport')
@@ -282,6 +333,9 @@ def load_files(debugging):
         # df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(lambda age: 20 * int(age / 20))
         df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(map_age_to_group)
         df_combined['TotHDLRat'] =  df_combined['LBXTC'] / df_combined['LBDHDD']
+
+        # st.write(df_combined.shape)
+        # st.dataframe(df_combined)
 
         if debugging:
             st.dataframe(df_combined, hide_index=True)
@@ -345,40 +399,41 @@ def ui_choose(df, debugging):
         st.write(medBP)
 
     df2 = df.copy()
+    # st.write(df2)
+    # st.write(df2.shape)
 
     if gender is not None:
         genderFilter = [genderOptions[gender]]
         df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
+        # st.write(df2.shape, "gender")
     if age_group is not None:
         ageFilter = [ageOptions[age_group]]
         df2 = df2[df2['Age_Group'].isin(ageFilter)]
+        # st.write(df2.shape, "Age")
+
+    # st.write(df2)
     
     if ethnicity is not None and ethnicity == 'South Asian':
-        if medChol is not None:
-            medCholFilter = [medCholOptions[medChol]]
-            df2 = df2[df2['cholMeds'].isin(medCholFilter)]
-        if medDiab is not None:
-            medDiabFilter = [medDiabOptions[medDiab]]
-            df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
-        if medBP is not None:
-           medBPFilter = [medBPOptions[medBP]]
-           df2 = df2[df2['bpMeds'].isin(medBPFilter)]
+        medCholFilter = [medCholOptions[medChol]]
+        df2 = df2[df2['cholMeds'].isin(medCholFilter)]
+        medDiabFilter = [medDiabOptions[medDiab]]
+        df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
+        medBPFilter = [medBPOptions[medBP]]
+        df2 = df2[df2['bpMeds'].isin(medBPFilter)]
     elif ethnicity is None or ethnicity != 'South Asian':
-        if medChol is not None:
-            medCholFilter = [medCholOptions[medChol]]
-            if medChol == 'Yes':
-                df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
-            elif medChol == 'No':
-                df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
-        if medDiab is not None:
-            medDiabFilter = [medDiabOptions[medDiab]]
-            df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
-        if medBP is not None:
-            medBPFilter = [medBPOptions[medBP]]
-            if medBP == 'Yes':
-                df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
-            elif medBP == 'No':
-                df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
+        # st.dataframe(df2)
+        medCholFilter = [medCholOptions[medChol]]
+        if medChol == 'Yes':
+            df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
+        elif medChol == 'No':
+            df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
+        medDiabFilter = [medDiabOptions[medDiab]]
+        df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
+        medBPFilter = [medBPOptions[medBP]]
+        if medBP == 'Yes':
+            df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
+        elif medBP == 'No':
+            df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
 
     if len(df2) < 15:
         if age_group is not None:
@@ -390,51 +445,79 @@ def ui_choose(df, debugging):
                 df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
             
             if ethnicity is not None and ethnicity == 'South Asian':
-                if medChol is not None:
-                    medCholFilter = [medCholOptions[medChol]]
-                    df2 = df2[df2['cholMeds'].isin(medCholFilter)]
-                if medDiab is not None:
-                    medDiabFilter = [medDiabOptions[medDiab]]
-                    df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
-                if medBP is not None:
-                    medBPFilter = [medBPOptions[medBP]]
-                    df2 = df2[df2['bpMeds'].isin(medBPFilter)]
+                medCholFilter = [medCholOptions[medChol]]
+                df2 = df2[df2['cholMeds'].isin(medCholFilter)]
+                medDiabFilter = [medDiabOptions[medDiab]]
+                df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
+                medBPFilter = [medBPOptions[medBP]]
+                df2 = df2[df2['bpMeds'].isin(medBPFilter)]
             elif ethnicity is None or ethnicity != 'South Asian':
-                if medChol is not None:
-                    if medChol == 'Yes':
-                        df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
-                    elif medChol == 'No':
-                        df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
-                if medDiab is not None:
-                    df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
-                if medBP is not None:
-                    if medBP == 'Yes':
-                        df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
-                    elif medBP == 'No':
-                        df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
+                if medChol == 'Yes':
+                    df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
+                elif medChol == 'No':
+                    df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
+                df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
+                if medBP == 'Yes':
+                    df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
+                elif medBP == 'No':
+                    df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
     
     if len(df2) < 15:
         st.write(f"Not enough records found to compare. Please remove medication usage and try again.")
     else:
         length = len(df2)
-        st.markdown(f"<span style='color:white;'>{length} records found.</span>", unsafe_allow_html=True)
+        st.markdown(f"<span style='color:white;'>{length} records found.</span>", unsafe_allow_html=True) # SANAA unwhite
         
 
     return df2
 
 @st.dialog(" ")
-def popup(acro, column, user_input, user_percentile, gender, race, age_range, med, on_med, prob, value, p25, p50, p75, p90, side, suffix, low_number, high_number):
-    st.header(f"Your {column} value compared to others in your peer group")
+def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, p25, p50, p75, p90, low_number, high_number, status, df3):
+    
+    st.header(f"Comparing your {column} value to others in your peer group")
     if on_med == 'Yes':
-        st.write(f"Your {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {race} {gender.lower()} aged between {age_range} years who is ON {med}-lowering medication.")
+        if age_range is None and race is None and gender is None:
+            st.write(f"(Person ON {med}-lowering medication.)")  
+        elif gender is None and race is None:
+            st.write(f"(Person aged between {age_range} years, ON {med}-lowering medication.)")
+        elif age_range is None and gender is None:
+            st.write(f"({race}, ON {med}-lowering medication.)")  
+        elif age_range is None and race is None:
+            st.write(f"({gender}, ON {med}-lowering medication.)")  
+        elif gender is None:
+            st.write(f"({race}, aged between {age_range} years, ON {med}-lowering medication.)")
+        elif race is None:
+            st.write(f"({gender}, aged between {age_range} years, ON {med}-lowering medication.)")
+        else:
+            st.write(f"({race} {gender.lower()}, aged between {age_range} years, ON {med}-lowering medication.)")
     else:
-        st.write(f"Your {column} of {user_input:.1f} is at the {user_percentile: .0f}{suffix} percentile for a {race} {gender.lower()} aged between {age_range} years who is NOT ON {med}-lowering medication.")
-    
-    if side == 'greater':
-        st.write(f"The estimated probability of an optimal {column} ≥ {value} {UNITS_MAP[acro]} for a {race} {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
-    else:
-        st.write(f"The estimated probability of an optimal {column} ≤ {value} {UNITS_MAP[acro]} for a {race} {gender.lower()} aged between {age_range} years is {prob * 100: .0f}%.")
-    
+        if age_range is None and race is None and gender is None:
+            st.write(f"(Person NOT ON {med}-lowering medication.)")  
+        elif gender is None and race is None:
+            st.write(f"(Person aged between {age_range} years, NOT ON {med}-lowering medication.)")
+        elif age_range is None and gender is None:
+            st.write(f"({race}, NOT ON {med}-lowering medication.)")  
+        elif age_range is None and race is None:
+            st.write(f"({gender}, NOT ON {med}-lowering medication.)")  
+        elif gender is None:
+            st.write(f"({race}, aged between {age_range} years, NOT ON {med}-lowering medication.)")
+        elif race is None:
+            st.write(f"({gender}, aged between {age_range} years, NOT ON {med}-lowering medication.)")
+        else:
+            st.write(f"({race} {gender.lower()}, aged between {age_range} years, NOT ON {med}-lowering medication.)")
+
+    total = df3.shape[0]
+    # st.write(total)
+
+    # columnName = column + f" ({UNITS_MAP[acro]})"
+    df3 = df3[df3[acro] <= 5.8]
+    top = df3.shape[0]  
+    # st.write(top)           
+    prop = (top / total) * 100
+
+    st.header(f"Your {column}: {user_input:.1f} {UNITS_MAP[acro]}, Risk classification: {status}")
+    st.write(f"{prop:.0f}% of individuals in your peer group have {column} <= {user_input:.1f}")
+
     if STEP_SIZE[acro] == 0.1:
         data = {
             'Percentile': [f'{column} Level'],
@@ -456,12 +539,17 @@ def popup(acro, column, user_input, user_percentile, gender, race, age_range, me
     df = pd.DataFrame(data)
     st.dataframe(df, hide_index=True)
 
-    if 'Triglyc' in column or 'LDL' in column or 'Total Cholesterol (mg/dL)' in column or 'Glucose' in column or 'Pressure' in column or 'A1C' in column:
-        st.write(f"Based on the American Heart Association guidlelines, the optimal value for {column} is ≤ {low_number} for {gender.lower()}s.")
-    elif 'to HDL' in column or 'Body Mass' in column:
-        st.write(f"Based on the American Heart Association guidlelines, the optimal value for {column} is between {low_number}-{high_number} for {gender.lower()}s.")
+    if 'to HDL' in column or 'Body Mass' in column:
+        st.write(f"The **optimal** value for {column} is **{low_number} - {high_number}** according to AHA guidelines. In your peer group, the estimated probability of having a sub-optimal {column} of ≤ {low_number} or ≥ {high_number} is {prob:.0f}%.")
     elif 'HDL' in column:
-        st.write(f"Based on the American Heart Association guidlelines, the optimal value for {column} is ≥ {low_number} for {gender.lower()}s.")
+        st.write(f"The **optimal** value for {column} is ≥ **{low_number}** according to AHA guidelines. In your peer group, the estimated probability of having a sub-optimal {column} of ≥ {low_number} is {prob:.0f}%.")
+    else:
+        st.write(f"The **optimal** value for {column} is ≤ **{low_number}** according to AHA guidelines. In your peer group, the estimated probability of having a sub-optimal {column} of ≥ {low_number} is {prob:.0f}%.")
+
+    if status != 'Optimal':
+        st.write("Please check our guidance on next steps to lower the risk posed by this marker at the end of your report.")
+    else:
+        "Your marker is in optimal range. Continue working on your lifestyle behaviors to keep this marker in range."
 
 # metric_list = get_app_queue()
 if 'metric_list' not in st.session_state:
@@ -498,12 +586,14 @@ def show_analysis(df):
 
     user_inputs = {}
 
-    st.markdown(f"### <u>My risk profile markers</u>", unsafe_allow_html=True)
+    # st.markdown(f"### <u>My risk profile markers</u>", unsafe_allow_html=True)
 
-    col_dropdown, col_empty, col_input, col_input2, col_empty = st.columns([0.25, 0.1, 0.2, 0.2, 0.25], gap='medium', vertical_alignment='center')
+    # col_empty1, col_dropdown, col_empty, col_input, col_input2, col_empty = st.columns([0.001, 0.234, 0.115, 0.2, 0.2, 0.25], gap='medium', vertical_alignment='center')
+    col_dropdown, col_empty, col_input, col_empty2, col_input2, col_empty3 = st.columns([0.225, 0.025, 0.172, 0.067, 0.175, 0.331], gap='medium', vertical_alignment='center')
+
 
     with col_dropdown:
-        metric = st.selectbox('Metric', list(DROPDOWN_SELECTION.keys()))
+        metric = st.selectbox('My Risk Profile Markers: Select one', list(DROPDOWN_SELECTION.keys()))
     
     column = DROPDOWN_SELECTION[metric]
 
@@ -570,8 +660,8 @@ def show_analysis(df):
             placeholder = st.empty()
             header = f"{NAME_MAP[column]}"
 
-            col8, col9, col10 = st.columns([0.65, 0.3, 0.05], vertical_alignment='center')
-            
+            col8, col9, col10 = st.columns([0.65, 0.3, 0.05], vertical_alignment='top', gap='small')
+        
             with col8:
                 #user_input = user_inputs[column]  # Reference the user input from the dictionary
                 user_input = column_dict['input']
@@ -602,12 +692,12 @@ def show_analysis(df):
                     low_number = AHA_RANGES[columnName][1]
                     high_number = AHA_RANGES[columnName][3]
                     if ethnicity == 'South Asian' and columnName == 'Body Mass Index':
-                        high_number = 23
+                        AHA_RANGES[columnName][3] = 23
                 else:
                     st.write(f"No AHA prescribed range available for {columnName}.")
                     continue
                 if columnName == 'HDL (mg/dL)' and gender == 'Female':
-                    low_number = 50
+                    AHA_RANGES[columnName][1] = 50
 
                 sorted_array = np.sort(array)
 
@@ -616,12 +706,12 @@ def show_analysis(df):
                     high_number = 1000
                     high_percentile = 99
                 else:
-                    high_percentile = np.mean(sorted_array <= high_number) * 100
+                    high_percentile = int(np.mean(sorted_array <= high_number) * 100)
                     extra_high_number = AHA_RANGES[columnName][5]
                     if extra_high_number is not None:
-                        extra_high_percentile = np.mean(sorted_array <= extra_high_number) * 100
+                        extra_high_percentile = int(np.mean(sorted_array <= extra_high_number) * 100)
 
-                low_percentile = np.mean(sorted_array <= low_number) * 100
+                low_percentile = int(np.mean(sorted_array <= low_number) * 100)
 
                 fig, ax = plt.subplots(figsize=(16, 1.15))
 
@@ -629,6 +719,8 @@ def show_analysis(df):
                 user_percentile = int(np.mean(sorted_array <= user_input) * 100)
                 if user_percentile == 100:
                     user_percentile = 99
+
+                status = 'Optimal'
                 
                 if high_percentile < 99:
                     ax.plot([high_percentile, high_percentile], [0.6, 0.95], color='white', lw=1, label='Demarcation', zorder=999)
@@ -703,45 +795,45 @@ def show_analysis(df):
                                 (100 - high_percentile), 0.35, 
                                 color=at_risk, fill=True, zorder=90))
 
-                scatter_size = 1500
+                scatter_size = 1750
 
                 if columnName == 'HDL (mg/dL)':
                     if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = at_risk
+                        status = 'At risk'
                     else:
-                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = optimal
                 elif 'Blood Pressure' in columnName:
                     if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = optimal
                     else:
-                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = at_risk
+                        status = 'At risk'
                 elif columnName == 'Body Mass Index':
                     if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = at_risk
+                        status = 'At risk'
                     elif user_percentile < high_percentile:
-                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = optimal
                     elif user_percentile < extra_high_percentile:
-                        ax.scatter(user_percentile, 0.865, color=borderline, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = borderline
+                        status = 'Borderline'
                     else:
-                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = at_risk
+                        status = 'At risk'
                 else:
                     if user_percentile < low_percentile:
-                        ax.scatter(user_percentile, 0.865, color=optimal, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = optimal
                     elif user_percentile <= high_percentile:
-                        ax.scatter(user_percentile, 0.865, color=borderline, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = borderline
+                        status = 'Borderline'
                     elif user_percentile > high_percentile:
-                        ax.scatter(user_percentile, 0.865, color=at_risk, zorder=1000, label='Your Input', s=scatter_size, edgecolors=['black'])
                         header_color = at_risk
+                        status = 'At risk'
+                
+                ax.scatter(user_percentile, 0.855, zorder=999, s=scatter_size+100, edgecolors='k')
+                ax.scatter(user_percentile, 0.855, color=header_color, zorder=1000, label='Your Input', s=scatter_size, edgecolors='w')
+                        
 
                 placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
 
@@ -761,11 +853,11 @@ def show_analysis(df):
                 # ax.set_title(columnName)
 
                 if STEP_SIZE[column] == .1 or column == 'BMXBMI':
-                    ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.25, 0.81),
-                                horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=17)
+                    ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.25, 0.79),
+                                horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=16)
                 else:
-                    ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.25, 0.81),
-                                horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=17)
+                    ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.25, 0.79),
+                                horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=16)
                 
                 if int(user_percentile) == 100:
                     user_percentile = 99
@@ -840,31 +932,53 @@ def show_analysis(df):
                 fig.savefig(f'{column}.jpeg', bbox_inches='tight')
                 plt.close(fig)
 
-                kde = sm.nonparametric.KDEUnivariate(array)
-                kde.fit(bw='scott')  # You can also specify bandwidth manually, e.g., bw=0.5
+                df3 = df.copy()
 
-                # Generate a range of HDL values to estimate the CDF
-                hdl_range = np.linspace(min(array), max(array), 1000)
+                total = df3.shape[0]
 
-                # Evaluate the KDE over the range
-                pdf_values = kde.evaluate(hdl_range)
-
-                # Calculate the CDF by integrating the PDF
-                cdf_values = np.cumsum(pdf_values) * (hdl_range[1] - hdl_range[0])
-
-                # Find the CDF value at HDL = 35
-                if "HDL" in columnName or high_number == 1000:
-                    value = low_number
+                if "to HDL" in columnName:
+                    value = AHA_RANGES[columnName][1]
+                    df3 = df3[df3['TotHDLRat'] < AHA_RANGES[columnName][1] & df3['TotHDLRat'] > AHA_RANGES[columnName][3]]
+                elif "HDL" in columnName:
+                    value = AHA_RANGES[columnName][1]
+                    df3 = df3[df3['LBDHDD'] < AHA_RANGES[columnName][1]]
+                elif "Body Mass Index" in columnName:
+                    value = AHA_RANGES[columnName][3]
+                    df3 = df3[df3['BMXBMI'] > AHA_RANGES[columnName][3]]
                 else:
-                    value = high_number
+                    value = AHA_RANGES[columnName][1]
+                    df3 = df3[df3[column] > AHA_RANGES[columnName][1]]
+
+                top = df3.shape[0]
+                # st.write(top)
+                # st.write(total)                
+                prob = (top / total) * 100
+
+                # kde = sm.nonparametric.KDEUnivariate(array)
+                # kde.fit(bw='scott')  # You can also specify bandwidth manually, e.g., bw=0.5
+
+                # # Generate a range of HDL values to estimate the CDF
+                # hdl_range = np.linspace(min(array), max(array), 1000)
+
+                # # Evaluate the KDE over the range
+                # pdf_values = kde.evaluate(hdl_range)
+
+                # # Calculate the CDF by integrating the PDF
+                # cdf_values = np.cumsum(pdf_values) * (hdl_range[1] - hdl_range[0])
+
+                # # Find the CDF value at HDL = 35
+                # if "HDL" in columnName or high_number == 1000:
+                #     value = low_number
+                # else:
+                #     value = high_number
                 
-                cdf_at_35 = np.interp(value, hdl_range, cdf_values)
+                # cdf_at_35 = np.interp(value, hdl_range, cdf_values)
 
-                # Probability of HDL >= 35
-                if columnName == 'HDL (mg/dL)':
-                    prob = 1 - cdf_at_35
-                else:
-                    prob = cdf_at_35
+                # # Probability of HDL >= 35
+                # if columnName == 'HDL (mg/dL)':
+                #     prob = 1 - cdf_at_35
+                # else:
+                #     prob = cdf_at_35
 
                 # # Display the result in Streamlit
                 # st.write(f"Probability of HDL >= {value}: {probability_gte_35 * 100: .0f}%")
@@ -883,7 +997,8 @@ def show_analysis(df):
                         button[kind="primary"] {
                             background-color: white;
                             color: black;
-                            border: 1px solid #7D343C;
+                            border: 0px solid #7D343C;
+                            padding: 5px;
                         }
 
                         button[kind="primary"]:hover {
@@ -915,24 +1030,28 @@ def show_analysis(df):
                 # st.caption(' Press for more info')
 
             if more_info:
-                    if "HDL (mg/dL)" in columnName:
-                        popup(column, popup_column, user_input, user_percentile, gender, ethnicity, age_group, "cholesterol", medChol, prob, value, 
-                              percentile_25, percentile_50, percentile_75, percentile_90, "greater", suffix, low_number, high_number)
-                    elif "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
-                        popup(column, popup_column, user_input, user_percentile, gender, ethnicity, age_group, "cholesterol", medChol, prob, value, 
-                              percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix, low_number, high_number)
+                    if "HDL (mg/dL)" in columnName or "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
+                        popup(column, popup_column, user_input, gender, ethnicity, age_group, "cholesterol", medChol, prob, 
+                              percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, df)
                     elif "Glucose" in columnName or "A1C" in columnName:
-                        popup(column, popup_column, user_input, user_percentile, gender, ethnicity, age_group, "blood sugar", medDiab, prob, value, 
-                              percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix, low_number, high_number)   
+                        popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood sugar", medDiab, prob, 
+                              percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, df)   
                     else:
-                        popup(column, popup_column, user_input, user_percentile, gender, ethnicity, age_group, "blood pressure", medBP, prob, value, 
-                              percentile_25, percentile_50, percentile_75, percentile_90, "less", suffix, low_number, high_number)
+                        popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood pressure", medBP, prob, 
+                              percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, df3)
             
+
 
 # Main execution
 df_c = load_files(False)
 df_d = ui_choose(df_c, False)
 show_analysis(df_d)
+
+# df_d = df_d['LBDHDD'] check with Amit
+# st.write(df_d.shape[0])
+
+# df_d = df_d[df_d < 40]
+# st.write(df_d.shape[0])
 
 st.divider()
 st.markdown('<div style="text-align: center"> Please email <a href="mailto:sanaa.bhorkar@gmail.com">sanaa.bhorkar@gmail.com</a> with any feedback! </div>', unsafe_allow_html=True)
