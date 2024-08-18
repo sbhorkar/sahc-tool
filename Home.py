@@ -37,7 +37,7 @@ OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
 VERSION = 1.7
 
-image_path = os.path.join(LOGO_DIR, 'SCORE.svg')
+image_path = os.path.join(LOGO_DIR, 'SCORE same size.svg')
 
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
