@@ -149,34 +149,34 @@ MCQ_FILE = os.path.join(DATA_DIR, 'P_MCQ.XPT')
 SAHC_FILE = os.path.join(SAHC_DATA_DIR, 'merged_data_noPID.csv')
 
 UNITS_MAP = {
-    'LBDHDD': "mg/dL", 'LBDLDL': "mg/dL", 'LBXTC': "mg/dL", 'LBXTR': "mg/dL", 'LBXGH': "%",
-    'LBXGLU': "mg/dL", 'BPXOSY1': "mmHg", 'BPXODI1': "mmHg", 'LBXHGB': "g/dL", 'TotHDLRat': "", 'BMXBMI': ""
+    'LBDHDD': "mg/dl", 'LBDLDL': "mg/dl", 'LBXTC': "mg/dl", 'LBXTR': "mg/dl", 'LBXGH': "%",
+    'LBXGLU': "mg/dl", 'BPXOSY1': "mmHg", 'BPXODI1': "mmHg", 'LBXHGB': "g/dl", 'TotHDLRat': "", 'BMXBMI': ""
 }
 
 
 NAME_MAP = {
     'LBXTC': 'Total Cholesterol', 'LBDLDL': 'LDL', 'LBDHDD': 'HDL', 
-    'LBXTR': 'Triglycerides', 'TotHDLRat': 'Total Cholesterol to HDL Ratio', 
+    'LBXTR': 'Triglycerides', 'TotHDLRat': 'Total Cholesterol to HDL ratio', 
     'LBXGLU': 'Fasting Glucose', 'LBXGH': 'HbA1c',
     'BMXBMI': 'Body Mass Index', 'BPXOSY1': 'Systolic Blood Pressure', 'BPXODI1': 'Diastolic Blood Pressure', 
 }
 
 DROPDOWN_SELECTION = {
     'Total Cholesterol': 'LBXTC', 'LDL': 'LBDLDL', 'HDL': 'LBDHDD',
-    'Triglycerides': 'LBXTR', 'Total Cholesterol to HDL Ratio': 'TotHDLRat',
+    'Triglycerides': 'LBXTR', 'Total Cholesterol to HDL ratio': 'TotHDLRat',
     'Fasting Glucose': 'LBXGLU', 'HbA1c': 'LBXGH',
     'Body Mass Index': 'BMXBMI', 'Systolic Blood Pressure': 'BPXOSY1', 'Diastolic Blood Pressure': 'BPXODI1', 
 }
 
 AHA_RANGES = {
-    'Triglycerides (mg/dL)': ("Optimal", 150, "Borderline", 200, "At risk", None, None),
-    'HDL (mg/dL)': ("At risk", 40, "Optimal", None, None, None, None),
-    'LDL (mg/dL)': ("Optimal", 100, "Borderline", 160, "At risk", None, None),
-    'Total Cholesterol (mg/dL)': ("Optimal", 200, "Borderline", 240, "At risk", None, None),
-    'Fasting Glucose (mg/dL)': ("Optimal", 100, "Borderline", 125, "At risk", None, None),
+    'Triglycerides (mg/dl)': ("Optimal", 150, "Borderline", 200, "At risk", None, None),
+    'HDL (mg/dl)': ("At risk", 40, "Optimal", None, None, None, None),
+    'LDL (mg/dl)': ("Optimal", 100, "Borderline", 160, "At risk", None, None),
+    'Total Cholesterol (mg/dl)': ("Optimal", 200, "Borderline", 240, "At risk", None, None),
+    'Fasting Glucose (mg/dl)': ("Optimal", 100, "Borderline", 125, "At risk", None, None),
     'Systolic Blood Pressure (mmHg)': ("Optimal", 120, "At risk", None, None, None, None),
     'Diastolic Blood Pressure (mmHg)': ("Optimal", 80, "At risk", None, None, None, None),
-    'Total Cholesterol to HDL Ratio ()': ("Optimal", 3.5, "Borderline", 5, "At risk", None, None),
+    'Total Cholesterol to HDL ratio ()': ("Optimal", 3.5, "Borderline", 5, "At risk", None, None),
     'HbA1c (%)': ("Optimal", 5.7, "Borderline", 6.4, "At risk", None, None),
     'Body Mass Index': ("Low", 18.5, "Optimal", 25, "Borderline", 30, "At risk")
 }
@@ -291,7 +291,7 @@ with st.expander(st.session_state.title_expander or expand_label, expanded=True)
         ethnicity = st.selectbox('Ethnicity', ['Non-South Asian', 'South Asian'], key="selected_ethnicity", on_change=update_title, index=None)
     with col4:
         med_options = ['None', 'Cholesterol', 'Diabetes', 'Blood Pressure']
-        medications_select = st.multiselect(label="Select your medication use", options=med_options, key="selected_meds", on_change=update_title)
+        medications_select = st.multiselect(label="Medications controlling", options=med_options, key="selected_meds", on_change=update_title)
 
         medChol = 'No'
         medDiab = 'No'
@@ -531,7 +531,7 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
             person_label = f"({race} {gender.lower()}, aged between {age_range} years, NOT ON {med}-lowering medication)"
 
     st.write(f"""
-            **Your {column} value compared to others in your peer group**
+            **Your {column} compared to others in your peer group**
             <br>
             {person_label}
             """, unsafe_allow_html=True)
@@ -542,7 +542,7 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
         <br>
         Risk classification: {status}**
         """, unsafe_allow_html=True)
-    st.write(f"{prop:.0f}% of individuals in your peer group have {column} ≤ {user_input:.1f}")
+    st.write(f"**{prop:.0f}%** of individuals in your peer group have {column} < {user_input:.1f}")
 
     if STEP_SIZE[acro] == 0.1:
         data = pd.DataFrame({
@@ -583,27 +583,27 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
     st.markdown(html, unsafe_allow_html=True)
 
 
-    if 'Total Cholesterol to HDL' in column or 'Body Mass' in column:
+    if 'Body Mass' in column:
         st.write(f"""
-        According to the AHA guidelines, the **optimal** value for {column} is **{low_number} - {high_number}**.
+        According to AHA guidelines, the **optimal** value for {column} is **{low_number} - {high_number}**.
         <br>
-        In your peer group, the estimated probability of having a sub-optimal {column} of < {low_number} or > {high_number} is {prob:.0f}%.
+        In your peer group, the estimated probability of having a sub-optimal {column} of < {low_number} or > {high_number} is **{prob:.0f}%.**
         """, unsafe_allow_html=True)
-    elif 'HDL' in column:
+    elif 'HDL (mg/dl)' in column:
         st.write(f"""
-            According to the AHA guidelines, the **optimal** value for {column} is ≥ **{low_number}**.
+            According to AHA guidelines, the **optimal** value for {column} is ≥ **{low_number}**.
             <br>
-            In your peer group, the estimated probability of having a sub-optimal {column} of < {low_number} is {prob:.0f}%.
+            In your peer group, the estimated probability of having a sub-optimal {column} of < {low_number} is **{prob:.0f}%.**
             """, unsafe_allow_html=True)
     else:
         st.write(f"""
-            According to the AHA guidelines, the **optimal** value for {column} is ≤ **{low_number}**.
+            According to AHA guidelines, the **optimal** value for {column} is ≤ **{low_number}**.
             <br>
-            <span style='margin:0px !important;'>In your peer group, the estimated probability of having a sub-optimal {column} of > {low_number} is {prob:.0f}%
+            In your peer group, the estimated probability of having a sub-optimal {column} of > {low_number} is **{prob:.0f}%.**
             """, unsafe_allow_html=True)
     
     if status != 'Optimal':
-        st.write("Please check our guidance on next steps to lower the risk posed by this marker at the end of your report.")
+        st.markdown('To understand your cardio-metabolic risk profile further, and to receive personalized guidance to improve lifestyle behaviors such as diet, exercise, sleep, stress management and more, <a href="https://www.elcaminohealth.org/community/lifestyle-consult">schedule</a> a 60 minute lifestyle medicine consult with El Camino Health.', unsafe_allow_html=True)
     else:
         "Your marker is in optimal range. Continue working on your lifestyle behaviors to keep this marker in range."
 
@@ -647,10 +647,10 @@ def show_analysis(df):
     # col_empty1, col_dropdown, col_empty, col_input, col_input2, col_empty = st.columns([0.001, 0.234, 0.115, 0.2, 0.2, 0.25], gap='medium', vertical_alignment='center')
     with analysis:
 
-        col_dropdown, col_empty, col_input, col_empty2, col_input2, col_empty3 = st.columns([.25, .05, .2, .1, .2, .4], vertical_alignment='top')
+        col_dropdown, col_empty, col_input, col_empty2, col_input2, col_empty3 = st.columns([.2, .1, .2, .1, .2, .4], vertical_alignment='top')
 
         with col_dropdown:
-            metric = st.selectbox('My Risk Profile Markers: Select one', list(DROPDOWN_SELECTION.keys()))
+            metric = st.selectbox('My Risk Profile Markers', list(DROPDOWN_SELECTION.keys()))
         
         column = DROPDOWN_SELECTION[metric]
 
@@ -753,7 +753,7 @@ def show_analysis(df):
                     else:
                         st.write(f"No AHA prescribed range available for {columnName}.")
                         continue
-                    if columnName == 'HDL (mg/dL)' and gender == 'Female':
+                    if columnName == 'HDL (mg/dl)' and gender == 'Female':
                         AHA_RANGES[columnName][1] = 50
 
                     sorted_array = np.sort(array)
@@ -794,7 +794,7 @@ def show_analysis(df):
                         borderline = orange
                         at_risk = red
 
-                    # if columnName != 'HDL (mg/dL)':
+                    # if columnName != 'HDL (mg/dl)':
                     #     ax.add_patch(Rectangle((0, 0.6), 
                     #                     low_percentile, 0.35, 
                     #                     color=optimal, fill=True, zorder=90))
@@ -814,7 +814,7 @@ def show_analysis(df):
                     #                     (100 - high_percentile), 0.35, 
                     #                     color=at_risk, fill=True, zorder=90))
 
-                    if columnName == 'HDL (mg/dL)':
+                    if columnName == 'HDL (mg/dl)':
                         ax.add_patch(Rectangle((0, 0.6), 
                                         low_percentile, 0.35, 
                                         color=at_risk, fill=True, zorder=90))
@@ -854,7 +854,7 @@ def show_analysis(df):
 
                     scatter_size = 1750
 
-                    if columnName == 'HDL (mg/dL)':
+                    if columnName == 'HDL (mg/dl)':
                         if user_percentile < low_percentile:
                             header_color = at_risk
                             status = 'At risk'
@@ -909,12 +909,17 @@ def show_analysis(df):
 
                     # ax.set_title(columnName)
 
+                    if status == 'Borderline':
+                        text_color = 'black'
+                    else:
+                        text_color = 'white'
+
                     if STEP_SIZE[column] == .1 or column == 'BMXBMI':
                         ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.25, 0.79),
-                                    horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=16)
+                                    horizontalalignment='center', color = text_color, zorder=1001, weight='bold', fontsize=16)
                     else:
                         ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.25, 0.79),
-                                    horizontalalignment='center', color = 'black', zorder=1001, weight='bold', fontsize=16)
+                                    horizontalalignment='center', color = text_color, zorder=1001, weight='bold', fontsize=16)
                     
                     if int(user_percentile) == 100:
                         user_percentile = 99
@@ -1085,7 +1090,7 @@ def show_analysis(df):
                     # st.caption(' Press for more info')
 
                 if more_info:
-                        if "HDL (mg/dL)" in columnName or "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
+                        if "HDL (mg/dl)" in columnName or "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "cholesterol", medChol, prob, 
                                 percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, df, value, prop)
                         elif "Glucose" in columnName or "A1C" in columnName:
