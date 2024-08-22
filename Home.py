@@ -10,7 +10,8 @@ import base64
 import yagmail
 import datetime
 from matplotlib.patches import Rectangle
-from collections import deque 
+from collections import deque
+import sqlite3
 
 st.set_page_config(page_title="SCORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
@@ -43,15 +44,96 @@ OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
 VERSION = 1.10
 
-image_path = os.path.join(LOGO_DIR, 'SCORE same size.svg')
+image_path = os.path.join(LOGO_DIR, 'SCORE new tagline.svg')
 
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Download file</a>'
 
+# Initialize the database connection
+conn = sqlite3.connect('feedback.db')
+c = conn.cursor()
+
+# Create table if it doesn't exist
+c.execute('''CREATE TABLE IF NOT EXISTS feedback
+            (thumbs_up INTEGER DEFAULT 0, thumbs_down INTEGER DEFAULT 0)''')
+
+# Initialize counts if the table is empty
+c.execute("SELECT COUNT(*) FROM feedback")
+if c.fetchone()[0] == 0:
+    c.execute("INSERT INTO feedback (thumbs_up, thumbs_down) VALUES (0, 0)")
+    conn.commit()
+
+# Function to get counts
+def get_counts():
+    c.execute("SELECT thumbs_up, thumbs_down FROM feedback")
+    return c.fetchone()
+
+# Function to update count
+def update_count(feedback_type):
+    if feedback_type == "thumbs_up":
+        c.execute("UPDATE feedback SET thumbs_up = thumbs_up + 1")
+    elif feedback_type == "thumbs_down":
+        c.execute("UPDATE feedback SET thumbs_down = thumbs_down + 1")
+    conn.commit()
+
+# Show current counts (optional, for your reference only)
+# if st.checkbox("Show current feedback counts (for testing)"):
+#     thumbs_up_count, thumbs_down_count = get_counts()
+#     st.write(f"Current Thumbs Up: {thumbs_up_count}")
+#     st.write(f"Current Thumbs Down: {thumbs_down_count}")
+
+# Close the database connection when the app is stopped
+conn.close()
+
+@st.dialog(" ")
+def header_popup(liked):
+    if liked:
+        st.write("Glad you liked SCORE. Would you like to send suggestions for improvement?")
+        url = 'mailto:sahc@elcaminohealth.org?Subject=Liked%20SCORE%2C%20some%20suggestions%20for%20improvement&Body=Hello%2C%0A%0AHere%20are%20my%20suggestions%20to%20help%20improve%20SCORE%3A%0A%0ABest%2C%0ANAME%0AMOBILE%20%28provide%20if%20would%20like%20to%20have%20the%20South%20Asian%20Heart%20Center%20contact%20you%20regarding%20your%20suggestions%29.%0A%0A'
+        col_button1, col_button2, col_empty = st.columns([0.2, 0.2, 0.6])
+        with col_button1:
+            st.link_button("Yes", url)
+        with col_button2:
+            if st.button("No"):
+                st.rerun()
+    else:
+        st.write("Would you like to send suggestions for improvement?")
+        url = 'mailto:sahc@elcaminohealth.org?Subject=Feedback%20on%20SCORE&Body=Hello%2C%0A%0AHere%20are%20my%20suggestions%20to%20help%20improve%20SCORE%3A%0A%0ABest%2C%0ANAME%0AMOBILE%20%28provide%20if%20would%20have%20the%20South%20Asian%20Heart%20Center%20contact%20you%20for%20further%20details%29.%0A%0A'
+        col_button1, col_button2, col_empty = st.columns([0.2, 0.2, 0.6])
+        with col_button1:
+            st.link_button("Yes", url)
+        with col_button2:
+            if st.button("No"):
+                st.rerun()
+
 header = st.container()
 with header:
-    col_image, col_empty, col_color = st.columns([1, 2, 1], vertical_alignment='top')
+    col_image, col_buttons, col_empty, col_color = st.columns([0.3, 0.3, 0.1, 0.3], vertical_alignment='top')
+
+    with col_buttons:
+        with st.container():
+            col_up, col_down, col_empty = st.columns([0.1, 0.1, 0.8])
+            with col_up:
+                if st.button("👍", help="Like this"):
+                    # update_count("thumbs_up")
+                    # thumbs_up_count, thumbs_down_count = get_counts()
+                    header_popup(True)
+                    
+            with col_down:
+                if st.button("👎", help="Needs improvement"):
+                    # update_count("thumbs_down")
+                    # thumbs_up_count, thumbs_down_count = get_counts()
+                    header_popup(False)
+        
+        url = 'mailto:friends-email-address-here?Subject=Checkout%20SCORE%3A%20Compare%20your%20lipid%20and%20glucose%20markers%20with%20others%20similar%20to%20you&Body=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20risk%20profile.%0A%0ACheck%20it%20out%20it%20out%20here%3A%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A%0A%0A'
+        with st.container():
+            col_button, col_empty = st.columns([0.25, 0.8])
+            with col_button:
+                st.link_button("Share", url, help="Share SCORE with others", use_container_width=True)
+
+        
+
     with col_image:
         st.image(image_path)
     with col_color:
@@ -146,13 +228,24 @@ BPX_FILE = os.path.join(DATA_DIR, 'P_BPXO.XPT')
 CBC_FILE = os.path.join(DATA_DIR, 'P_CBC.XPT')
 BMX_FILE = os.path.join(DATA_DIR, 'P_BMX.XPT')
 MCQ_FILE = os.path.join(DATA_DIR, 'P_MCQ.XPT')
+USER_FILE_2017 = os.path.join(DATA_DIR, 'DEMO_2017.XPT')
+DIQ_FILE_2017 = os.path.join(DATA_DIR, 'DIQ_2017.XPT')
+BPQ_FILE_2017 = os.path.join(DATA_DIR, 'BPQ_2017.XPT')
+HDL_FILE_2017 = os.path.join(DATA_DIR, 'HDL_2017.XPT')
+TGL_FILE_2017 = os.path.join(DATA_DIR, 'TRIGLY_2017.XPT')
+TCH_FILE_2017 = os.path.join(DATA_DIR, 'TCHOL_2017.XPT')
+GLU_FILE_2017 = os.path.join(DATA_DIR, 'GLU_2017.XPT')
+GHB_FILE_2017 = os.path.join(DATA_DIR, 'GHB_2017.XPT')
+BPX_FILE_2017 = os.path.join(DATA_DIR, 'BPXO_2017.XPT')
+CBC_FILE_2017 = os.path.join(DATA_DIR, 'CBC_2017.XPT')
+BMX_FILE_2017 = os.path.join(DATA_DIR, 'BMX_2017.XPT')
+MCQ_FILE_2017 = os.path.join(DATA_DIR, 'MCQ_2017.XPT')
 SAHC_FILE = os.path.join(SAHC_DATA_DIR, 'merged_data_noPID.csv')
 
 UNITS_MAP = {
-    'LBDHDD': "mg/dl", 'LBDLDL': "mg/dl", 'LBXTC': "mg/dl", 'LBXTR': "mg/dl", 'LBXGH': "%",
-    'LBXGLU': "mg/dl", 'BPXOSY1': "mmHg", 'BPXODI1': "mmHg", 'LBXHGB': "g/dl", 'TotHDLRat': "", 'BMXBMI': ""
+    'LBDHDD': "mg/dL", 'LBDLDL': "mg/dL", 'LBXTC': "mg/dL", 'LBXTR': "mg/dL", 'LBXGH': "%",
+    'LBXGLU': "mg/dL", 'BPXOSY1': "mmHg", 'BPXODI1': "mmHg", 'LBXHGB': "g/dL", 'TotHDLRat': "", 'BMXBMI': ""
 }
-
 
 NAME_MAP = {
     'LBXTC': 'Total Cholesterol', 'LBDLDL': 'LDL', 'LBDHDD': 'HDL', 
@@ -169,11 +262,11 @@ DROPDOWN_SELECTION = {
 }
 
 AHA_RANGES = {
-    'Triglycerides (mg/dl)': ("Optimal", 150, "Borderline", 200, "At risk", None, None),
-    'HDL (mg/dl)': ("At risk", 40, "Optimal", None, None, None, None),
-    'LDL (mg/dl)': ("Optimal", 100, "Borderline", 160, "At risk", None, None),
-    'Total Cholesterol (mg/dl)': ("Optimal", 200, "Borderline", 240, "At risk", None, None),
-    'Fasting Glucose (mg/dl)': ("Optimal", 100, "Borderline", 125, "At risk", None, None),
+    'Triglycerides (mg/dL)': ("Optimal", 150, "Borderline", 200, "At risk", None, None),
+    'HDL (mg/dL)': ("At risk", 40, "Optimal", None, None, None, None),
+    'LDL (mg/dL)': ("Optimal", 100, "Borderline", 160, "At risk", None, None),
+    'Total Cholesterol (mg/dL)': ("Optimal", 200, "Borderline", 240, "At risk", None, None),
+    'Fasting Glucose (mg/dL)': ("Optimal", 100, "Borderline", 125, "At risk", None, None),
     'Systolic Blood Pressure (mmHg)': ("Optimal", 120, "At risk", None, None, None, None),
     'Diastolic Blood Pressure (mmHg)': ("Optimal", 80, "At risk", None, None, None, None),
     'Total Cholesterol to HDL ratio ()': ("Optimal", 3.5, "Borderline", 5, "At risk", None, None),
@@ -327,18 +420,42 @@ def load_files(debugging):
         df_bpx = pd.read_sas(BPX_FILE, format='xport')
         df_bmx = pd.read_sas(BMX_FILE, format='xport')
         df_mcq = pd.read_sas(MCQ_FILE, format='xport')
+        df_user_2017 = pd.read_sas(USER_FILE_2017, format='xport')
+        df_diq_2017 = pd.read_sas(DIQ_FILE_2017, format='xport')
+        df_bpq_2017 = pd.read_sas(BPQ_FILE_2017, format='xport')
+        df_hdl_2017 = pd.read_sas(HDL_FILE_2017, format='xport')
+        df_tgl_2017 = pd.read_sas(TGL_FILE_2017, format='xport')
+        df_tch_2017 = pd.read_sas(TCH_FILE_2017, format='xport')
+        df_glu_2017 = pd.read_sas(GLU_FILE_2017, format='xport')
+        df_ghb_2017 = pd.read_sas(GHB_FILE_2017, format='xport')
+        df_bpx_2017 = pd.read_sas(BPX_FILE_2017, format='xport')
+        df_bmx_2017 = pd.read_sas(BMX_FILE_2017, format='xport')
+        df_mcq_2017 = pd.read_sas(MCQ_FILE_2017, format='xport')
 
+        df_user = pd.concat([df_user, df_user_2017], ignore_index=True)
         df_combined = df_user[['SEQN', 'RIAGENDR', 'RIDAGEYR', 'RIDRETH3']]
+        df_diq = pd.concat([df_diq, df_diq_2017], ignore_index=True)
         df_combined = pd.merge(df_combined, df_diq[['SEQN', 'DIQ010', 'DIQ160', 'DIQ050', 'DIQ070']], on='SEQN', how='left')
+        df_bpq = pd.concat([df_bpq, df_bpq_2017], ignore_index=True)
         df_combined = pd.merge(df_combined, df_bpq[['SEQN', 'BPQ090D', 'BPQ100D', 'BPQ040A', 'BPQ020']], on='SEQN', how='left')
+        df_hdl = pd.concat([df_hdl, df_hdl_2017], ignore_index=True)
         df_combined = pd.merge(df_combined, df_hdl[['SEQN', 'LBDHDD']], on='SEQN', how='left')
+        df_tgl = pd.concat([df_tgl, df_tgl_2017], ignore_index=True)
         df_combined = pd.merge(df_combined, df_tgl[['SEQN', 'LBXTR', 'LBDLDL']], on='SEQN', how='left')
+        df_tch = pd.concat([df_tch, df_tch_2017], ignore_index=True)
         df_combined = pd.merge(df_combined, df_tch[['SEQN', 'LBXTC']], on='SEQN', how='left')
+        df_glu = pd.concat([df_glu, df_glu_2017], ignore_index=True)
         df_combined = pd.merge(df_combined, df_glu[['SEQN', 'LBXGLU']], on='SEQN', how='left')
+        df_ghb = pd.concat([df_ghb, df_ghb_2017], ignore_index=True)
         df_combined = pd.merge(df_combined, df_ghb[['SEQN', 'LBXGH']], on='SEQN', how='left')
+        df_bpx = pd.concat([df_bpx, df_bpx_2017], ignore_index=True)
         df_combined = pd.merge(df_combined, df_bpx[['SEQN', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1', 'BPXOSY2', 'BPXODI2', 'BPXOPLS2', 'BPXOSY3', 'BPXODI3', 'BPXOPLS3']], on='SEQN', how='left')
+        df_bmx = pd.concat([df_bmx, df_bmx_2017], ignore_index=True)
         df_combined = pd.merge(df_combined, df_bmx[['SEQN', 'BMXBMI']], on='SEQN', how='left')
+        df_mcq = pd.concat([df_mcq, df_mcq_2017], ignore_index=True)
         df_combined = pd.merge(df_combined, df_mcq[['SEQN', 'MCQ160E']], on='SEQN', how='left')
+
+        # st.dataframe(df_combined)
 
         # df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(lambda age: 20 * int(age / 20))
         df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(map_age_to_group)
@@ -542,7 +659,11 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
         <br>
         Risk classification: {status}**
         """, unsafe_allow_html=True)
-    st.write(f"**{prop:.0f}%** of individuals in your peer group have {column} < {user_input:.1f}")
+    
+    if "LDL" in column:
+        st.write(f"**{prop:.0f}%** of individuals in your peer group have an {column} < {user_input:.1f}")
+    else:
+        st.write(f"**{prop:.0f}%** of individuals in your peer group have a {column} < {user_input:.1f}")
 
     if STEP_SIZE[acro] == 0.1:
         data = pd.DataFrame({
@@ -589,7 +710,7 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
         <br>
         In your peer group, the estimated probability of having a sub-optimal {column} of < {low_number} or > {high_number} is **{prob:.0f}%.**
         """, unsafe_allow_html=True)
-    elif 'HDL (mg/dl)' in column:
+    elif 'HDL (mg/dL)' in column:
         st.write(f"""
             According to AHA guidelines, the **optimal** value for {column} is ≥ **{low_number}**.
             <br>
@@ -753,7 +874,7 @@ def show_analysis(df):
                     else:
                         st.write(f"No AHA prescribed range available for {columnName}.")
                         continue
-                    if columnName == 'HDL (mg/dl)' and gender == 'Female':
+                    if columnName == 'HDL (mg/dL)' and gender == 'Female':
                         AHA_RANGES[columnName][1] = 50
 
                     sorted_array = np.sort(array)
@@ -780,10 +901,10 @@ def show_analysis(df):
                     status = 'Optimal'
                     
                     if high_percentile < 99:
-                        ax.plot([high_percentile, high_percentile], [0.6, 0.95], color='white', lw=1, label='Demarcation', zorder=999)
-                    ax.plot([low_percentile, low_percentile], [0.6, 0.95], color='white', lw=1, label='Demarcation', zorder=999)
+                        ax.plot([high_percentile, high_percentile], [0.6, 0.95], color='white', lw=2, label='Demarcation', zorder=999)
+                    ax.plot([low_percentile, low_percentile], [0.6, 0.95], color='white', lw=2, label='Demarcation', zorder=999)
                     if columnName == 'Body Mass Index':
-                        ax.plot([extra_high_percentile, extra_high_percentile], [0.6, 0.95], color='white', lw=1, label='Demarcation', zorder=999)
+                        ax.plot([extra_high_percentile, extra_high_percentile], [0.6, 0.95], color='white', lw=2, label='Demarcation', zorder=999)
                     
                     if colorblind_mode == True:
                         optimal = lightgreen
@@ -794,7 +915,7 @@ def show_analysis(df):
                         borderline = orange
                         at_risk = red
 
-                    # if columnName != 'HDL (mg/dl)':
+                    # if columnName != 'HDL (mg/dL)':
                     #     ax.add_patch(Rectangle((0, 0.6), 
                     #                     low_percentile, 0.35, 
                     #                     color=optimal, fill=True, zorder=90))
@@ -814,7 +935,7 @@ def show_analysis(df):
                     #                     (100 - high_percentile), 0.35, 
                     #                     color=at_risk, fill=True, zorder=90))
 
-                    if columnName == 'HDL (mg/dl)':
+                    if columnName == 'HDL (mg/dL)':
                         ax.add_patch(Rectangle((0, 0.6), 
                                         low_percentile, 0.35, 
                                         color=at_risk, fill=True, zorder=90))
@@ -854,7 +975,7 @@ def show_analysis(df):
 
                     scatter_size = 1750
 
-                    if columnName == 'HDL (mg/dl)':
+                    if columnName == 'HDL (mg/dL)':
                         if user_percentile < low_percentile:
                             header_color = at_risk
                             status = 'At risk'
@@ -888,8 +1009,8 @@ def show_analysis(df):
                             header_color = at_risk
                             status = 'At risk'
                     
-                    ax.scatter(user_percentile, 0.855, zorder=999, s=scatter_size+175, edgecolors='k')
-                    ax.scatter(user_percentile, 0.855, color=header_color, zorder=1000, label='Your Input', s=scatter_size, edgecolors='w', linewidth=2)
+                    ax.scatter(user_percentile, 0.85, zorder=999, s=scatter_size+225, edgecolors='k')
+                    ax.scatter(user_percentile, 0.85, color=header_color, zorder=1000, label='Your Input', s=scatter_size, edgecolors='w', linewidth=3)
                             
 
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
@@ -1090,7 +1211,7 @@ def show_analysis(df):
                     # st.caption(' Press for more info')
 
                 if more_info:
-                        if "HDL (mg/dl)" in columnName or "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
+                        if "HDL (mg/dL)" in columnName or "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "cholesterol", medChol, prob, 
                                 percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, df, value, prop)
                         elif "Glucose" in columnName or "A1C" in columnName:
@@ -1133,5 +1254,5 @@ show_analysis(df_d)
 # st.write(df_d.shape[0])
 
 st.divider()
-st.markdown('<div style="text-align: center"> Please email <a href="mailto:sanaa.bhorkar@gmail.com">sanaa.bhorkar@gmail.com</a> with any feedback! </div>', unsafe_allow_html=True)
+# st.markdown('<div style="text-align: center"> Please email <a href="mailto:sanaa.bhorkar@gmail.com">sanaa.bhorkar@gmail.com</a> with any feedback! </div>', unsafe_allow_html=True)
 st.markdown(f"<div style='text-align: center'> Version {VERSION}</div>", unsafe_allow_html=True)
