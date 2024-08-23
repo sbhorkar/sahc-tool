@@ -19,8 +19,6 @@ global length
 global col_records
 length = 0
 
-st.markdown('<style>big-font {font-size:50px !important;}</style>', unsafe_allow_html=True)
-
 deploy = True
 # Hide the hamburger menu for deployment
 hide_menu_style = """
@@ -37,14 +35,14 @@ if deploy:
 #     return deque()
 
 DIR = os.getcwd()
-PLOT_DIR = DIR + '/plots'
+PLOT_DIR = DIR + '/plots/'
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 1.10
+VERSION = 1.12
 
-image_path = os.path.join(LOGO_DIR, 'SCORE new tagline.svg')
+image_path = os.path.join(LOGO_DIR, 'SCORE official logo.svg')
 
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
@@ -89,7 +87,7 @@ conn.close()
 @st.dialog(" ")
 def header_popup(liked):
     if liked:
-        st.write("Glad you liked SCORE. Would you like to send suggestions for improvement?")
+        st.write("Glad you liked SCORE! Would you like to send suggestions for improvement?")
         url = 'mailto:sahc@elcaminohealth.org?Subject=Liked%20SCORE%2C%20some%20suggestions%20for%20improvement&Body=Hello%2C%0A%0AHere%20are%20my%20suggestions%20to%20help%20improve%20SCORE%3A%0A%0ABest%2C%0ANAME%0AMOBILE%20%28provide%20if%20would%20like%20to%20have%20the%20South%20Asian%20Heart%20Center%20contact%20you%20regarding%20your%20suggestions%29.%0A%0A'
         col_button1, col_button2, col_empty = st.columns([0.2, 0.2, 0.6])
         with col_button1:
@@ -106,10 +104,50 @@ def header_popup(liked):
         with col_button2:
             if st.button("No"):
                 st.rerun()
+    
+# st.button("Hi!")
+# st.button("Goodbye")
+
+
+from streamlit_extras.stylable_container import stylable_container
+
+st.markdown(
+    '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>',
+    unsafe_allow_html=True,
+)
+
+# with stylable_container(
+#     key="container_with_border",
+#     css_styles=r"""
+#         button div:before {
+#             font-family: 'Font Awesome 5 Free';
+#             content: '\f14d';
+#             display: inline-block;
+#             padding-right: 0px;
+#             vertical-align: middle;
+#             font-weight: 900;
+#         }
+#         """,
+# ):
+#     st.button("")
+
+
+@st.dialog("Share with your friends and family!")
+def share_popup():
+    col_mail, col_what, col_mess = st.columns(3, gap='small')
+    with col_mail:
+        url = 'mailto:?Subject=Checkout%20SCORE%3A%20Compare%20your%20lipid%20and%20glucose%20markers%20with%20others%20similar%20to%20you&Body=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20risk%20profile.%0A%0ACheck%20it%20out%20it%20out%20here%3A%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A'
+        st.link_button(":envelope: Mail", url)
+    with col_what:
+        url = 'https://wa.me/?text=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20risk%20profile.%0A%0ACheck%20it%20out%20it%20out%20here%3A%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A'
+        st.link_button("Whatsapp", url)
+    with col_mess:
+        url = 'sms:&body=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20risk%20profile.%0A%0ACheck%20it%20out%20it%20out%20here%3A%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A'
+        st.link_button(":speech_balloon: Messages", url)
 
 header = st.container()
 with header:
-    col_image, col_buttons, col_empty, col_color = st.columns([0.3, 0.3, 0.1, 0.3], vertical_alignment='top')
+    col_image, col_buttons, col_empty, col_color = st.columns([0.25, 0.3, 0.15, 0.3], vertical_alignment='top', gap='small')
 
     with col_buttons:
         with st.container():
@@ -126,13 +164,24 @@ with header:
                     # thumbs_up_count, thumbs_down_count = get_counts()
                     header_popup(False)
         
-        url = 'mailto:friends-email-address-here?Subject=Checkout%20SCORE%3A%20Compare%20your%20lipid%20and%20glucose%20markers%20with%20others%20similar%20to%20you&Body=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20risk%20profile.%0A%0ACheck%20it%20out%20it%20out%20here%3A%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A%0A%0A'
-        with st.container():
-            col_button, col_empty = st.columns([0.25, 0.8])
-            with col_button:
-                st.link_button("Share", url, help="Share SCORE with others", use_container_width=True)
-
+        with stylable_container(
+            key="container_with_border",
+            css_styles=r"""
+                button div:before {
+                    font-family: "Font Awesome 5 Free";
+                    content: '\f14d';
+                    display: inline-block;
+                    padding-right: 0px;
+                    vertical-align: middle;
+                    font-weight: 900;
+                    color: black;
+                }
+                """,
+            ): 
+                share = st.button("", help='Share with others')
         
+        if share:
+            share_popup()
 
     with col_image:
         st.image(image_path)
@@ -1255,4 +1304,4 @@ show_analysis(df_d)
 
 st.divider()
 # st.markdown('<div style="text-align: center"> Please email <a href="mailto:sanaa.bhorkar@gmail.com">sanaa.bhorkar@gmail.com</a> with any feedback! </div>', unsafe_allow_html=True)
-st.markdown(f"<div style='text-align: center'> Version {VERSION}</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: center'> Version {VERSION:.2f}</div>", unsafe_allow_html=True)

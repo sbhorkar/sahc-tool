@@ -8,3 +8,4 @@ seaborn
 statsmodels
 fpdf
 yagmail
+streamlit_extras
