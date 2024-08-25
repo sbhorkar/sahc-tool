@@ -13,20 +13,7 @@ from matplotlib.patches import Rectangle
 from collections import deque
 import sqlite3
 
-st.set_page_config(page_title="SCORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide", initial_sidebar_state = "auto")
-
-# Set up the page margins to reduce top padding
-st.markdown("""
-        <style>
-               .block-container {
-                    padding-top: 1rem;
-                    padding-bottom: 0rem;
-                    padding-left: 2rem;
-                    padding-right: 1rem;
-                }
-        </style>
-        """, unsafe_allow_html=True)
-
+st.set_page_config(page_title="SCORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide")
 
 global length
 global col_records
@@ -48,9 +35,9 @@ LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 2.0
+VERSION = 1.12
 
-image_path = os.path.join(LOGO_DIR, 'SCORE underlined.svg')
+image_path = os.path.join(LOGO_DIR, 'SCORE official logo.svg')
 
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
@@ -89,6 +76,9 @@ def update_count(feedback_type):
 #     thumbs_up_count, thumbs_down_count = get_counts()
 #     st.write(f"Current Thumbs Up: {thumbs_up_count}")
 #     st.write(f"Current Thumbs Down: {thumbs_down_count}")
+
+# Close the database connection when the app is stopped
+conn.close()
 
 @st.dialog(" ")
 def header_popup(liked):
@@ -189,7 +179,7 @@ def track_unique_view(user_id):
 user_id = get_user_id()
 total_unique_views = track_unique_view(user_id)
 
-# st.write(f"Total Page Views: {total_unique_views}")
+st.write(f"Total Page Views: {total_unique_views}")
 
 ################ Unique visitor count END ##################
 
@@ -206,228 +196,97 @@ def share_popup():
     with col_mess:
         url = 'sms:&body=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20risk%20profile.%0A%0ACheck%20it%20out%20it%20out%20here%3A%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A'
         st.link_button(":speech_balloon: Messages", url)
-    
-def config_sidebar_old(): # NOT USED
-    st.markdown(
-        """
-        <style>
-            section[data-testid="stSidebar"] {
-                width: 250px !important; # Set the width to your desired value
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    with st.sidebar:
-    #   col_image, col_buttons, col_empty, col_color = st.columns([0.25, 0.3, 0.15, 0.3], vertical_alignment='top', gap='small')
 
-    #  with col_buttons:
+header = st.container()
+with header:
+    col_image, col_buttons, col_empty, col_color = st.columns([0.25, 0.3, 0.15, 0.3], vertical_alignment='top', gap='small')
+
+    with col_buttons:
         with st.container():
-            #col_up, col_down, col_empty = st.columns([0.1, 0.1, 0.8])
-            #    with col_up:
-            with st.expander("Feedback", True, icon =":material/thumbs_up_down:"):
-                col_up, col_down, col_empty = st.columns([0.1, 0.1,0.2])
-                with col_up:
-                    if st.button("👍", help="Like this"):
-                                # update_count("thumbs_up")
-                                # thumbs_up_count, thumbs_down_count = get_counts()
-                        header_popup(True)
-                            
-                with col_down:
-                    if st.button("👎", help="Needs improvement"):
-                                # update_count("thumbs_down")
-                                # thumbs_up_count, thumbs_down_count = get_counts()
-                        header_popup(False)
-            
-            with st.expander("Share with Others", True, icon=":material/share:"):
-                with stylable_container(
-                    key="container_with_border",
-                    css_styles=r"""
-                        button div:before {
-                            font-family: "Font Awesome 5 Free";
-                            content: '\f14d';
-                            #content: '\f40c';
-                            display: inline-block;
-                            padding-right: 0px;
-                            vertical-align: middle;
-                            font-weight: 900;
-                            color: black;
-                        }
-                        """,
-                    ): 
-                    share = st.button("", help='Share with others')
-                
-                    if share:
-                        share_popup()
-
-        #with col_image:
-        # st.image(image_path)
-        #with col_color:
-            with st.expander("High Contrast Mode", True, icon="👁️"):
-                global colorblind_mode
-                colorblind_mode = st.toggle("On/Off")
-                #st.caption("Contrast and colorblindness improvements")
-        # with col_pdf:
-        #     email = st.text_input("Download a PDF report!", placeholder='Email')
-
-        #     if '@' in email:
-        #         button_disabled = False
-        #     else:
-        #         button_disabled = True
-
-        #     export_as_pdf = st.button("Export Report", disabled=button_disabled)
-
-        #     if export_as_pdf:
-        #         pdf = FPDF('P','mm','A4');
-        #         pdf.add_page()
-        #         pdf.set_font('Arial', 'B', 16)
-        #         # pdf.cell(40, 10, report_text)
-        #         pdf.image('LBDHDD.jpeg', x=5, y=30, w=200, h=25.633)  # Adjust 'x', 'y', 'w', and 'h' as needed
-
-        #         pdf_file_path = 'test.pdf'  # Adjust the path and filename as needed
-        #         pdf.output(pdf_file_path)
-                
-        #         # html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
-        #         # st.markdown(html, unsafe_allow_html=True)
-
-        #         # Send the PDF via email with yagmail
-        #         yag = yagmail.SMTP('sanaa.bhorkar@gmail.com', 'txhamunwqrefciwl', host='smtp.gmail.com', port=587, smtp_starttls=True, smtp_ssl=False)
-
-        #         # Enclose the PDF
-        #         yag.send(
-        #             to=email,
-        #             subject="Your SAHA Report",
-        #             contents="Report attached.",
-        #             attachments=['test.pdf']
-        #         )
-
-        #         # Close SMTP connection
-        #         yag.close()
-
-        #         with open("emails.txt", "a") as f: # save emails to a text file
-        #             date = datetime.datetime.now()
-        #             f.write(f"{date}, {email}\n")
-        # header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
-
-def config_sidebar():
-    st.markdown(
-        """
-        <style>
-            section[data-testid="stSidebar"] {
-                width: 100px !important; # Set the width to your desired value
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    with st.sidebar:
-    #   col_image, col_buttons, col_empty, col_color = st.columns([0.25, 0.3, 0.15, 0.3], vertical_alignment='top', gap='small')
-
-    #  with col_buttons:
-        with st.container():
-            #col_up, col_down, col_empty = st.columns([0.1, 0.1, 0.8])
-            #    with col_up:
-            st.write("Provide Feedback:")
-            col_empty, col_up, col_down, col_empty2 = st.columns([0.05,0.1, 0.1,0.2])
+            col_up, col_down, col_empty = st.columns([0.1, 0.1, 0.8])
             with col_up:
                 if st.button("👍", help="Like this"):
-                    update_count("thumbs_up")
+                    # update_count("thumbs_up")
+                    # thumbs_up_count, thumbs_down_count = get_counts()
                     header_popup(True)
-                        
+                    
             with col_down:
                 if st.button("👎", help="Needs improvement"):
-                    update_count("thumbs_down")
+                    # update_count("thumbs_down")
+                    # thumbs_up_count, thumbs_down_count = get_counts()
                     header_popup(False)
+        
+        with stylable_container(
+            key="container_with_border",
+            css_styles=r"""
+                button div:before {
+                    font-family: "Font Awesome 5 Free";
+                    content: '\f14d';
+                    #content: '\f40c';
+                    display: inline-block;
+                    padding-right: 0px;
+                    vertical-align: middle;
+                    font-weight: 900;
+                    color: black;
+                }
+                """,
+            ): 
+                share = st.button("", help='Share with others')
+        
+        if share:
+            share_popup()
+
+    with col_image:
+        st.image(image_path)
+    with col_color:
+        colorblind_mode = st.toggle("High Contrast Mode")
+        st.caption("Contrast and colorblindness improvements")
+    # with col_pdf:
+    #     email = st.text_input("Download a PDF report!", placeholder='Email')
+
+    #     if '@' in email:
+    #         button_disabled = False
+    #     else:
+    #         button_disabled = True
+
+    #     export_as_pdf = st.button("Export Report", disabled=button_disabled)
+
+    #     if export_as_pdf:
+    #         pdf = FPDF('P','mm','A4');
+    #         pdf.add_page()
+    #         pdf.set_font('Arial', 'B', 16)
+    #         # pdf.cell(40, 10, report_text)
+    #         pdf.image('LBDHDD.jpeg', x=5, y=30, w=200, h=25.633)  # Adjust 'x', 'y', 'w', and 'h' as needed
+
+    #         pdf_file_path = 'test.pdf'  # Adjust the path and filename as needed
+    #         pdf.output(pdf_file_path)
             
-            st.write("Share with others")
-            with stylable_container(
-                key="container_with_border",
-                css_styles=r"""
-                    button div:before {
-                        font-family: "Font Awesome 5 Free";
-                        content: '\f14d';
-                        #content: '\f40c';
-                        display: inline-block;
-                        padding-right: 0px;
-                        vertical-align: middle;
-                        font-weight: 900;
-                        color: black;
-                    }
-                    """,
-                ): 
-                col_empty, col_up, col_down, col_empty2 = st.columns([0.05,0.1, 0.1,0.2])
-                with col_up:
-                    share = st.button("", help='Share with others')
-            
-                    if share:
-                        share_popup()
-               # st.divider()
+    #         # html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
+    #         # st.markdown(html, unsafe_allow_html=True)
 
-        #with col_image:
-        # st.image(image_path)
-        #with col_color:
-            global colorblind_mode
-            st.write("High Contrast Mode")
-            col_empty, col_up, col_empty2 = st.columns([0.03,0.25, 0.1])
-            with col_up:
-                colorblind_mode = st.toggle("On/Off", help='Colorblindess improvements')
-            # st.caption("Colorblindness improvements")
-# 
-        # with col_pdf:
-        #     email = st.text_input("Download a PDF report!", placeholder='Email')
+    #         # Send the PDF via email with yagmail
+    #         yag = yagmail.SMTP('sanaa.bhorkar@gmail.com', 'txhamunwqrefciwl', host='smtp.gmail.com', port=587, smtp_starttls=True, smtp_ssl=False)
 
-        #     if '@' in email:
-        #         button_disabled = False
-        #     else:
-        #         button_disabled = True
+    #         # Enclose the PDF
+    #         yag.send(
+    #             to=email,
+    #             subject="Your SAHA Report",
+    #             contents="Report attached.",
+    #             attachments=['test.pdf']
+    #         )
 
-        #     export_as_pdf = st.button("Export Report", disabled=button_disabled)
+    #         # Close SMTP connection
+    #         yag.close()
 
-        #     if export_as_pdf:
-        #         pdf = FPDF('P','mm','A4');
-        #         pdf.add_page()
-        #         pdf.set_font('Arial', 'B', 16)
-        #         # pdf.cell(40, 10, report_text)
-        #         pdf.image('LBDHDD.jpeg', x=5, y=30, w=200, h=25.633)  # Adjust 'x', 'y', 'w', and 'h' as needed
-
-        #         pdf_file_path = 'test.pdf'  # Adjust the path and filename as needed
-        #         pdf.output(pdf_file_path)
-                
-        #         # html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
-        #         # st.markdown(html, unsafe_allow_html=True)
-
-        #         # Send the PDF via email with yagmail
-        #         yag = yagmail.SMTP('sanaa.bhorkar@gmail.com', 'txhamunwqrefciwl', host='smtp.gmail.com', port=587, smtp_starttls=True, smtp_ssl=False)
-
-        #         # Enclose the PDF
-        #         yag.send(
-        #             to=email,
-        #             subject="Your SAHA Report",
-        #             contents="Report attached.",
-        #             attachments=['test.pdf']
-        #         )
-
-        #         # Close SMTP connection
-        #         yag.close()
-
-        #         with open("emails.txt", "a") as f: # save emails to a text file
-        #             date = datetime.datetime.now()
-        #             f.write(f"{date}, {email}\n")
-        # header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
+    #         with open("emails.txt", "a") as f: # save emails to a text file
+    #             date = datetime.datetime.now()
+    #             f.write(f"{date}, {email}\n")
+    col_score, col_records = st.columns([0.95, 0.05])
+    with col_score:
+        st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity.")
+# header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 ############################Settings #########################
-st.image(image_path)
-col_score, col_records = st.columns([0.95, 0.05])
-with col_score:
-    st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity.")
 
-if "title_expander" not in st.session_state:
-    st.session_state.title_expander = "About Me"
-
-expand_label = "About Me"
-aboutMe_expand = st.expander(st.session_state.title_expander or expand_label, expanded=True)
-analysis = st.container(border=True)
-
-config_sidebar()
 st.markdown(""" 
         <style>
         *:not(fixed-header)::before, 
@@ -435,6 +294,23 @@ st.markdown("""
            box-sizing: inherit;
         }
         </style>""", unsafe_allow_html=True)
+
+# st.markdown(
+#     """
+# <style>
+#     div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
+#         position: sticky;
+#         top: 3.3rem;
+#         background-color: white;
+#         z-index: 9999;
+#     }
+#     .fixed-header {
+#         border-bottom: 1px solid lightgrey;
+#     }
+# </style>
+#     """,
+#     unsafe_allow_html=True
+# )
 
 red = "#ee3942"
 orange = "#fec423"
@@ -534,8 +410,18 @@ def map_age_to_group(age):
     else:
         return 79
 
+# aboutMe_placeholder = st.empty()
+# aboutMe_placeholder.markdown(f"### <u>About Me</u>", unsafe_allow_html=True)
+
+expand_label = "About Me"
+
+# aboutMe_expand = st.expander(expand_label, expanded=True)
+
 if 'title_list' not in st.session_state:
     st.session_state.title_list = []
+
+if "title_expander" not in st.session_state:
+    st.session_state.title_expander = "About Me"
 
 if "selected_gender" not in st.session_state:
     st.session_state.selected_gender = None
@@ -579,7 +465,8 @@ def update_title():
     else:
         st.session_state.title_expander = "About Me"
 
-with aboutMe_expand:
+with st.expander(st.session_state.title_expander or expand_label, expanded=True):
+    # option = st.selectbox("Select an option", ["One", "Two", "Tres"], key="title_expander")
     col1, col12, col2, col22, col3, col32, col4, col42 = st.columns([.2, .1, .2, .1, .2, .1, .2, .1], vertical_alignment='top')
 
     medCholOptions = {'Yes': 1, 'No': 2}
@@ -587,14 +474,20 @@ with aboutMe_expand:
     medBPOptions = {'Yes': 1, 'No': 2}
 
     with col1:
+        # gender = st.selectbox('Gender', list(genderOptions.keys()), key=None) # fix these SANAA
+        # gender = st.selectbox('Gender', list(genderOptions.keys()), key="selected_gender", on_change=update_title(), index=None)
         gender = st.selectbox('Gender', list(genderOptions.keys()), key="selected_gender", on_change=update_title, index=None)
+        # index = None will keep default empty
     with col2:
+        # age_group = st.selectbox('Age group', list(ageOptions.keys()), index=2, key=None)
+        # age_group = st.selectbox('Age group', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None)
         age_group = st.selectbox('Age group', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None)
     with col3:
+        # ethnicity = st.selectbox('Ethnicity', ['Non-South Asian', 'South Asian'], key=None)
         ethnicity = st.selectbox('Ethnicity', ['Non-South Asian', 'South Asian'], key="selected_ethnicity", on_change=update_title, index=None)
     with col4:
         med_options = ['None', 'Cholesterol', 'Diabetes', 'Blood Pressure']
-        medications_select = st.multiselect(label="Medications", options=med_options, key="selected_meds", on_change=update_title)
+        medications_select = st.multiselect(label="Medications controlling", options=med_options, key="selected_meds", on_change=update_title)
 
         medChol = 'No'
         medDiab = 'No'
@@ -607,9 +500,14 @@ with aboutMe_expand:
         if 'Blood Pressure' in medications_select:
             medBP = 'Yes'
 
+analysis = st.container(border=True)
+
 meds = ", ".join(medications_select)
 if meds == '':
     meds = "None"
+
+# aboutMe_label = f"About me: {gender}, Age: {age_group}, {ethnicity}, Current medications: {meds}"
+# aboutMe_placeholder.markdown(f"### <u>{aboutMe_label}</u>", unsafe_allow_html=True)
                                             
 # @st.cache_data
 def load_files(debugging):
@@ -807,6 +705,19 @@ def ui_choose(df, debugging):
 @st.dialog(" ", width='large')
 def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, p25, p50, p75, p90, low_number, high_number, status, df3, value, prop):
 
+    # st.markdown(
+    #     """
+    #     <style>
+    #     .st-bn.st-fg.st-fh.st-fi.st-bm.st-fj.st-f8.st-fk.st-fl {
+    #         margin: 0px !important;
+    #         padding: 0px !important;
+    #     }
+    #     </style>
+    #     """,
+    #     unsafe_allow_html=True
+    # )
+
+    # st.header(f"Your {column} value compared to others in your peer group")
     if on_med == 'Yes':
         
         if age_range is None and race is None and gender is None:
@@ -1107,6 +1018,26 @@ def show_analysis(df):
                         borderline = orange
                         at_risk = red
 
+                    # if columnName != 'HDL (mg/dL)':
+                    #     ax.add_patch(Rectangle((0, 0.6), 
+                    #                     low_percentile, 0.35, 
+                    #                     color=optimal, fill=True, zorder=90))
+                    #     ax.add_patch(Rectangle((low_percentile, 0.6), 
+                    #                 (high_percentile - low_percentile), 0.35, 
+                    #                 color=at_risk, fill=True, zorder=90))
+                    # else:
+                    #     ax.add_patch(Rectangle((0, 0.6), 
+                    #                     low_percentile, 0.35, 
+                    #                     color=at_risk, fill=True, zorder=90))
+                    #     ax.add_patch(Rectangle((low_percentile, 0.6), 
+                    #                 (high_percentile - low_percentile), 0.35, 
+                    #                 color=optimal, fill=True, zorder=90))
+
+                    # if high_percentile < 99:
+                    #     ax.add_patch(Rectangle((high_percentile, 0.6), 
+                    #                     (100 - high_percentile), 0.35, 
+                    #                     color=at_risk, fill=True, zorder=90))
+
                     if columnName == 'HDL (mg/dL)':
                         ax.add_patch(Rectangle((0, 0.6), 
                                         low_percentile, 0.35, 
@@ -1332,6 +1263,8 @@ def show_analysis(df):
 
                     popup_column = NAME_MAP[column]
 
+
+# data-testid="baseButton-primary" class="st-emotion-cache-1h8fy6v ef3psqc14"><div data-testid="stMarkdownContainer" class="st-emotion-cache-187vdiz e1nzilvr4">
                 with col9:
 
                     user_input = column_dict['input']
@@ -1369,6 +1302,17 @@ def show_analysis(df):
 
                     more_info = st.button(f'ⓘ {user_percentile: .0f}{suffix} percentile compared to peers in your group', key=column, type='primary')
 
+                    #     f'''
+                    #     <div>
+                    #         <button type="button" class="stButton primary-button">
+                    #             ⓘ {user_percentile: .0f}{suffix} percentile compared to peers in your group
+                    #         </button>
+                    #     </div>
+                    #     ''',
+                    #     unsafe_allow_html=True
+                    # )
+                    # st.caption(' Press for more info')
+
                 if more_info:
                         if "HDL (mg/dL)" in columnName or "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "cholesterol", medChol, prob, 
@@ -1379,14 +1323,39 @@ def show_analysis(df):
                         else:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood pressure", medBP, prob, 
                                 percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, df3, value, prop)
+            # with col10:
+            #     st.caption(" ")
+            #     user_input = column_dict['input']
+
+            #     array = df[column].dropna()
+            #     sorted_array = np.sort(array)
+            #     user_percentile = int(np.mean(sorted_array <= user_input) * 100)
+
+            #     digit = user_percentile % 10
+            #     # st.write(digit)
+            #     suffix = 'th'
+
+            #     if digit == 1:
+            #         suffix = 'st'
+            #     elif digit == 2:
+            #         suffix = 'nd'
+            #     elif digit == 3:
+            #         suffix = 'rd'
+
+            #     st.write(f'{user_percentile: .0f}{suffix} percentile compared to peers in your group', key=column, type='primary')
+
 
 # Main execution
 df_c = load_files(False)
 df_d = ui_choose(df_c, False)
 show_analysis(df_d)
 
-up, down = get_counts()
-st.markdown(f"<div style='text-align: center'> Total Visitors: {total_unique_views}</div>", unsafe_allow_html=True)
-st.markdown(f"<div style='text-align: center'> Version {VERSION}</div>", unsafe_allow_html=True)
-st.markdown(f"<div style='text-align: center'><span style='color:white;'>({up}, {down})</span></div>", unsafe_allow_html=True)
-conn.close()
+# df_d = df_d['LBDHDD'] check with Amit
+# st.write(df_d.shape[0])
+
+# df_d = df_d[df_d < 40]
+# st.write(df_d.shape[0])
+
+st.divider()
+# st.markdown('<div style="text-align: center"> Please email <a href="mailto:sanaa.bhorkar@gmail.com">sanaa.bhorkar@gmail.com</a> with any feedback! </div>', unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: center'> Version {VERSION:.2f}</div>", unsafe_allow_html=True)
