@@ -1,18 +1,16 @@
+# Import all necessary libraries
 import streamlit as st
 import pandas as pd
-import os
-from matplotlib.lines import Line2D
-import matplotlib.pyplot as plt
 import numpy as np
-import statsmodels.api as sm
-from fpdf import FPDF
-import base64
-import yagmail
-import datetime
+import os
+import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from collections import deque
 import sqlite3
+from streamlit_extras.stylable_container import stylable_container
 
+########################### PAGE SET UP ##############################
+# Setting page initial state
 st.set_page_config(page_title="SCORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide", initial_sidebar_state = "auto")
 
 # Set up the page margins to reduce top padding
@@ -27,36 +25,25 @@ st.markdown("""
         </style>
         """, unsafe_allow_html=True)
 
-
-global length
-global col_records
-length = 0
-
-deploy = True
-# Hide the hamburger menu for deployment
+# Hide the hamburger menu
 hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
         </style>
         """
-if deploy:
-    st.markdown(hide_menu_style, unsafe_allow_html=True)
+st.markdown(hide_menu_style, unsafe_allow_html=True)
+
+st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>', unsafe_allow_html=True)
 
 DIR = os.getcwd()
-PLOT_DIR = DIR + '/plots/'
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
-OUTPUT_DIR = DIR + '/output/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
 VERSION = 2.0
 
-image_path = os.path.join(LOGO_DIR, 'SCORE underlined.svg')
+image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
-def create_download_link(val, filename):
-    b64 = base64.b64encode(val)  # val looks like b'...'
-    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Download file</a>'
-
-########################### Feedback ##############################
+########################### FEEDBACK ##############################
 # Initialize the database connection
 conn = sqlite3.connect('feedback.db')
 c = conn.cursor()
@@ -84,12 +71,6 @@ def update_count(feedback_type):
         c.execute("UPDATE feedback SET thumbs_down = thumbs_down + 1")
     conn.commit()
 
-# Show current counts (optional, for your reference only)
-# if st.checkbox("Show current feedback counts (for testing)"):
-#     thumbs_up_count, thumbs_down_count = get_counts()
-#     st.write(f"Current Thumbs Up: {thumbs_up_count}")
-#     st.write(f"Current Thumbs Down: {thumbs_down_count}")
-
 @st.dialog(" ")
 def header_popup(liked):
     if liked:
@@ -111,35 +92,9 @@ def header_popup(liked):
             if st.button("No"):
                 st.rerun()
 
-####################### FEEDBACK #######################
-# st.button("Hi!")
-# st.button("Goodbye")
+########################### FEEDBACK END ##############################
 
-
-from streamlit_extras.stylable_container import stylable_container
-
-st.markdown(
- #   '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>',
-    '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>',
-#https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css
-    unsafe_allow_html=True,
-)
-
-# with stylable_container(
-#     key="container_with_border",
-#     css_styles=r"""
-#         button div:before {
-#             font-family: 'Font Awesome 5 Free';
-#             content: '\f14d';
-#             display: inline-block;
-#             padding-right: 0px;
-#             vertical-align: middle;
-#             font-weight: 900;
-#         }
-#         """,
-# ):
-#     st.button("")
-################ Unique visitor count ##################
+########################### VIEWER COUNT ##############################
 import sqlite3
 
 def create_db():
@@ -189,11 +144,9 @@ def track_unique_view(user_id):
 user_id = get_user_id()
 total_unique_views = track_unique_view(user_id)
 
-# st.write(f"Total Page Views: {total_unique_views}")
+########################### VIEWER COUNT END ##############################
 
-################ Unique visitor count END ##################
-
-#################Share###########################
+########################### SIDEBAR ##############################
 @st.dialog("Share with your friends and family!")
 def share_popup():
     col_mail, col_what, col_mess = st.columns(3, gap='small')
@@ -206,108 +159,6 @@ def share_popup():
     with col_mess:
         url = 'sms:&body=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20risk%20profile.%0A%0ACheck%20it%20out%20it%20out%20here%3A%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A'
         st.link_button(":speech_balloon: Messages", url)
-    
-def config_sidebar_old(): # NOT USED
-    st.markdown(
-        """
-        <style>
-            section[data-testid="stSidebar"] {
-                width: 250px !important; # Set the width to your desired value
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    with st.sidebar:
-    #   col_image, col_buttons, col_empty, col_color = st.columns([0.25, 0.3, 0.15, 0.3], vertical_alignment='top', gap='small')
-
-    #  with col_buttons:
-        with st.container():
-            #col_up, col_down, col_empty = st.columns([0.1, 0.1, 0.8])
-            #    with col_up:
-            with st.expander("Feedback", True, icon =":material/thumbs_up_down:"):
-                col_up, col_down, col_empty = st.columns([0.1, 0.1,0.2])
-                with col_up:
-                    if st.button("👍", help="Like this"):
-                                # update_count("thumbs_up")
-                                # thumbs_up_count, thumbs_down_count = get_counts()
-                        header_popup(True)
-                            
-                with col_down:
-                    if st.button("👎", help="Needs improvement"):
-                                # update_count("thumbs_down")
-                                # thumbs_up_count, thumbs_down_count = get_counts()
-                        header_popup(False)
-            
-            with st.expander("Share with Others", True, icon=":material/share:"):
-                with stylable_container(
-                    key="container_with_border",
-                    css_styles=r"""
-                        button div:before {
-                            font-family: "Font Awesome 5 Free";
-                            content: '\f14d';
-                            #content: '\f40c';
-                            display: inline-block;
-                            padding-right: 0px;
-                            vertical-align: middle;
-                            font-weight: 900;
-                            color: black;
-                        }
-                        """,
-                    ): 
-                    share = st.button("", help='Share with others')
-                
-                    if share:
-                        share_popup()
-
-        #with col_image:
-        # st.image(image_path)
-        #with col_color:
-            with st.expander("High Contrast Mode", True, icon="👁️"):
-                global colorblind_mode
-                colorblind_mode = st.toggle("On/Off")
-                #st.caption("Contrast and colorblindness improvements")
-        # with col_pdf:
-        #     email = st.text_input("Download a PDF report!", placeholder='Email')
-
-        #     if '@' in email:
-        #         button_disabled = False
-        #     else:
-        #         button_disabled = True
-
-        #     export_as_pdf = st.button("Export Report", disabled=button_disabled)
-
-        #     if export_as_pdf:
-        #         pdf = FPDF('P','mm','A4');
-        #         pdf.add_page()
-        #         pdf.set_font('Arial', 'B', 16)
-        #         # pdf.cell(40, 10, report_text)
-        #         pdf.image('LBDHDD.jpeg', x=5, y=30, w=200, h=25.633)  # Adjust 'x', 'y', 'w', and 'h' as needed
-
-        #         pdf_file_path = 'test.pdf'  # Adjust the path and filename as needed
-        #         pdf.output(pdf_file_path)
-                
-        #         # html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
-        #         # st.markdown(html, unsafe_allow_html=True)
-
-        #         # Send the PDF via email with yagmail
-        #         yag = yagmail.SMTP('sanaa.bhorkar@gmail.com', 'txhamunwqrefciwl', host='smtp.gmail.com', port=587, smtp_starttls=True, smtp_ssl=False)
-
-        #         # Enclose the PDF
-        #         yag.send(
-        #             to=email,
-        #             subject="Your SAHA Report",
-        #             contents="Report attached.",
-        #             attachments=['test.pdf']
-        #         )
-
-        #         # Close SMTP connection
-        #         yag.close()
-
-        #         with open("emails.txt", "a") as f: # save emails to a text file
-        #             date = datetime.datetime.now()
-        #             f.write(f"{date}, {email}\n")
-        # header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
 
 def config_sidebar():
     st.markdown(
@@ -321,105 +172,106 @@ def config_sidebar():
         unsafe_allow_html=True,
     )
     with st.sidebar:
-    #   col_image, col_buttons, col_empty, col_color = st.columns([0.25, 0.3, 0.15, 0.3], vertical_alignment='top', gap='small')
-
-    #  with col_buttons:
-        with st.container():
-            #col_up, col_down, col_empty = st.columns([0.1, 0.1, 0.8])
-            #    with col_up:
-            st.write("Provide Feedback:")
-            col_empty, col_up, col_down, col_empty2 = st.columns([0.05,0.1, 0.1,0.2])
+        st.write("Provide Feedback:")
+        col_empty, col_up, col_down, col_empty2 = st.columns([0.05,0.1, 0.1,0.2])
+        with col_up:
+            if st.button("👍", help="Like this"):
+                update_count("thumbs_up")
+                header_popup(True)
+                    
+        with col_down:
+            if st.button("👎", help="Needs improvement"):
+                update_count("thumbs_down")
+                header_popup(False)
+        
+        st.write("Share with others")
+        with stylable_container(
+            key="container_with_border",
+            css_styles=r"""
+                button div:before {
+                    font-family: "Font Awesome 5 Free";
+                    content: '\f14d';
+                    #content: '\f40c';
+                    display: inline-block;
+                    padding-right: 0px;
+                    vertical-align: middle;
+                    font-weight: 900;
+                    color: black;
+                }
+                """,
+            ): 
+            col_empty, col_up, col_down, col_empty2 = st.columns([0.05, 0.1, 0.1, 0.2])
             with col_up:
-                if st.button("👍", help="Like this"):
-                    update_count("thumbs_up")
-                    header_popup(True)
-                        
-            with col_down:
-                if st.button("👎", help="Needs improvement"):
-                    update_count("thumbs_down")
-                    header_popup(False)
-            
-            st.write("Share with others")
-            with stylable_container(
-                key="container_with_border",
-                css_styles=r"""
-                    button div:before {
-                        font-family: "Font Awesome 5 Free";
-                        content: '\f14d';
-                        #content: '\f40c';
-                        display: inline-block;
-                        padding-right: 0px;
-                        vertical-align: middle;
-                        font-weight: 900;
-                        color: black;
-                    }
-                    """,
-                ): 
-                col_empty, col_up, col_down, col_empty2 = st.columns([0.05,0.1, 0.1,0.2])
-                with col_up:
-                    share = st.button("", help='Share with others')
-            
-                    if share:
-                        share_popup()
-               # st.divider()
+                share = st.button("", help='Share with others')
+        
+                if share:
+                    share_popup()
 
-        #with col_image:
-        # st.image(image_path)
-        #with col_color:
-            global colorblind_mode
-            st.write("High Contrast Mode")
-            col_empty, col_up, col_empty2 = st.columns([0.03,0.25, 0.1])
-            with col_up:
-                colorblind_mode = st.toggle("On/Off", help='Colorblindess improvements')
-            # st.caption("Colorblindness improvements")
-# 
+        global colorblind_mode
+        st.write("High Contrast Mode")
+        col_empty, col_up, col_empty2 = st.columns([0.03,0.25, 0.1])
+        with col_up:
+            colorblind_mode = st.toggle("On/Off", help='Colorblindess improvements')
+
+########################### PDF CODE FOR LATER ##############################
+
         # with col_pdf:
-        #     email = st.text_input("Download a PDF report!", placeholder='Email')
+    #     email = st.text_input("Download a PDF report!", placeholder='Email')
 
-        #     if '@' in email:
-        #         button_disabled = False
-        #     else:
-        #         button_disabled = True
+    #     if '@' in email:
+    #         button_disabled = False
+    #     else:
+    #         button_disabled = True
 
-        #     export_as_pdf = st.button("Export Report", disabled=button_disabled)
+    #     export_as_pdf = st.button("Export Report", disabled=button_disabled)
 
-        #     if export_as_pdf:
-        #         pdf = FPDF('P','mm','A4');
-        #         pdf.add_page()
-        #         pdf.set_font('Arial', 'B', 16)
-        #         # pdf.cell(40, 10, report_text)
-        #         pdf.image('LBDHDD.jpeg', x=5, y=30, w=200, h=25.633)  # Adjust 'x', 'y', 'w', and 'h' as needed
+    #     if export_as_pdf:
+    #         pdf = FPDF('P','mm','A4');
+    #         pdf.add_page()
+    #         pdf.set_font('Arial', 'B', 16)
+    #         pdf.cell(40, 10, report_text)
+    #         pdf.image('LBDHDD.jpeg', x=5, y=30, w=200, h=25.633)  # Adjust 'x', 'y', 'w', and 'h' as needed
 
-        #         pdf_file_path = 'test.pdf'  # Adjust the path and filename as needed
-        #         pdf.output(pdf_file_path)
-                
-        #         # html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
-        #         # st.markdown(html, unsafe_allow_html=True)
+    #         pdf_file_path = 'test.pdf'  # Adjust the path and filename as needed
+    #         pdf.output(pdf_file_path)
+            
+    #         html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
+    #         st.markdown(html, unsafe_allow_html=True)
 
-        #         # Send the PDF via email with yagmail
-        #         yag = yagmail.SMTP('sanaa.bhorkar@gmail.com', 'txhamunwqrefciwl', host='smtp.gmail.com', port=587, smtp_starttls=True, smtp_ssl=False)
+    #         Send the PDF via email with yagmail
+    #         yag = yagmail.SMTP('sanaa.bhorkar@gmail.com', 'txhamunwqrefciwl', host='smtp.gmail.com', port=587, smtp_starttls=True, smtp_ssl=False)
 
-        #         # Enclose the PDF
-        #         yag.send(
-        #             to=email,
-        #             subject="Your SAHA Report",
-        #             contents="Report attached.",
-        #             attachments=['test.pdf']
-        #         )
+    #         Enclose the PDF
+    #         yag.send(
+    #             to=email,
+    #             subject="Your SAHA Report",
+    #             contents="Report attached.",
+    #             attachments=['test.pdf']
+    #         )
 
-        #         # Close SMTP connection
-        #         yag.close()
+    #         Close SMTP connection
+    #         yag.close()
 
-        #         with open("emails.txt", "a") as f: # save emails to a text file
-        #             date = datetime.datetime.now()
-        #             f.write(f"{date}, {email}\n")
-        # header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
-############################Settings #########################
+    #         with open("emails.txt", "a") as f: save emails to a text file
+    #             date = datetime.datetime.now()
+    #             f.write(f"{date}, {email}\n")
+    # header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
+
+########################### PDF CODE END ##############################
+
+config_sidebar()
+
+########################### SIDEBAR END ##############################
+
+########################### HEADER ##############################
 st.image(image_path)
 col_score, col_records = st.columns([0.95, 0.05])
 with col_score:
     st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity.")
 
+########################### HEADER END ##############################
+
+########################### PAGE SETTINGS AND CONSTANTS ##############################
 if "title_expander" not in st.session_state:
     st.session_state.title_expander = "About Me"
 
@@ -427,7 +279,6 @@ expand_label = "About Me"
 aboutMe_expand = st.expander(st.session_state.title_expander or expand_label, expanded=True)
 analysis = st.container(border=True)
 
-config_sidebar()
 st.markdown(""" 
         <style>
         *:not(fixed-header)::before, 
@@ -483,9 +334,9 @@ NAME_MAP = {
 
 DROPDOWN_SELECTION = {
     'Total Cholesterol': 'LBXTC', 'LDL': 'LBDLDL', 'HDL': 'LBDHDD',
-    'Triglycerides': 'LBXTR', 'Total Cholesterol to HDL ratio': 'TotHDLRat',
+    'Triglycerides': 'LBXTR', 'Total Cholesterol:HDL': 'TotHDLRat',
     'Fasting Glucose': 'LBXGLU', 'HbA1c': 'LBXGH',
-    'Body Mass Index': 'BMXBMI', 'Systolic Blood Pressure': 'BPXOSY1', 'Diastolic Blood Pressure': 'BPXODI1', 
+    'Body Mass Index': 'BMXBMI', 'Systolic BP': 'BPXOSY1', 'Diastolic BP': 'BPXODI1', 
 }
 
 AHA_RANGES = {
@@ -514,25 +365,9 @@ STEP_SIZE = {
         'BMXBMI': 1,
     }
 
-def map_age_to_group(age):
-    if 0 <= age <= 2:
-        return 1
-    elif 3 <= age <= 5:
-        return 4
-    elif 6 <= age <= 13:
-        return 9
-    elif 14 <= age <= 18:
-        return 16
-    elif 19 <= age <= 33:
-        return 19
-    elif 34 <= age <= 48:
-        return 34
-    elif 49 <= age <= 64:
-        return 49
-    elif 65 <= age <= 78:
-        return 65
-    else:
-        return 79
+########################### PAGE SETTINGS AND CONSTANTS END ##############################
+
+########################### EXPANDER SET UP ##############################
 
 if 'title_list' not in st.session_state:
     st.session_state.title_list = []
@@ -610,9 +445,32 @@ with aboutMe_expand:
 meds = ", ".join(medications_select)
 if meds == '':
     meds = "None"
-                                            
-# @st.cache_data
-def load_files(debugging):
+
+########################### EXPANDER TITLE SET UP END ##############################
+
+########################### DATAFRAME CLEAN UP ##############################
+
+def map_age_to_group(age):
+    if 0 <= age <= 2:
+        return 1
+    elif 3 <= age <= 5:
+        return 4
+    elif 6 <= age <= 13:
+        return 9
+    elif 14 <= age <= 18:
+        return 16
+    elif 19 <= age <= 33:
+        return 19
+    elif 34 <= age <= 48:
+        return 34
+    elif 49 <= age <= 64:
+        return 49
+    elif 65 <= age <= 78:
+        return 65
+    else:
+        return 79
+
+def load_files():
     if ethnicity is None or ethnicity != 'South Asian':
         df_user = pd.read_sas(USER_FILE, format='xport')
         df_diq = pd.read_sas(DIQ_FILE, format='xport')
@@ -660,33 +518,14 @@ def load_files(debugging):
         df_mcq = pd.concat([df_mcq, df_mcq_2017], ignore_index=True)
         df_combined = pd.merge(df_combined, df_mcq[['SEQN', 'MCQ160E']], on='SEQN', how='left')
 
-        # st.dataframe(df_combined)
-
-        # df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(lambda age: 20 * int(age / 20))
         df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(map_age_to_group)
         df_combined['TotHDLRat'] =  df_combined['LBXTC'] / df_combined['LBDHDD']
 
-        # st.write(df_combined.shape)
-        # st.dataframe(df_combined)
-
-        if debugging:
-            st.dataframe(df_combined, hide_index=True)
-            st.dataframe(df_user, hide_index=True)
-            st.dataframe(df_diq, hide_index=True)
-            st.dataframe(df_bpq, hide_index=True)
-            st.dataframe(df_hdl, hide_index=True)
-            st.dataframe(df_tgl, hide_index=True)
-            st.dataframe(df_tch, hide_index=True)
-            st.dataframe(df_glu, hide_index=True)
-            st.dataframe(df_ghb, hide_index=True)
-            st.dataframe(df_bpx, hide_index=True)
-
-        if debugging:
-            df_combined.to_csv(os.path.join(OUTPUT_DIR, 'nhanes_combined.csv'), index=False)
         return df_combined
     else:
         df_combined = pd.read_csv(SAHC_FILE)
 
+        # Rename the SAHC columns to match with the NHANES columns
         df_combined = df_combined.rename(columns={
             'gender': 'RIAGENDR',
             'race': 'RIDRETH3',
@@ -707,6 +546,8 @@ def load_files(debugging):
 
         return df_combined
 
+########################### DATAFRAME CLEAN UP AND FILTER ##############################
+
 def get_next_age_group(age_group, direction='up'):
     age_groups = list(ageOptions.keys())
     current_index = age_groups.index(age_group)
@@ -722,28 +563,15 @@ def get_next_age_group(age_group, direction='up'):
         else:
             return age_groups[current_index + 1]
 
-def ui_choose(df, debugging):
-    if debugging:
-        st.write(gender)
-        st.write(age_group)
-        st.write(medChol)
-        st.write(medDiab)
-        st.write(medBP)
-
+def ui_choose(df):
     df2 = df.copy()
-    # st.write(df2)
-    # st.write(df2.shape)
 
     if gender is not None:
         genderFilter = [genderOptions[gender]]
         df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
-        # st.write(df2.shape, "gender")
     if age_group is not None:
         ageFilter = [ageOptions[age_group]]
         df2 = df2[df2['Age_Group'].isin(ageFilter)]
-        # st.write(df2.shape, "Age")
-
-    # st.write(df2)
     
     if ethnicity is not None and ethnicity == 'South Asian':
         medCholFilter = [medCholOptions[medChol]]
@@ -753,7 +581,6 @@ def ui_choose(df, debugging):
         medBPFilter = [medBPOptions[medBP]]
         df2 = df2[df2['bpMeds'].isin(medBPFilter)]
     elif ethnicity is None or ethnicity != 'South Asian':
-        # st.dataframe(df2)
         medCholFilter = [medCholOptions[medChol]]
         if medChol == 'Yes':
             df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
@@ -801,8 +628,18 @@ def ui_choose(df, debugging):
     
     if len(df2) < 15:
         st.write(f"Not enough records found to compare. Please remove medication usage and try again.") 
+    
+    # Edit the BMI and HDL numbers for ethnicity/gender
+    if ethnicity == 'South Asian':
+        AHA_RANGES['Body Mass Index'] = ("Low", 18.5, "Optimal", 23, "Borderline", 30, "At risk")
+    if gender == 'Female':
+        AHA_RANGES['HDL (mg/dL)'] = ("At risk", 50, "Optimal", None, None, None, None)
 
     return df2
+
+########################### DATAFRAME CLEAN UP AND FILTER END ##############################
+
+########################### INFORMATION POP UP ##############################
 
 @st.dialog(" ", width='large')
 def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, p25, p50, p75, p90, low_number, high_number, status, df3, value, prop):
@@ -845,7 +682,6 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
             {person_label}
             """, unsafe_allow_html=True)
 
-    # st.header(f"Your {column}: {user_input:.1f} {UNITS_MAP[acro]}\n ### Risk classification: {status}")
     st.write(f"""
         **Your {column}: {user_input:.1f} {UNITS_MAP[acro]}
         <br>
@@ -879,20 +715,14 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
                     '<thead style="background-color: lightgray;">')
     html_parts = html.split('<td>')
 
-    # Modify the first <td> tag
     html_parts[1] = '<td style="text-align: left;">' + html_parts[1]
 
-    # Modify the 2nd to 5th <td> tags
     for i in range(2, 6):
         if i < len(html_parts):
             html_parts[i] = '<td style="text-align: center;">' + html_parts[i]
 
-    # Reconstruct the HTML string
     html = ''.join(html_parts)
 
-    # html = html.replace('<tr>', '<tr style="background-color: #f2f2f2;">', 1)
-
-    # Display the customized HTML in Streamlit
     st.markdown(html, unsafe_allow_html=True)
 
 
@@ -920,44 +750,17 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
     else:
         "Your marker is in optimal range. Continue working on your lifestyle behaviors to keep this marker in range."
 
-# metric_list = get_app_queue()
+########################### INFORMATION POP UP END ##############################
+
+########################### DROPDOWN AND INPUTS FOR METRICS ##############################
+
 if 'metric_list' not in st.session_state:
     st.session_state.metric_list = deque()
 
 
 def show_analysis(df):
-    # st.write("show_analysis entered", datetime.datetime.now())
-    validation_labels = {
-        'LBDHDD': "Value should be between 20-100",
-        'LBDLDL': "Value should be between 30-300",
-        'LBXTC': "Value should be between 100-320",
-        'LBXTR': "Value should be between 50-300",
-        'LBXGLU': "Value should be between 50-150",
-        'BPXOSY1': "Value should be between 90-200",
-        'BPXODI1': "Value should be between 60-130",
-        'TotHDLRat': "Value should be between 0.5-10",
-        'LBXGH': "Value should be between 0 and 20",
-        'BMXBMI': "Value should be between 10 and 50"
-    }
-
-    validation_range = {
-        'LBDHDD': [20, 100],
-        'LBDLDL': [30, 300],
-        'LBXTC': [100, 320],
-        'LBXTR': [50, 300],
-        'LBXGLU': [50, 150],
-        'BPXOSY1': [90, 200],
-        'BPXODI1': [60,130],
-        'TotHDLRat': [0.5, 10.0],
-        'LBXGH': [0.0, 20.0],
-        'BMXBMI': [10, 50]
-    }
-
     user_inputs = {}
-
-    # st.markdown(f"### <u>My risk profile markers</u>", unsafe_allow_html=True)
-
-    # col_empty1, col_dropdown, col_empty, col_input, col_input2, col_empty = st.columns([0.001, 0.234, 0.115, 0.2, 0.2, 0.25], gap='medium', vertical_alignment='center')
+    
     with analysis:
 
         col_dropdown, col_empty, col_input, col_empty2, col_input2, col_empty3 = st.columns([.2, .1, .2, .1, .2, .4], vertical_alignment='top')
@@ -989,9 +792,6 @@ def show_analysis(df):
                 else:
                     user_inputs[column] = st.number_input(f'{metric} ({UNITS_MAP[column]})', key='user_input', step=STEP_SIZE[column], value=None)
 
-            # with col_input2:
-            #     st.caption(f"{validation_labels[column]}")
-
         if len(st.session_state.metric_list) == 0:
             st.session_state.metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
         else:
@@ -1009,21 +809,18 @@ def show_analysis(df):
 
         st.divider()
 
-        # Number of elements
-        num_elements = 10
+########################### DROPDOWN AND INPUTS FOR METRICS END ##############################
 
-        # Create placeholders for columns
+########################### SHOW GRAPHS ##############################
+
+        num_elements = 10 # Number of total metrics available, if user checks all of them
+
         cols = [st.empty() for _ in range(num_elements)]
 
         for i, column_dict in enumerate(st.session_state.metric_list):
 
-            global header
-            global placeholder
-            global header_color
-
             column = column_dict['column']
             columnName = column_dict['columnName']
-            #st.write(column)
 
             with cols[i].container():
 
@@ -1033,7 +830,6 @@ def show_analysis(df):
                 col8, col9 = st.columns([0.65, 0.35], vertical_alignment='top', gap='small')
             
                 with col8:
-                    #user_input = user_inputs[column]  # Reference the user input from the dictionary
                     user_input = column_dict['input']
 
                     if user_input == None:
@@ -1046,28 +842,13 @@ def show_analysis(df):
                         st.markdown(f"Not enough data available for {columnName}.")
                         continue
 
-                    # if user_input <= validation_range[column][0] or user_input >= validation_range[column][1]:
-                    #     # st.write(f"### ")
-                    #     st.write(f"Please enter a :red[**valid**] value for {columnName}.")
-                    #     continue
-                    # el
                     if STEP_SIZE[column] == 0.1 or column == 'BMXBMI':
                         header = f"{NAME_MAP[column]}: {user_input:.1f} {UNITS_MAP[column]}"
                     else:
                         header = f"{NAME_MAP[column]}: {user_input:.0f} {UNITS_MAP[column]}"
 
-                    # st.write(f"####")
-
-                    if columnName in AHA_RANGES:
-                        low_number = AHA_RANGES[columnName][1]
-                        high_number = AHA_RANGES[columnName][3]
-                        if ethnicity == 'South Asian' and columnName == 'Body Mass Index':
-                            AHA_RANGES[columnName][3] = 23
-                    else:
-                        st.write(f"No AHA prescribed range available for {columnName}.")
-                        continue
-                    if columnName == 'HDL (mg/dL)' and gender == 'Female':
-                        AHA_RANGES[columnName][1] = 50
+                    low_number = AHA_RANGES[columnName][1]
+                    high_number = AHA_RANGES[columnName][3]
 
                     sorted_array = np.sort(array)
 
@@ -1085,7 +866,7 @@ def show_analysis(df):
 
                     fig, ax = plt.subplots(figsize=(16, 1.15))
 
-                    # dot at user input position
+                    # Find the user percentile
                     user_percentile = int(np.mean(sorted_array <= user_input) * 100)
                     if user_percentile == 100:
                         user_percentile = 99
@@ -1181,26 +962,15 @@ def show_analysis(df):
                             header_color = at_risk
                             status = 'At risk'
                     
+                    # Show the circle for the user input on the graph
                     ax.scatter(user_percentile, 0.85, zorder=999, s=scatter_size+225, edgecolors='k')
                     ax.scatter(user_percentile, 0.85, color=header_color, zorder=1000, label='Your Input', s=scatter_size, edgecolors='w', linewidth=3)
-                            
 
-                    placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True)
+                    placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True) # Change the color of the title for each graph
 
-                    ax.set_xlim(0, 100)
                     ax.set_ylim(0.4, 1.1)
-                    ax.set_yticks([])
-                    # ax.xaxis.tick_top()  
-                    ax.xaxis.set_label_position('top') 
-                    # tick_positions = [0, 100]
-
-                    # tick_labels = ['0%ile', '99%ile']
+                    ax.set_yticks([]) 
                     ax.set_xticks([])
-                    # ax.set_xticklabels(tick_labels)
-
-                    # ax.set_xlabel('Percentile (%)')
-
-                    # ax.set_title(columnName)
 
                     if status == 'Borderline':
                         text_color = 'black'
@@ -1214,8 +984,6 @@ def show_analysis(df):
                         ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.25, 0.79),
                                     horizontalalignment='center', color = text_color, zorder=1001, weight='bold', fontsize=16)
                     
-                    if int(user_percentile) == 100:
-                        user_percentile = 99
                     if user_percentile > 90:
                         plt.annotate(f'({user_percentile:.0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile - 5, 0.98), 
                                 horizontalalignment='center')
@@ -1228,32 +996,18 @@ def show_analysis(df):
                                     horizontalalignment='right', weight='bold')
                         plt.annotate(f'<18.5', xy=(low_percentile - 1, 0.657), xytext=(low_percentile - 1, 0.3),
                                 horizontalalignment='right')
-                        if ethnicity == 'South Asian':
-                            plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
-                                    horizontalalignment='left', weight='bold')
-                            plt.annotate(f'18.5-23', xy=(low_percentile, 0.657), xytext=(low_percentile, 0.3),
-                                    horizontalalignment='left')
-                            plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(low_percentile, 0.675), xytext=(high_percentile, 0.45),
-                                    horizontalalignment='left', weight='bold')
-                            plt.annotate(f'23-25', xy=(high_percentile - 1, 0.657), xytext=(high_percentile, 0.3),
-                                    horizontalalignment='left')
-                            plt.annotate(f'{AHA_RANGES[columnName][6]}', xy=(low_percentile, 0.675), xytext=(extra_high_percentile, 0.45),
-                                    horizontalalignment='left', weight='bold')
-                            plt.annotate('>25', xy=(extra_high_percentile - 1, 0.657), xytext=(extra_high_percentile, 0.3),
-                                    horizontalalignment='left')
-                        else:
-                            plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
-                                    horizontalalignment='left', weight='bold')
-                            plt.annotate(f'18.5-25', xy=(low_percentile, 0.657), xytext=(low_percentile, 0.3),
-                                    horizontalalignment='left')
-                            plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(low_percentile, 0.675), xytext=(high_percentile, 0.45),
-                                    horizontalalignment='left', weight='bold')
-                            plt.annotate(f'25-30', xy=(high_percentile - 1, 0.657), xytext=(high_percentile, 0.3),
-                                    horizontalalignment='left')
-                            plt.annotate(f'{AHA_RANGES[columnName][6]}', xy=(low_percentile, 0.675), xytext=(extra_high_percentile, 0.45),
-                                    horizontalalignment='left', weight='bold')
-                            plt.annotate('>30', xy=(extra_high_percentile - 1, 0.657), xytext=(extra_high_percentile, 0.3),
-                                    horizontalalignment='left')
+                        plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
+                                horizontalalignment='left', weight='bold')
+                        plt.annotate(f'18.5-23', xy=(low_percentile, 0.657), xytext=(low_percentile, 0.3),
+                                horizontalalignment='left')
+                        plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(low_percentile, 0.675), xytext=(high_percentile, 0.45),
+                                horizontalalignment='left', weight='bold')
+                        plt.annotate(f'23-25', xy=(high_percentile - 1, 0.657), xytext=(high_percentile, 0.3),
+                                horizontalalignment='left')
+                        plt.annotate(f'{AHA_RANGES[columnName][6]}', xy=(low_percentile, 0.675), xytext=(extra_high_percentile, 0.45),
+                                horizontalalignment='left', weight='bold')
+                        plt.annotate('>25', xy=(extra_high_percentile - 1, 0.657), xytext=(extra_high_percentile, 0.3),
+                                horizontalalignment='left')
                     else:
                         if high_number < 1000:
                             plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.45),
@@ -1279,35 +1033,21 @@ def show_analysis(df):
                     for spine in ax.spines.values():
                         spine.set_visible(False)
 
-                    # fig.patch.set_alpha(0) make background transparent
-                    # ax.patch.set_alpha(0)
-
                     st.pyplot(fig)
-
-                    fig.savefig(f'{column}.jpeg', bbox_inches='tight')
                     plt.close(fig)
 
-                    df3 = df.copy()
+########################### SHOW GRAPHS END ##############################
 
-                    total = df3.shape[0]
+########################### INFORMATION BUTTON ##############################
 
                     if "to HDL" in columnName:
                         value = AHA_RANGES[columnName][1]
-                        # df3 = df3[df3['TotHDLRat'] < AHA_RANGES[columnName][1] & df3['TotHDLRat'] > AHA_RANGES[columnName][3]]
                     elif "HDL" in columnName:
                         value = AHA_RANGES[columnName][1]
-                        # df3 = df3[df3['LBDHDD'] < AHA_RANGES[columnName][1]]
                     elif "Body Mass Index" in columnName:
                         value = AHA_RANGES[columnName][3]
-                        # df3 = df3[df3['BMXBMI'] > AHA_RANGES[columnName][3]]
                     else:
                         value = AHA_RANGES[columnName][1]
-                        # df3 = df3[df3[column] > AHA_RANGES[columnName][1]]
-
-                    # top = df3.shape[0]
-                    # # st.write(top)
-                    # # st.write(total)                
-                    # prob = (top / total) * 100
 
                     prob_percentile = int(np.mean(sorted_array <= value) * 100)
                     prob = 100 - prob_percentile
@@ -1316,32 +1056,21 @@ def show_analysis(df):
                     df4 = df4[column]
                     df4 = df4.dropna()
                     total = df4.shape[0]
-                    # st.write(total)
 
+                    # Get the percentage of people that have a value <= the entered value
                     df4 = df4[df4 <= user_input]
-                    top = df4.shape[0]  
-                    # st.write(top)           
+                    top = df4.shape[0]          
                     prop = (top / total) * 100
 
-                    # st.write(prop)
-
-                    percentile_25 = np.percentile(sorted_array, 25)
-                    percentile_50 = np.percentile(sorted_array, 50)
-                    percentile_75 = np.percentile(sorted_array, 75)
-                    percentile_90 = np.percentile(sorted_array, 90)
+                    percentile_25 = int(np.percentile(sorted_array, 25))
+                    percentile_50 = int(np.percentile(sorted_array, 50))
+                    percentile_75 = int(np.percentile(sorted_array, 75))
+                    percentile_90 = int(np.percentile(sorted_array, 90))
 
                     popup_column = NAME_MAP[column]
 
                 with col9:
-
-                    user_input = column_dict['input']
-
-                    array = df[column].dropna()
-                    sorted_array = np.sort(array)
-                    user_percentile = int(np.mean(sorted_array <= user_input) * 100)
-
                     digit = user_percentile % 10
-                    # st.write(digit)
                     suffix = 'th'
 
                     if digit == 1:
@@ -1380,11 +1109,16 @@ def show_analysis(df):
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood pressure", medBP, prob, 
                                 percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, df3, value, prop)
 
-# Main execution
-df_c = load_files(False)
-df_d = ui_choose(df_c, False)
+########################### INFORMATION BUTTON END ##############################
+
+########################### MAIN EXECUTION ##############################
+df_c = load_files()
+df_d = ui_choose(df_c)
 show_analysis(df_d)
 
+########################### MAIN EXECUTION END ##############################
+
+########################### FOOTER ##############################
 up, down = get_counts()
 st.markdown(f"<div style='text-align: center'> Total Visitors: {total_unique_views}</div>", unsafe_allow_html=True)
 st.markdown(f"<div style='text-align: center'> Version {VERSION}</div>", unsafe_allow_html=True)
