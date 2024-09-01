@@ -6,6 +6,7 @@ LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
 VERSION = 2.0
+
 USER_FILE = os.path.join(DATA_DIR, 'DEMO_P.XPT')
 DIQ_FILE = os.path.join(DATA_DIR, 'P_DIQ.XPT')
 BPQ_FILE = os.path.join(DATA_DIR, 'P_BPQ.XPT')
@@ -30,11 +31,33 @@ BPX_FILE_2017 = os.path.join(DATA_DIR, 'BPXO_2017.XPT')
 CBC_FILE_2017 = os.path.join(DATA_DIR, 'CBC_2017.XPT')
 BMX_FILE_2017 = os.path.join(DATA_DIR, 'BMX_2017.XPT')
 MCQ_FILE_2017 = os.path.join(DATA_DIR, 'MCQ_2017.XPT')
+USER_FILE_2015 = os.path.join(DATA_DIR, 'DEMO_2015.XPT')
+DIQ_FILE_2015 = os.path.join(DATA_DIR, 'DIQ_2015.XPT')
+BPQ_FILE_2015 = os.path.join(DATA_DIR, 'BPQ_2015.XPT')
+HDL_FILE_2015 = os.path.join(DATA_DIR, 'HDL_2015.XPT')
+TGL_FILE_2015 = os.path.join(DATA_DIR, 'TRIGLY_2015.XPT')
+TCH_FILE_2015 = os.path.join(DATA_DIR, 'TCHOL_2015.XPT')
+GLU_FILE_2015 = os.path.join(DATA_DIR, 'GLU_2015.XPT')
+GHB_FILE_2015 = os.path.join(DATA_DIR, 'GHB_2015.XPT')
+BPX_FILE_2015 = os.path.join(DATA_DIR, 'BPXO_2015.XPT')
+BMX_FILE_2015 = os.path.join(DATA_DIR, 'BMX_2015.XPT')
+MCQ_FILE_2015 = os.path.join(DATA_DIR, 'MCQ_2015.XPT')
+USER_FILE_2013 = os.path.join(DATA_DIR, 'DEMO_2013.XPT')
+DIQ_FILE_2013 = os.path.join(DATA_DIR, 'DIQ_2013.XPT')
+BPQ_FILE_2013 = os.path.join(DATA_DIR, 'BPQ_2013.XPT')
+HDL_FILE_2013 = os.path.join(DATA_DIR, 'HDL_2013.XPT')
+TGL_FILE_2013 = os.path.join(DATA_DIR, 'TRIGLY_2013.XPT')
+TCH_FILE_2013 = os.path.join(DATA_DIR, 'TCHOL_2013.XPT')
+GLU_FILE_2013 = os.path.join(DATA_DIR, 'GLU_2013.XPT')
+GHB_FILE_2013 = os.path.join(DATA_DIR, 'GHB_2013.XPT')
+BPX_FILE_2013 = os.path.join(DATA_DIR, 'BPXO_2013.XPT')
+BMX_FILE_2013 = os.path.join(DATA_DIR, 'BMX_2013.XPT')
+MCQ_FILE_2013 = os.path.join(DATA_DIR, 'MCQ_2013.XPT')
+
 SAHC_FILE = os.path.join(SAHC_DATA_DIR, 'merged_data_noPID.csv')
 SAHC_RENAME_FILE = os.path.join(SAHC_DATA_DIR, 'renamed_merged_data_noPID.csv')
 
-NHANES_FILE = os.path.join(DATA_DIR, 'nhanes_merged_data2017.csv')
-
+NHANES_FILE = os.path.join(DATA_DIR, 'nhanes_merged_data.csv')
 
 def map_age_to_group(age):
     if 0 <= age <= 2:
@@ -80,28 +103,60 @@ def export_nhanes_files():
     df_bpx_2017 = pd.read_sas(BPX_FILE_2017, format='xport')
     df_bmx_2017 = pd.read_sas(BMX_FILE_2017, format='xport')
     df_mcq_2017 = pd.read_sas(MCQ_FILE_2017, format='xport')
+    df_user_2015 = pd.read_sas(USER_FILE_2015, format='xport')
+    df_diq_2015 = pd.read_sas(DIQ_FILE_2015, format='xport')
+    df_bpq_2015 = pd.read_sas(BPQ_FILE_2015, format='xport')
+    df_hdl_2015 = pd.read_sas(HDL_FILE_2015, format='xport')
+    df_tgl_2015 = pd.read_sas(TGL_FILE_2015, format='xport')
+    df_tch_2015 = pd.read_sas(TCH_FILE_2015, format='xport')
+    df_glu_2015 = pd.read_sas(GLU_FILE_2015, format='xport')
+    df_ghb_2015 = pd.read_sas(GHB_FILE_2015, format='xport')
+    df_bpx_2015 = pd.read_sas(BPX_FILE_2015, format='xport')
+    df_bmx_2015 = pd.read_sas(BMX_FILE_2015, format='xport')
+    df_mcq_2015 = pd.read_sas(MCQ_FILE_2015, format='xport')
+    df_user_2013 = pd.read_sas(USER_FILE_2013, format='xport')
+    df_diq_2013 = pd.read_sas(DIQ_FILE_2013, format='xport')
+    df_bpq_2013 = pd.read_sas(BPQ_FILE_2013, format='xport')
+    df_hdl_2013 = pd.read_sas(HDL_FILE_2013, format='xport')
+    df_tgl_2013 = pd.read_sas(TGL_FILE_2013, format='xport')
+    df_tch_2013 = pd.read_sas(TCH_FILE_2013, format='xport')
+    df_glu_2013 = pd.read_sas(GLU_FILE_2013, format='xport')
+    df_ghb_2013 = pd.read_sas(GHB_FILE_2013, format='xport')
+    df_bpx_2013 = pd.read_sas(BPX_FILE_2013, format='xport')
+    df_bmx_2013 = pd.read_sas(BMX_FILE_2013, format='xport')
+    df_mcq_2013 = pd.read_sas(MCQ_FILE_2013, format='xport')
 
-    df_user = pd.concat([df_user, df_user_2017], ignore_index=True)
+    df_user = pd.concat([df_user_2013, df_user_2015, df_user_2017], ignore_index=True)
     df_combined = df_user[['SEQN', 'RIAGENDR', 'RIDAGEYR', 'RIDRETH3']]
-    df_diq = pd.concat([df_diq, df_diq_2017], ignore_index=True)
+
+    df_diq = pd.concat([df_diq_2013, df_diq_2015, df_diq_2017], ignore_index=True)
     df_combined = pd.merge(df_combined, df_diq[['SEQN', 'DIQ010', 'DIQ160', 'DIQ050', 'DIQ070']], on='SEQN', how='left')
-    df_bpq = pd.concat([df_bpq, df_bpq_2017], ignore_index=True)
+
+    df_bpq = pd.concat([df_bpq_2013, df_bpq_2015, df_bpq_2017], ignore_index=True)
     df_combined = pd.merge(df_combined, df_bpq[['SEQN', 'BPQ090D', 'BPQ100D', 'BPQ040A', 'BPQ020']], on='SEQN', how='left')
-    df_hdl = pd.concat([df_hdl, df_hdl_2017], ignore_index=True)
+
+    df_hdl = pd.concat([df_hdl_2013, df_hdl_2015, df_hdl_2017], ignore_index=True)
     df_combined = pd.merge(df_combined, df_hdl[['SEQN', 'LBDHDD']], on='SEQN', how='left')
-    df_tgl = pd.concat([df_tgl, df_tgl_2017], ignore_index=True)
+
+    df_tgl = pd.concat([df_tgl_2013, df_tgl_2015, df_tgl_2017], ignore_index=True)
     df_combined = pd.merge(df_combined, df_tgl[['SEQN', 'LBXTR', 'LBDLDL']], on='SEQN', how='left')
-    df_tch = pd.concat([df_tch, df_tch_2017], ignore_index=True)
+
+    df_tch = pd.concat([df_tch_2013, df_tch_2015, df_tch_2017], ignore_index=True)
     df_combined = pd.merge(df_combined, df_tch[['SEQN', 'LBXTC']], on='SEQN', how='left')
-    df_glu = pd.concat([df_glu, df_glu_2017], ignore_index=True)
+
+    df_glu = pd.concat([df_glu_2013, df_glu_2015, df_glu_2017], ignore_index=True)
     df_combined = pd.merge(df_combined, df_glu[['SEQN', 'LBXGLU']], on='SEQN', how='left')
-    df_ghb = pd.concat([df_ghb, df_ghb_2017], ignore_index=True)
+
+    df_ghb = pd.concat([df_ghb_2013, df_ghb_2015, df_ghb_2017], ignore_index=True)
     df_combined = pd.merge(df_combined, df_ghb[['SEQN', 'LBXGH']], on='SEQN', how='left')
-    df_bpx = pd.concat([df_bpx, df_bpx_2017], ignore_index=True)
+
+    df_bpx = pd.concat([df_bpx_2013, df_bpx_2015, df_bpx_2017], ignore_index=True)
     df_combined = pd.merge(df_combined, df_bpx[['SEQN', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1', 'BPXOSY2', 'BPXODI2', 'BPXOPLS2', 'BPXOSY3', 'BPXODI3', 'BPXOPLS3']], on='SEQN', how='left')
-    df_bmx = pd.concat([df_bmx, df_bmx_2017], ignore_index=True)
+
+    df_bmx = pd.concat([df_bmx_2013, df_bmx_2015, df_bmx_2017], ignore_index=True)
     df_combined = pd.merge(df_combined, df_bmx[['SEQN', 'BMXBMI']], on='SEQN', how='left')
-    df_mcq = pd.concat([df_mcq, df_mcq_2017], ignore_index=True)
+
+    df_mcq = pd.concat([df_mcq_2013, df_mcq_2015, df_mcq_2017], ignore_index=True)
     df_combined = pd.merge(df_combined, df_mcq[['SEQN', 'MCQ160E']], on='SEQN', how='left')
 
     df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(map_age_to_group)

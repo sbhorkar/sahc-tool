@@ -40,7 +40,7 @@ DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 2.6
+VERSION = 3.0
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
@@ -452,9 +452,6 @@ def ui_choose(df):
     if gender is not None:
         genderFilter = [genderOptions[gender]]
         df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
-    if age_group is not None:
-        ageFilter = [ageOptions[age_group]]
-        df2 = df2[df2['Age_Group'].isin(ageFilter)]
     
     if ethnicity is not None and ethnicity == 'South Asians only':
         medCholFilter = [medCholOptions[medChol]]
@@ -476,38 +473,19 @@ def ui_choose(df):
             df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
         elif medBP == 'No':
             df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
-    
-    length = len(df2)
 
-    with col_records:
-        st.markdown(f"<span style='color:white;'>({length})</span>", unsafe_allow_html=True)
-    
-    if length < 15:
-        if age_group is not None:
+    if age_group is not None:
+        ageFilter = [ageOptions[age_group]]
+        length = len(df2[df2['Age_Group'].isin(ageFilter)])
+
+        if length < 15:
             next_age_group = get_next_age_group(age_group)
             ageFilter.append(ageOptions[next_age_group])
+        
+        df2 = df2[df2['Age_Group'].isin(ageFilter)]
 
-            if gender is not None:
-                genderFilter = [genderOptions[gender]]
-                df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
-            
-            if ethnicity is not None and ethnicity == 'South Asians only':
-                medCholFilter = [medCholOptions[medChol]]
-                df2 = df2[df2['cholMeds'].isin(medCholFilter)]
-                medDiabFilter = [medDiabOptions[medDiab]]
-                df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
-                medBPFilter = [medBPOptions[medBP]]
-                df2 = df2[df2['bpMeds'].isin(medBPFilter)]
-            elif ethnicity is None or ethnicity != 'South Asians only':
-                if medChol == 'Yes':
-                    df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
-                elif medChol == 'No':
-                    df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
-                df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
-                if medBP == 'Yes':
-                    df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
-                elif medBP == 'No':
-                    df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
+    with col_records:
+        st.markdown(f"<span style='color:white;'>({len(df2)})</span>", unsafe_allow_html=True)
     
     if len(df2) < 15:
         st.write(f"Not enough records found to compare. Please remove medication usage and try again.") 

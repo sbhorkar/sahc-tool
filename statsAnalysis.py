@@ -69,9 +69,8 @@ STEP_SIZE = {
         'LBXGH': .1,
         'BMXBMI': 1,
     }
-def ui_choose(df):
-    #global gender, age_group,ethnicity, medChol,medDiab,medBP
-    
+
+def ui_choose(df):    
     
     df2 = df.copy()
 
@@ -115,65 +114,45 @@ def ui_choose(df):
 
     return df2
 
-def dump_percentile(metric, column, columnName, df):
+def dump_percentile(metric, column, df):
     array = df[column].dropna()
-    low_number = AHA_RANGES[columnName][1]
-    high_number = AHA_RANGES[columnName][3]
-    extra_high_number = AHA_RANGES[columnName][5]
-    extra_high_percentile = None
 
     sorted_array = np.sort(array)
-
-    # Calculate the percentile
-    if high_number == None:
-        high_number = 1000
-        high_percentile = 99
-        limit = high_number
-    else:
-        high_percentile = int(np.mean(sorted_array <= high_number) * 100)
-        limit = high_number
-        if extra_high_number is not None:
-            extra_high_percentile = int(np.mean(sorted_array <= extra_high_number) * 100)
-            limit = extra_high_number
-
-    low_percentile = int(np.mean(sorted_array <= low_number) * 100)
 
     # Find the user percentile
     
     if STEP_SIZE[metric] == 1:
-        user_input = random.randint(0,limit)
+        user_input = random.randint(int(sorted_array[0]),int(sorted_array[-1]))
     else:
-        user_input = round(random.random()*10, 2)
+        user_input = round(random.random()*(sorted_array[-1] - sorted_array[0]), 2)
     user_percentile = int(np.mean(sorted_array <= user_input) * 100)
     if user_percentile == 100:
         user_percentile = 99
-    return {'Metric':metric, 'Low Number': low_number, 'Low Percentile': low_percentile, 
-            'High Number': high_number,'High Percentile':high_percentile, 
-            'Extra High Number': extra_high_number,'Extra High Percentile':extra_high_percentile, 
+    selected_data = [float(x) for x in sorted_array if x <= user_input]
+    actual_percentie = len(selected_data)/len(sorted_array)
+    return {'Metric':metric, 'Low Number': sorted_array, 'Length': len(sorted_array),
+            'User Data': selected_data, 'User Data Length': len (selected_data), 
             'User Input':user_input, 
-            'User Percentile': user_percentile }
-    #print(low_number, low_percentile, high_number, high_percentile, user_input, user_percentile)
-    #if extra_high_number is not None:
-    #    print(extra_high_number, extra_high_percentile)
+            'User Percentile': user_percentile, 'Actual Percentile': actual_percentie, 
+            'Difference': ((actual_percentie*100)-user_percentile) }
         
-
-print(len(df_nhanes))
 df_d = ui_choose(df_nhanes)
-print(len(df_d))
 
 #print(DROPDOWN_SELECTION.values())
-df_percentile = pd.DataFrame(columns=['Metric', 'Low Number', 'Low Percentile', 'High Number', 
-                                      'High Percentile', 'Extra High Number', 'Extra High Percentile',
-                                      'User Input', 'User Percentile'])
-records =
+#seqns = df_d['SEQN']
+#print (seqns)
+#selected_seqn = random.sample(seqns.tolist(), 10)
+#print (selected_seqn)
+#new_df_d = df_d[df_d['SEQN'].isin(selected_seqn)]
+#print(new_df_d)
+records = []
 for metric in DROPDOWN_SELECTION.values():
-    print(metric)
+    
     column = DROPDOWN_SELECTION[NAME_MAP[metric]]
-    if metric != 'BMXBMI':
-        columnName = NAME_MAP[metric] + f" ({UNITS_MAP[metric]})"
-    else:
-        columnName = NAME_MAP[metric]
-    print (column, columnName)
+    
     for i in range(10):
-        df_percentile.append(dump_percentile(metric, column, columnName, df_d))
-    len(df_percentile)
+        #records.append(dump_percentile(metric, column, columnName, df_d))
+        records.append(dump_percentile(metric, column, df_d))
+df_percentile = pd.DataFrame(records)
+len(df_percentile)
+df_percentile.to_csv('Percentile_2.csv')
