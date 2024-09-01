@@ -33,13 +33,14 @@ hide_menu_style = """
         """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
 
+# Adding CSS for the share button logo
 st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>', unsafe_allow_html=True)
 
 DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 2.0
+VERSION = 2.6
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
@@ -95,7 +96,6 @@ def header_popup(liked):
 ########################### FEEDBACK END ##############################
 
 ########################### VIEWER COUNT ##############################
-import sqlite3
 
 def create_db():
     conn = sqlite3.connect('unique_views.db')
@@ -112,10 +112,8 @@ create_db()
 
 import streamlit as st
 import hashlib
-import sqlite3
 
 import uuid
-import streamlit as st
 
 # Generate a unique run_id for the session
 if 'run_id' not in st.session_state:
@@ -190,8 +188,7 @@ def config_sidebar():
             css_styles=r"""
                 button div:before {
                     font-family: "Font Awesome 5 Free";
-                    content: '\f14d';
-                    #content: '\f40c';
+                    content: '\f14d'; # Get the share icon
                     display: inline-block;
                     padding-right: 0px;
                     vertical-align: middle;
@@ -294,31 +291,10 @@ darkgreen = "#75975e"
 regugreen = "#9dba82"
 lightgreen = "#c7ddb5"
 
-USER_FILE = os.path.join(DATA_DIR, 'DEMO_P.XPT')
-DIQ_FILE = os.path.join(DATA_DIR, 'P_DIQ.XPT')
-BPQ_FILE = os.path.join(DATA_DIR, 'P_BPQ.XPT')
-HDL_FILE = os.path.join(DATA_DIR, 'P_HDL.XPT')
-TGL_FILE = os.path.join(DATA_DIR, 'P_TRIGLY.XPT')
-TCH_FILE = os.path.join(DATA_DIR, 'P_TCHOL.XPT')
-GLU_FILE = os.path.join(DATA_DIR, 'P_GLU.XPT')
-GHB_FILE = os.path.join(DATA_DIR, 'P_GHB.XPT')
-BPX_FILE = os.path.join(DATA_DIR, 'P_BPXO.XPT')
-CBC_FILE = os.path.join(DATA_DIR, 'P_CBC.XPT')
-BMX_FILE = os.path.join(DATA_DIR, 'P_BMX.XPT')
-MCQ_FILE = os.path.join(DATA_DIR, 'P_MCQ.XPT')
-USER_FILE_2017 = os.path.join(DATA_DIR, 'DEMO_2017.XPT')
-DIQ_FILE_2017 = os.path.join(DATA_DIR, 'DIQ_2017.XPT')
-BPQ_FILE_2017 = os.path.join(DATA_DIR, 'BPQ_2017.XPT')
-HDL_FILE_2017 = os.path.join(DATA_DIR, 'HDL_2017.XPT')
-TGL_FILE_2017 = os.path.join(DATA_DIR, 'TRIGLY_2017.XPT')
-TCH_FILE_2017 = os.path.join(DATA_DIR, 'TCHOL_2017.XPT')
-GLU_FILE_2017 = os.path.join(DATA_DIR, 'GLU_2017.XPT')
-GHB_FILE_2017 = os.path.join(DATA_DIR, 'GHB_2017.XPT')
-BPX_FILE_2017 = os.path.join(DATA_DIR, 'BPXO_2017.XPT')
-CBC_FILE_2017 = os.path.join(DATA_DIR, 'CBC_2017.XPT')
-BMX_FILE_2017 = os.path.join(DATA_DIR, 'BMX_2017.XPT')
-MCQ_FILE_2017 = os.path.join(DATA_DIR, 'MCQ_2017.XPT')
-SAHC_FILE = os.path.join(SAHC_DATA_DIR, 'merged_data_noPID.csv')
+SAHC_RENAME_FILE = os.path.join(SAHC_DATA_DIR, 'renamed_merged_data_noPID.csv')
+NHANES_FILE = os.path.join(DATA_DIR, 'nhanes_merged_data.csv')
+df_sahc = pd.read_csv(SAHC_RENAME_FILE)
+df_nhanes = pd.read_csv(NHANES_FILE)
 
 UNITS_MAP = {
     'LBDHDD': "mg/dL", 'LBDLDL': "mg/dL", 'LBXTC': "mg/dL", 'LBXTR': "mg/dL", 'LBXGH': "%",
@@ -345,9 +321,9 @@ AHA_RANGES = {
     'LDL (mg/dL)': ("Optimal", 100, "Borderline", 160, "At risk", None, None),
     'Total Cholesterol (mg/dL)': ("Optimal", 200, "Borderline", 240, "At risk", None, None),
     'Fasting Glucose (mg/dL)': ("Optimal", 100, "Borderline", 125, "At risk", None, None),
-    'Systolic Blood Pressure (mmHg)': ("Optimal", 120, "At risk", None, None, None, None),
-    'Diastolic Blood Pressure (mmHg)': ("Optimal", 80, "At risk", None, None, None, None),
-    'Total Cholesterol to HDL ratio ()': ("Optimal", 3.5, "Borderline", 5, "At risk", None, None),
+    'Systolic BP (mmHg)': ("Optimal", 120, "At risk", None, None, None, None),
+    'Diastolic BP (mmHg)': ("Optimal", 80, "At risk", None, None, None, None),
+    'Total Cholesterol:HDL ()':("Optimal", 3.5, "Borderline", 5, "At risk", None, None),
     'HbA1c (%)': ("Optimal", 5.7, "Borderline", 6.4, "At risk", None, None),
     'Body Mass Index': ("Low", 18.5, "Optimal", 25, "Borderline", 30, "At risk")
 }
@@ -405,6 +381,8 @@ def update_title():
     if selected_meds:
         if 'None' in selected_meds:
             selected_meds.remove('None')
+            selected_meds.clear()
+            st.session_state.selected_meds = []
         if selected_meds != []:
             selected_meds = ', '.join(selected_meds)
             st.session_state.title_list.append(f"Current medications: {selected_meds}")
@@ -415,7 +393,7 @@ def update_title():
         st.session_state.title_expander = "About Me"
 
 with aboutMe_expand:
-    col1, col12, col2, col22, col3, col32, col4, col42 = st.columns([.2, .1, .2, .1, .2, .1, .2, .1], vertical_alignment='top')
+    col1, col12, col2, col22, col3, col32, col4, col42 = st.columns([.2, .1, .2, .1, .2, .1, .22, .08], vertical_alignment='top')
 
     medCholOptions = {'Yes': 1, 'No': 2}
     medDiabOptions = {'Yes': 1, 'No': 2}
@@ -426,7 +404,7 @@ with aboutMe_expand:
     with col2:
         age_group = st.selectbox('Age group', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None)
     with col3:
-        ethnicity = st.selectbox('Ethnicity', ['Non-South Asian', 'South Asian'], key="selected_ethnicity", on_change=update_title, index=None)
+        ethnicity = st.selectbox('Ethnicity', ['Any ethnicity', 'South Asians only'], key="selected_ethnicity", on_change=update_title, index=None)
     with col4:
         med_options = ['None', 'Cholesterol', 'Diabetes', 'Blood Pressure']
         medications_select = st.multiselect(label="Medications", options=med_options, key="selected_meds", on_change=update_title)
@@ -442,109 +420,14 @@ with aboutMe_expand:
         if 'Blood Pressure' in medications_select:
             medBP = 'Yes'
 
-meds = ", ".join(medications_select)
-if meds == '':
-    meds = "None"
-
 ########################### EXPANDER TITLE SET UP END ##############################
 
-########################### DATAFRAME CLEAN UP ##############################
-
-def map_age_to_group(age):
-    if 0 <= age <= 2:
-        return 1
-    elif 3 <= age <= 5:
-        return 4
-    elif 6 <= age <= 13:
-        return 9
-    elif 14 <= age <= 18:
-        return 16
-    elif 19 <= age <= 33:
-        return 19
-    elif 34 <= age <= 48:
-        return 34
-    elif 49 <= age <= 64:
-        return 49
-    elif 65 <= age <= 78:
-        return 65
+def new_load_files():
+    global df_nhanes, df_sahc
+    if ethnicity is None or ethnicity != 'South Asians only':
+        return df_nhanes
     else:
-        return 79
-
-def load_files():
-    if ethnicity is None or ethnicity != 'South Asian':
-        df_user = pd.read_sas(USER_FILE, format='xport')
-        df_diq = pd.read_sas(DIQ_FILE, format='xport')
-        df_bpq = pd.read_sas(BPQ_FILE, format='xport')
-        df_hdl = pd.read_sas(HDL_FILE, format='xport')
-        df_tgl = pd.read_sas(TGL_FILE, format='xport')
-        df_tch = pd.read_sas(TCH_FILE, format='xport')
-        df_glu = pd.read_sas(GLU_FILE, format='xport')
-        df_ghb = pd.read_sas(GHB_FILE, format='xport')
-        df_bpx = pd.read_sas(BPX_FILE, format='xport')
-        df_bmx = pd.read_sas(BMX_FILE, format='xport')
-        df_mcq = pd.read_sas(MCQ_FILE, format='xport')
-        df_user_2017 = pd.read_sas(USER_FILE_2017, format='xport')
-        df_diq_2017 = pd.read_sas(DIQ_FILE_2017, format='xport')
-        df_bpq_2017 = pd.read_sas(BPQ_FILE_2017, format='xport')
-        df_hdl_2017 = pd.read_sas(HDL_FILE_2017, format='xport')
-        df_tgl_2017 = pd.read_sas(TGL_FILE_2017, format='xport')
-        df_tch_2017 = pd.read_sas(TCH_FILE_2017, format='xport')
-        df_glu_2017 = pd.read_sas(GLU_FILE_2017, format='xport')
-        df_ghb_2017 = pd.read_sas(GHB_FILE_2017, format='xport')
-        df_bpx_2017 = pd.read_sas(BPX_FILE_2017, format='xport')
-        df_bmx_2017 = pd.read_sas(BMX_FILE_2017, format='xport')
-        df_mcq_2017 = pd.read_sas(MCQ_FILE_2017, format='xport')
-
-        df_user = pd.concat([df_user, df_user_2017], ignore_index=True)
-        df_combined = df_user[['SEQN', 'RIAGENDR', 'RIDAGEYR', 'RIDRETH3']]
-        df_diq = pd.concat([df_diq, df_diq_2017], ignore_index=True)
-        df_combined = pd.merge(df_combined, df_diq[['SEQN', 'DIQ010', 'DIQ160', 'DIQ050', 'DIQ070']], on='SEQN', how='left')
-        df_bpq = pd.concat([df_bpq, df_bpq_2017], ignore_index=True)
-        df_combined = pd.merge(df_combined, df_bpq[['SEQN', 'BPQ090D', 'BPQ100D', 'BPQ040A', 'BPQ020']], on='SEQN', how='left')
-        df_hdl = pd.concat([df_hdl, df_hdl_2017], ignore_index=True)
-        df_combined = pd.merge(df_combined, df_hdl[['SEQN', 'LBDHDD']], on='SEQN', how='left')
-        df_tgl = pd.concat([df_tgl, df_tgl_2017], ignore_index=True)
-        df_combined = pd.merge(df_combined, df_tgl[['SEQN', 'LBXTR', 'LBDLDL']], on='SEQN', how='left')
-        df_tch = pd.concat([df_tch, df_tch_2017], ignore_index=True)
-        df_combined = pd.merge(df_combined, df_tch[['SEQN', 'LBXTC']], on='SEQN', how='left')
-        df_glu = pd.concat([df_glu, df_glu_2017], ignore_index=True)
-        df_combined = pd.merge(df_combined, df_glu[['SEQN', 'LBXGLU']], on='SEQN', how='left')
-        df_ghb = pd.concat([df_ghb, df_ghb_2017], ignore_index=True)
-        df_combined = pd.merge(df_combined, df_ghb[['SEQN', 'LBXGH']], on='SEQN', how='left')
-        df_bpx = pd.concat([df_bpx, df_bpx_2017], ignore_index=True)
-        df_combined = pd.merge(df_combined, df_bpx[['SEQN', 'BPXOSY1', 'BPXODI1', 'BPXOPLS1', 'BPXOSY2', 'BPXODI2', 'BPXOPLS2', 'BPXOSY3', 'BPXODI3', 'BPXOPLS3']], on='SEQN', how='left')
-        df_bmx = pd.concat([df_bmx, df_bmx_2017], ignore_index=True)
-        df_combined = pd.merge(df_combined, df_bmx[['SEQN', 'BMXBMI']], on='SEQN', how='left')
-        df_mcq = pd.concat([df_mcq, df_mcq_2017], ignore_index=True)
-        df_combined = pd.merge(df_combined, df_mcq[['SEQN', 'MCQ160E']], on='SEQN', how='left')
-
-        df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(map_age_to_group)
-        df_combined['TotHDLRat'] =  df_combined['LBXTC'] / df_combined['LBDHDD']
-
-        return df_combined
-    else:
-        df_combined = pd.read_csv(SAHC_FILE)
-
-        # Rename the SAHC columns to match with the NHANES columns
-        df_combined = df_combined.rename(columns={
-            'gender': 'RIAGENDR',
-            'race': 'RIDRETH3',
-            'age': 'RIDAGEYR',
-            'bpSyst': 'BPXOSY1',
-            'bpDiast': 'BPXODI1',
-            'cholTot': 'LBXTC',
-            'cholLDL': 'LBDLDL',
-            'cholHDL': 'LBDHDD',
-            'cholTrig': 'LBXTR',
-            'Total:HDL': 'TotHDLRat',
-            'bloodSugar': 'LBXGLU',
-            'hg1ac': 'LBXGH',
-            'bmi': 'BMXBMI'
-        })
-
-        df_combined['Age_Group'] = df_combined['RIDAGEYR'].apply(map_age_to_group)
-
-        return df_combined
+        return df_sahc
 
 ########################### DATAFRAME CLEAN UP AND FILTER ##############################
 
@@ -573,14 +456,14 @@ def ui_choose(df):
         ageFilter = [ageOptions[age_group]]
         df2 = df2[df2['Age_Group'].isin(ageFilter)]
     
-    if ethnicity is not None and ethnicity == 'South Asian':
+    if ethnicity is not None and ethnicity == 'South Asians only':
         medCholFilter = [medCholOptions[medChol]]
         df2 = df2[df2['cholMeds'].isin(medCholFilter)]
         medDiabFilter = [medDiabOptions[medDiab]]
         df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
         medBPFilter = [medBPOptions[medBP]]
         df2 = df2[df2['bpMeds'].isin(medBPFilter)]
-    elif ethnicity is None or ethnicity != 'South Asian':
+    elif ethnicity is None or ethnicity != 'South Asians only':
         medCholFilter = [medCholOptions[medChol]]
         if medChol == 'Yes':
             df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
@@ -608,14 +491,14 @@ def ui_choose(df):
                 genderFilter = [genderOptions[gender]]
                 df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
             
-            if ethnicity is not None and ethnicity == 'South Asian':
+            if ethnicity is not None and ethnicity == 'South Asians only':
                 medCholFilter = [medCholOptions[medChol]]
                 df2 = df2[df2['cholMeds'].isin(medCholFilter)]
                 medDiabFilter = [medDiabOptions[medDiab]]
                 df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
                 medBPFilter = [medBPOptions[medBP]]
                 df2 = df2[df2['bpMeds'].isin(medBPFilter)]
-            elif ethnicity is None or ethnicity != 'South Asian':
+            elif ethnicity is None or ethnicity != 'South Asians only':
                 if medChol == 'Yes':
                     df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
                 elif medChol == 'No':
@@ -630,7 +513,7 @@ def ui_choose(df):
         st.write(f"Not enough records found to compare. Please remove medication usage and try again.") 
     
     # Edit the BMI and HDL numbers for ethnicity/gender
-    if ethnicity == 'South Asian':
+    if ethnicity == 'South Asians only':
         AHA_RANGES['Body Mass Index'] = ("Low", 18.5, "Optimal", 23, "Borderline", 30, "At risk")
     if gender == 'Female':
         AHA_RANGES['HDL (mg/dL)'] = ("At risk", 50, "Optimal", None, None, None, None)
@@ -642,7 +525,7 @@ def ui_choose(df):
 ########################### INFORMATION POP UP ##############################
 
 @st.dialog(" ", width='large')
-def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, p25, p50, p75, p90, low_number, high_number, status, df3, value, prop):
+def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, p25, p50, p75, p90, low_number, high_number, status, prop):
 
     if on_med == 'Yes':
         
@@ -725,7 +608,6 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
 
     st.markdown(html, unsafe_allow_html=True)
 
-
     if 'Body Mass' in column:
         st.write(f"""
         According to AHA guidelines, the **optimal** value for {column} is **{low_number} - {high_number}**.
@@ -757,13 +639,27 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
 if 'metric_list' not in st.session_state:
     st.session_state.metric_list = deque()
 
+# Helper function to fix the boundary condition
+def update_header_color(new_status):
+    global status, header_color, at_risk, optimal, borderline
+
+    if new_status == 'Optimal':
+        header_color = optimal
+    elif new_status == 'At risk':
+        header_color = at_risk
+    else:
+        header_color = borderline
+
+    status = new_status
 
 def show_analysis(df):
+    global status, header_color, at_risk, optimal, borderline
     user_inputs = {}
     
     with analysis:
 
         col_dropdown, col_empty, col_input, col_empty2, col_input2, col_empty3 = st.columns([.2, .1, .2, .1, .2, .4], vertical_alignment='top')
+        st.divider()
 
         with col_dropdown:
             metric = st.selectbox('My Risk Profile Markers', list(DROPDOWN_SELECTION.keys()))
@@ -806,8 +702,6 @@ def show_analysis(df):
                 del st.session_state.metric_list[delete]
             if user_inputs[column] is not None and user_inputs[column] >= 0:
                 st.session_state.metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
-
-        st.divider()
 
 ########################### DROPDOWN AND INPUTS FOR METRICS END ##############################
 
@@ -895,7 +789,7 @@ def show_analysis(df):
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
                                     (high_percentile - low_percentile), 0.35, 
                                     color=optimal, fill=True, zorder=90))
-                    elif "Blood Pressure" in columnName:
+                    elif "BP " in columnName:
                         ax.add_patch(Rectangle((0, 0.6), 
                                         low_percentile, 0.35, 
                                         color=optimal, fill=True, zorder=90))
@@ -930,38 +824,66 @@ def show_analysis(df):
 
                     if columnName == 'HDL (mg/dL)':
                         if user_percentile < low_percentile:
-                            header_color = at_risk
-                            status = 'At risk'
+                            update_header_color('At risk')
                         else:
-                            header_color = optimal
-                    elif 'Blood Pressure' in columnName:
+                            update_header_color('Optimal')
+                    elif 'BP ' in columnName:
                         if user_percentile <= low_percentile:
-                            header_color = optimal
+                            #Boundary condition of percentile
+                            if user_input > low_number:
+                                update_header_color('At risk')
+                            else:
+                                update_header_color('Optimal')
                         else:
-                            header_color = at_risk
-                            status = 'At risk'
+                            if user_input <= low_number:
+                                update_header_color('Optimal')
+                            else:
+                                update_header_color('At risk')
+                            
                     elif columnName == 'Body Mass Index':
+                        st.write(user_percentile, low_percentile, user_input, low_number)
+                        st.write(high_percentile, high_number, extra_high_percentile, extra_high_number)
                         if user_percentile < low_percentile:
-                            header_color = at_risk
-                            status = 'At risk'
+                            if user_input >= low_number:
+                                update_header_color('Optimal')
+                            else:
+                                update_header_color('At risk')
                         elif user_percentile <= high_percentile:
-                            header_color = optimal
+                            if user_input > high_number:
+                                update_header_color('Borderline')
+                            else:
+                                update_header_color('Optimal')
                         elif user_percentile < extra_high_percentile:
-                            header_color = borderline
-                            status = 'Borderline'
+                            if user_input > extra_high_number:
+                                update_header_color('At risk')
+                            else:
+                                update_header_color('Borderline')
                         else:
-                            header_color = at_risk
-                            status = 'At risk'
+                            if user_input <= extra_high_number:
+                                update_header_color('Borderline')
+                            else:
+                                update_header_color('At risk')
                     else:
                         if user_percentile <= low_percentile:
-                            header_color = optimal
+                            # Boundary condition of percentile
+                            if user_input > low_number:
+                                update_header_color('Borderline')
+                            else:
+                                update_header_color('Optimal')
                         elif user_percentile <= high_percentile:
-                            header_color = borderline
-                            status = 'Borderline'
+                            if user_input <= low_number:
+                                update_header_color('Optimal')
+                            elif user_input > high_number:
+                                update_header_color('At risk')
+                            else:
+                                update_header_color('Borderline')
+                            
                         elif user_percentile > high_percentile:
-                            header_color = at_risk
-                            status = 'At risk'
-                    
+                            update_header_color('At risk')
+                   
+                            if user_input < high_number:
+                                update_header_color('Borderline')
+                                        
                     # Show the circle for the user input on the graph
                     ax.scatter(user_percentile, 0.85, zorder=999, s=scatter_size+225, edgecolors='k')
                     ax.scatter(user_percentile, 0.85, color=header_color, zorder=1000, label='Your Input', s=scatter_size, edgecolors='w', linewidth=3)
@@ -1050,7 +972,7 @@ def show_analysis(df):
                         value = AHA_RANGES[columnName][1]
 
                     prob_percentile = int(np.mean(sorted_array <= value) * 100)
-                    prob = 100 - prob_percentile
+                    prob = 100 - prob_percentile # Get the probability of having a sub-optimal value
 
                     df4 = df.copy()
                     df4 = df4[column]
@@ -1101,18 +1023,18 @@ def show_analysis(df):
                 if more_info:
                         if "HDL (mg/dL)" in columnName or "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "cholesterol", medChol, prob, 
-                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, df, value, prop)
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, prop)
                         elif "Glucose" in columnName or "A1C" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood sugar", medDiab, prob, 
-                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, df, value, prop)   
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, prop)   
                         else:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood pressure", medBP, prob, 
-                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, df3, value, prop)
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, prop)
 
 ########################### INFORMATION BUTTON END ##############################
 
 ########################### MAIN EXECUTION ##############################
-df_c = load_files()
+df_c = new_load_files()
 df_d = ui_choose(df_c)
 show_analysis(df_d)
 
