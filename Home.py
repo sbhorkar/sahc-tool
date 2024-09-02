@@ -484,6 +484,8 @@ def ui_choose(df):
         
         df2 = df2[df2['Age_Group'].isin(ageFilter)]
 
+    length = len(df2)
+
     with col_records:
         st.markdown(f"<span style='color:white;'>({len(df2)})</span>", unsafe_allow_html=True)
     
@@ -492,7 +494,7 @@ def ui_choose(df):
     
     # Edit the BMI and HDL numbers for ethnicity/gender
     if ethnicity == 'South Asians only':
-        AHA_RANGES['Body Mass Index'] = ("Low", 18.5, "Optimal", 23, "Borderline", 30, "At risk")
+        AHA_RANGES['Body Mass Index'] = ("Low", 18.5, "Optimal", 23, "Borderline", 25, "At risk")
     if gender == 'Female':
         AHA_RANGES['HDL (mg/dL)'] = ("At risk", 50, "Optimal", None, None, None, None)
 
@@ -620,6 +622,8 @@ if 'metric_list' not in st.session_state:
 # Helper function to fix the boundary condition
 def update_header_color(new_status):
     global status, header_color, at_risk, optimal, borderline
+
+    # st.write(new_status)
 
     if new_status == 'Optimal':
         header_color = optimal
@@ -774,7 +778,7 @@ def show_analysis(df):
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
                                     (high_percentile - low_percentile), 0.35, 
                                     color=at_risk, fill=True, zorder=90))
-                    elif columnName == 'Body Mass Index':
+                    elif "Body Mass" in columnName:
                         ax.add_patch(Rectangle((0, 0.6), 
                                         low_percentile, 0.35, 
                                         color=at_risk, fill=True, zorder=90))
@@ -816,11 +820,8 @@ def show_analysis(df):
                             if user_input <= low_number:
                                 update_header_color('Optimal')
                             else:
-                                update_header_color('At risk')
-                            
+                                update_header_color('At risk')    
                     elif columnName == 'Body Mass Index':
-                        st.write(user_percentile, low_percentile, user_input, low_number)
-                        st.write(high_percentile, high_number, extra_high_percentile, extra_high_number)
                         if user_percentile < low_percentile:
                             if user_input >= low_number:
                                 update_header_color('Optimal')
@@ -831,16 +832,11 @@ def show_analysis(df):
                                 update_header_color('Borderline')
                             else:
                                 update_header_color('Optimal')
-                        elif user_percentile < extra_high_percentile:
+                        else:
                             if user_input > extra_high_number:
                                 update_header_color('At risk')
                             else:
                                 update_header_color('Borderline')
-                        else:
-                            if user_input <= extra_high_number:
-                                update_header_color('Borderline')
-                            else:
-                                update_header_color('At risk')
                     else:
                         if user_percentile <= low_percentile:
                             # Boundary condition of percentile
@@ -858,7 +854,6 @@ def show_analysis(df):
                             
                         elif user_percentile > high_percentile:
                             update_header_color('At risk')
-                   
                             if user_input < high_number:
                                 update_header_color('Borderline')
                                         
@@ -898,15 +893,15 @@ def show_analysis(df):
                                 horizontalalignment='right')
                         plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
                                 horizontalalignment='left', weight='bold')
-                        plt.annotate(f'18.5-23', xy=(low_percentile, 0.657), xytext=(low_percentile, 0.3),
+                        plt.annotate(f'18.5-{AHA_RANGES[columnName][3]}', xy=(low_percentile, 0.657), xytext=(low_percentile, 0.3),
                                 horizontalalignment='left')
                         plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(low_percentile, 0.675), xytext=(high_percentile, 0.45),
                                 horizontalalignment='left', weight='bold')
-                        plt.annotate(f'23-25', xy=(high_percentile - 1, 0.657), xytext=(high_percentile, 0.3),
+                        plt.annotate(f'{AHA_RANGES[columnName][3]}-{AHA_RANGES[columnName][5]}', xy=(high_percentile - 1, 0.657), xytext=(high_percentile, 0.3),
                                 horizontalalignment='left')
                         plt.annotate(f'{AHA_RANGES[columnName][6]}', xy=(low_percentile, 0.675), xytext=(extra_high_percentile, 0.45),
                                 horizontalalignment='left', weight='bold')
-                        plt.annotate('>25', xy=(extra_high_percentile - 1, 0.657), xytext=(extra_high_percentile, 0.3),
+                        plt.annotate(f'>{AHA_RANGES[columnName][5]}', xy=(extra_high_percentile - 1, 0.657), xytext=(extra_high_percentile, 0.3),
                                 horizontalalignment='left')
                     else:
                         if high_number < 1000:
