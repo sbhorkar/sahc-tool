@@ -40,7 +40,7 @@ DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 3.0
+VERSION = 3.5
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
@@ -76,22 +76,16 @@ def update_count(feedback_type):
 def header_popup(liked):
     if liked:
         st.write("Glad you liked SCORE! Would you like to send suggestions for improvement?")
-        url = 'mailto:sahc@elcaminohealth.org?Subject=Liked%20SCORE%2C%20some%20suggestions%20for%20improvement&Body=Hello%2C%0A%0AHere%20are%20my%20suggestions%20to%20help%20improve%20SCORE%3A%0A%0ABest%2C%0ANAME%0AMOBILE%20%28provide%20if%20would%20like%20to%20have%20the%20South%20Asian%20Heart%20Center%20contact%20you%20regarding%20your%20suggestions%29.%0A%0A'
-        col_button1, col_button2, col_empty = st.columns([0.2, 0.2, 0.6])
-        with col_button1:
-            st.link_button("Yes", url)
-        with col_button2:
-            if st.button("No"):
-                st.rerun()
+        url = 'mailto:sahc@elcaminohealth.org?Subject=Liked%20SCORE%2C%20some%20suggestions%20for%20improvement&Body=Hello%2C%0A%0AHere%20are%20my%20suggestions%20to%20help%20improve%20SCORE%3A%0A%0ABest%2C%0ANAME%0AMOBILE%20%28provide%20if%20you%20would%20like%20the%20South%20Asian%20Heart%20Center%20to%20contact%20you%20regarding%20your%20suggestions%29.%0A%0A'
     else:
         st.write("Would you like to send suggestions for improvement?")
-        url = 'mailto:sahc@elcaminohealth.org?Subject=Feedback%20on%20SCORE&Body=Hello%2C%0A%0AHere%20are%20my%20suggestions%20to%20help%20improve%20SCORE%3A%0A%0ABest%2C%0ANAME%0AMOBILE%20%28provide%20if%20would%20have%20the%20South%20Asian%20Heart%20Center%20contact%20you%20for%20further%20details%29.%0A%0A'
-        col_button1, col_button2, col_empty = st.columns([0.2, 0.2, 0.6])
-        with col_button1:
-            st.link_button("Yes", url)
-        with col_button2:
-            if st.button("No"):
-                st.rerun()
+        url = 'mailto:sahc@elcaminohealth.org?Subject=Feedback%20on%20SCORE&Body=Hello%2C%0A%0AHere%20are%20my%20suggestions%20to%20help%20improve%20SCORE%3A%0A%0ABest%2C%0ANAME%0AMOBILE%20%28provide%20if%20you%20would%20like%20the%20South%20Asian%20Heart%20Center%20to%20contact%20you%20for%20further%20details%29.%0A%0A'
+    col_button1, col_button2, col_empty = st.columns([0.2, 0.2, 0.6])
+    with col_button1:
+        st.link_button("Yes", url)
+    with col_button2:
+        if st.button("No"):
+            st.rerun()
 
 ########################### FEEDBACK END ##############################
 
@@ -393,7 +387,7 @@ def update_title():
         st.session_state.title_expander = "About Me"
 
 with aboutMe_expand:
-    col1, col12, col2, col22, col3, col32, col4, col42 = st.columns([.2, .1, .2, .1, .2, .1, .22, .08], vertical_alignment='top')
+    col1, col12, col2, col22, col3, col32, col4, col42 = st.columns([.25, .1, .2, .1, .2, .1, .22, .08], vertical_alignment='top')
 
     medCholOptions = {'Yes': 1, 'No': 2}
     medDiabOptions = {'Yes': 1, 'No': 2}
@@ -640,7 +634,7 @@ def show_analysis(df):
     
     with analysis:
 
-        col_dropdown, col_empty, col_input, col_empty2, col_input2, col_empty3 = st.columns([.2, .1, .2, .1, .2, .4], vertical_alignment='top')
+        col_dropdown, col_empty, col_input, col_empty2, col_input2, col_empty3 = st.columns([.25, .1, .2, .1, .2, .4], vertical_alignment='top')
         st.divider()
 
         with col_dropdown:
