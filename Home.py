@@ -1,3 +1,4 @@
+
 # Import all necessary libraries
 import streamlit as st
 import pandas as pd
@@ -40,7 +41,7 @@ DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 3.6 #Fixed issue of handling 11th, 12th, 13th
+VERSION = 3.7 #Fixed issue of column
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
@@ -387,7 +388,7 @@ def update_title():
         st.session_state.title_expander = "About Me"
 
 with aboutMe_expand:
-    col1, col12, col2, col22, col3, col32, col4, col42 = st.columns([.25, .1, .2, .1, .2, .1, .22, .08], vertical_alignment='top')
+    col1, col12, col2, col22, col3, col32, col4, col42 = st.columns([.25, .1, .25, .1, .25, .1, .22, .08], vertical_alignment='top')
 
     medCholOptions = {'Yes': 1, 'No': 2}
     medDiabOptions = {'Yes': 1, 'No': 2}
@@ -634,8 +635,8 @@ def show_analysis(df):
     
     with analysis:
 
-        col_dropdown, col_empty, col_input, col_empty2, col_input2, col_empty3 = st.columns([.25, .1, .2, .1, .2, .4], vertical_alignment='top')
-        st.divider()
+        col_dropdown, col_empty, col_input, col_empty2, col_input2, col_empty3 = st.columns([.25, .1, .25, .1, .25, .4], vertical_alignment='top')
+        st.divider() 
 
         with col_dropdown:
             metric = st.selectbox('My Risk Profile Markers', list(DROPDOWN_SELECTION.keys()))
