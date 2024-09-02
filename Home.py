@@ -40,7 +40,7 @@ DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 3.5
+VERSION = 3.6 #Fixed issue of handling 11th, 12th, 13th
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
@@ -962,13 +962,9 @@ def show_analysis(df):
                     digit = user_percentile % 10
                     suffix = 'th'
 
-                    if digit == 1:
-                        suffix = 'st'
-                    elif digit == 2:
-                        suffix = 'nd'
-                    elif digit == 3:
-                        suffix = 'rd'
-
+                    if user_percentile not in (11,12,13):
+                        suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(digit, 'th')
+                    
                     st.markdown("""
                         <style>
                         button[kind="primary"] {
