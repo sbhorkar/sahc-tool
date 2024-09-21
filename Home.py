@@ -41,7 +41,7 @@ DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 3.7 #Fixed issue of column
+VERSION = 3.8 #Fixed issue of column
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
@@ -395,7 +395,7 @@ with aboutMe_expand:
     medBPOptions = {'Yes': 1, 'No': 2}
 
     with col1:
-        gender = st.selectbox('Gender', list(genderOptions.keys()), key="selected_gender", on_change=update_title, index=None)
+        gender = st.selectbox('Gender assigned at birth', list(genderOptions.keys()), key="selected_gender", on_change=update_title, index=None)
     with col2:
         age_group = st.selectbox('Age group', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None)
     with col3:
@@ -670,15 +670,21 @@ def show_analysis(df):
         else:
             exists = False
             delete = -1
+            saved_input = None
             for index, selection in enumerate(st.session_state.metric_list):
                 if selection['column'] == column:
                     exists = True
                     delete = index
                     break
+
             if exists:
-                del st.session_state.metric_list[delete]
+                    saved_input = st.session_state.metric_list[delete]
+                    del st.session_state.metric_list[delete]
+
             if user_inputs[column] is not None and user_inputs[column] >= 0:
                 st.session_state.metric_list.appendleft({'column':column, 'input': user_inputs[column], 'columnName': columnName})
+            elif saved_input != None:
+                st.session_state.metric_list.appendleft(saved_input)
 
 ########################### DROPDOWN AND INPUTS FOR METRICS END ##############################
 

@@ -8,7 +8,11 @@ DIR = os.getcwd()
 
 DATA_DIR = DIR + '/data/'
 NHANES_FILE = os.path.join(DATA_DIR, 'nhanes_merged_data.csv')
+SAHC_DATA_DIR = DIR + '/sahc_data/'
+
+SAHC_RENAME_FILE = os.path.join(SAHC_DATA_DIR, 'renamed_merged_data_noPID.csv')
 df_nhanes = pd.read_csv(NHANES_FILE)
+df_sahc = pd.read_csv(SAHC_RENAME_FILE)
 
 
 genderOptions = {'Male': 1, 'Female': 2}
@@ -17,7 +21,8 @@ dataSelection = ['NHANES', 'SAHC']
 
 gender = None
 age_group = None
-ethnicity = None
+#ethnicity = None
+ethnicity = 'South Asians only'
 medChol = 'No'
 medDiab = 'No'
 medBP = 'No'
@@ -114,29 +119,37 @@ def ui_choose(df):
 
     return df2
 
-def dump_percentile(metric, column, df):
+def dump_percentile(metric, column, df, user_input, random_input = True):
     array = df[column].dropna()
 
     sorted_array = np.sort(array)
+    #print(user_input)
 
-    # Find the user percentile
-    
-    if STEP_SIZE[metric] == 1:
-        user_input = random.randint(int(sorted_array[0]),int(sorted_array[-1]))
-    else:
-        user_input = round(random.random()*(sorted_array[-1] - sorted_array[0]), 2)
+    if random_input:
+        if STEP_SIZE[metric] == 1:
+            user_input = random.randint(int(sorted_array[0]),int(sorted_array[-1]))
+        else:
+            user_input = round(random.random()*(sorted_array[-1] - sorted_array[0]), 2)
+
     user_percentile = int(np.mean(sorted_array <= user_input) * 100)
     if user_percentile == 100:
         user_percentile = 99
+
+            
     selected_data = [float(x) for x in sorted_array if x <= user_input]
-    actual_percentie = len(selected_data)/len(sorted_array)
-    return {'Metric':metric, 'Low Number': sorted_array, 'Length': len(sorted_array),
-            'User Data': selected_data, 'User Data Length': len (selected_data), 
+    #actual_percentile = len(selected_data)/len(sorted_array)
+    return {'Metric':metric, 'Data Sample': sorted_array, 'Length': len(sorted_array),
             'User Input':user_input, 
-            'User Percentile': user_percentile, 'Actual Percentile': actual_percentie, 
-            'Difference': ((actual_percentie*100)-user_percentile) }
+            'User Data': selected_data, 'User Data Length': len (selected_data), 
+            'User Percentile': user_percentile
+            #, 'Actual Percentile': actual_percentie, 
+            #'Difference': ((actual_percentie*100)-user_percentile) 
+            }
         
-df_d = ui_choose(df_nhanes)
+if ethnicity is None:
+    df_d = ui_choose(df_nhanes)
+else: 
+    df_d = ui_choose(df_sahc)
 
 #print(DROPDOWN_SELECTION.values())
 #seqns = df_d['SEQN']
@@ -150,9 +163,27 @@ for metric in DROPDOWN_SELECTION.values():
     
     column = DROPDOWN_SELECTION[NAME_MAP[metric]]
     
-    for i in range(10):
+    boundary_user_input = [0, 100]
+
+    #column = DROPDOWN_SELECTION[metric]
+
+    if column == 'BMXBMI':
+        columnName = NAME_MAP[metric]
+    else:
+        columnName = NAME_MAP[metric] + f" ({UNITS_MAP[column]})"
+    range_values_dict = AHA_RANGES[columnName]
+    range_values = [x for x in range_values_dict if isinstance(x, (int, float))]
+    for x in range_values:
+        boundary_user_input.append(x)
+
+    for user_input in boundary_user_input: 
+        records.append(dump_percentile(metric, column, df_d, user_input, False))
+
+    for i in range(100):
         #records.append(dump_percentile(metric, column, columnName, df_d))
-        records.append(dump_percentile(metric, column, df_d))
+        # Find the user percentile
+        
+        records.append(dump_percentile(metric, column, df_d, user_input))
 df_percentile = pd.DataFrame(records)
-len(df_percentile)
-df_percentile.to_csv('Percentile_2.csv')
+print(len(df_percentile))
+df_percentile.to_csv('SAHC_Percentile_3.csv')
