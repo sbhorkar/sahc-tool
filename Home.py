@@ -809,21 +809,32 @@ def show_analysis(df):
                     scatter_size = 1750
 
                     if columnName == 'HDL (mg/dL)':
-                        if user_percentile < low_percentile:
-                            update_header_color('At risk')
-                        elif user_percentile < high_percentile:
-                            update_header_color('Borderline')
-                        else:
+                        if user_percentile <= low_percentile:
+                            # Boundary condition of percentile
+                            if user_input >= low_number:
+                                update_header_color('Borderline')
+                            else:
+                                update_header_color('At risk')
+                        elif user_percentile <= high_percentile:
+                            if user_input < low_number:
+                                update_header_color('At risk')
+                            elif user_input >= high_number:
+                                update_header_color('Optimal')
+                            else:
+                                update_header_color('Borderline')
+                        elif user_percentile >= high_percentile:
                             update_header_color('Optimal')
+                            if user_input < high_number:
+                                update_header_color('Borderline')
                     elif 'BP ' in columnName:
                         if user_percentile <= low_percentile:
-                            #Boundary condition of percentile
+                            # Boundary condition of percentile
                             if user_input >= low_number:
                                 update_header_color('At risk')
                             else:
                                 update_header_color('Optimal')
                         else:
-                            if user_input <= low_number:
+                            if user_input < low_number:
                                 update_header_color('Optimal')
                             else:
                                 update_header_color('At risk')    
@@ -834,7 +845,7 @@ def show_analysis(df):
                             else:
                                 update_header_color('At risk')
                         elif user_percentile <= high_percentile:
-                            if user_input > high_number:
+                            if user_input >= high_number:
                                 update_header_color('Borderline')
                             else:
                                 update_header_color('Optimal')
@@ -844,20 +855,19 @@ def show_analysis(df):
                             else:
                                 update_header_color('Borderline')
                     else:
-                        if user_percentile <= low_percentile:
+                        if user_percentile < low_percentile:
                             # Boundary condition of percentile
                             if user_input >= low_number:
                                 update_header_color('Borderline')
                             else:
                                 update_header_color('Optimal')
                         elif user_percentile <= high_percentile:
-                            if user_input <= low_number:
+                            if user_input < low_number:
                                 update_header_color('Optimal')
                             elif user_input >= high_number:
                                 update_header_color('At risk')
                             else:
                                 update_header_color('Borderline')
-                            
                         elif user_percentile >= high_percentile:
                             update_header_color('At risk')
                             if user_input < high_number:
