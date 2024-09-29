@@ -846,7 +846,7 @@ def show_analysis(df):
                     else:
                         if user_percentile <= low_percentile:
                             # Boundary condition of percentile
-                            if user_input > low_number:
+                            if user_input >= low_number:
                                 update_header_color('Borderline')
                             else:
                                 update_header_color('Optimal')
@@ -928,11 +928,8 @@ def show_analysis(df):
                         else:
                             plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
                                             horizontalalignment='left', weight='bold')
-                            if columnName == 'HbA1c (%)':
-                                plt.annotate(f'{low_number}-{high_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
-                                            horizontalalignment='left')
-                            elif columnName == 'Total Cholesterol:HDL ()':
-                                plt.annotate(f'{low_number}-{high_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
+                            if columnName == 'HbA1c (%)' or columnName == 'Total Cholesterol:HDL ()':
+                                plt.annotate(f'{low_number}-{high_number - 0.1:.1f}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
                                             horizontalalignment='left')
                             else:
                                 plt.annotate(f'{low_number}-{high_number - 1}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
@@ -957,7 +954,7 @@ def show_analysis(df):
                     else:
                         value = AHA_RANGES[columnName][1]
 
-                    prob_percentile = int(np.mean(sorted_array <= value) * 100)
+                    prob_percentile = int(np.mean(sorted_array < value) * 100)
                     prob = 100 - prob_percentile # Get the probability of having a sub-optimal value
 
                     df4 = df.copy()
@@ -966,7 +963,7 @@ def show_analysis(df):
                     total = df4.shape[0]
 
                     # Get the percentage of people that have a value <= the entered value
-                    df4 = df4[df4 <= user_input]
+                    df4 = df4[df4 < user_input]
                     top = df4.shape[0]          
                     prop = (top / total) * 100
 
