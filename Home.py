@@ -440,34 +440,62 @@ def get_next_age_group(age_group, direction='up'):
             return age_groups[current_index - 1]
         else:
             return age_groups[current_index + 1]
+        
+def get_relevant_medications(metric):
+    metric_med_map = {
+        'LBXTC': ['Cholesterol'],
+        'LBDLDL': ['Cholesterol'],
+        'LBDHDD': ['Cholesterol'],
+        'LBXTR': ['Cholesterol'],
+        'TotHDLRat': ['Cholesterol'],
+        'LBXGLU': ['Diabetes'],
+        'LBXGH': ['Diabetes'],
+        'BPXOSY1': ['Blood Pressure'],
+        'BPXODI1': ['Blood Pressure'],
+        'BMXBMI': None,  # BMI doesn't have medication filters
+    }
+    return metric_med_map.get(metric, [])
 
-def ui_choose(df):
+def ui_choose(df, metric):
     df2 = df.copy()
 
     if gender is not None:
         genderFilter = [genderOptions[gender]]
         df2 = df2[df2['RIAGENDR'].isin(genderFilter)]
     
+    # Get relevant medications for the metric
+    relevant_meds = get_relevant_medications(metric)
+    # st.write(metric)
+    # st.write(relevant_meds)
+    
     if ethnicity is not None and ethnicity == 'South Asians only':
-        medCholFilter = [medCholOptions[medChol]]
-        df2 = df2[df2['cholMeds'].isin(medCholFilter)]
-        medDiabFilter = [medDiabOptions[medDiab]]
-        df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
-        medBPFilter = [medBPOptions[medBP]]
-        df2 = df2[df2['bpMeds'].isin(medBPFilter)]
+        if relevant_meds is not None:
+            if 'Cholesterol' in relevant_meds:
+                medCholFilter = [medCholOptions[medChol]]
+                df2 = df2[df2['cholMeds'].isin(medCholFilter)]
+            if 'Diabetes' in relevant_meds:
+                medDiabFilter = [medDiabOptions[medDiab]]
+                df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
+            if 'Blood Pressure' in relevant_meds:
+                medBPFilter = [medBPOptions[medBP]]
+                df2 = df2[df2['bpMeds'].isin(medBPFilter)]
     elif ethnicity is None or ethnicity != 'South Asians only':
-        medCholFilter = [medCholOptions[medChol]]
-        if medChol == 'Yes':
-            df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
-        elif medChol == 'No':
-            df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
-        medDiabFilter = [medDiabOptions[medDiab]]
-        df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
-        medBPFilter = [medBPOptions[medBP]]
-        if medBP == 'Yes':
-            df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
-        elif medBP == 'No':
-            df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
+        if relevant_meds is not None:
+            if 'Cholesterol' in relevant_meds:
+                medCholFilter = [medCholOptions[medChol]]
+                if medChol == 'Yes':
+                    df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
+                elif medChol == 'No':
+                    df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
+            if 'Diabetes' in relevant_meds:
+                medDiabFilter = [medDiabOptions[medDiab]]
+                df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
+            if 'Blood Pressure' in relevant_meds:
+                medBPFilter = [medBPOptions[medBP]]
+                if medBP == 'Yes':
+                    df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
+                elif medBP == 'No':
+                    df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
 
     if age_group is not None:
         ageFilter = [ageOptions[age_group]]
@@ -478,11 +506,6 @@ def ui_choose(df):
             ageFilter.append(ageOptions[next_age_group])
         
         df2 = df2[df2['Age_Group'].isin(ageFilter)]
-
-    length = len(df2)
-
-    with col_records:
-        st.markdown(f"<span style='color:white;'>({len(df2)})</span>", unsafe_allow_html=True)
     
     if len(df2) < 15:
         st.write(f"Not enough records found to compare. Please remove medication usage and try again.") 
@@ -502,8 +525,10 @@ def ui_choose(df):
 @st.dialog(" ", width='large')
 def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, p25, p50, p75, p90, low_number, high_number, status, prop):
 
-    if on_med == 'Yes':
-        
+    if med is not None:
+        med = med.lower()
+
+    if on_med == 'Yes' and med is not None:
         if age_range is None and race is None and gender is None:
             person_label = f"(Person ON {med}-lowering medication)"
         elif gender is None and race is None:
@@ -518,6 +543,21 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
             person_label = f"({gender}, aged between {age_range} years, ON {med}-lowering medication)"
         else:
             person_label = f"({race} {gender.lower()}, aged between {age_range} years, ON {med}-lowering medication)"
+    elif med is None:
+        if age_range is None and race is None and gender is None:
+            person_label = f""
+        elif gender is None and race is None:
+            person_label = f"(Person aged between {age_range} years)"
+        elif age_range is None and gender is None:
+            person_label = f"({race})"
+        elif age_range is None and race is None:
+            person_label = f"({gender})"
+        elif gender is None:
+            person_label = f"({race}, aged between {age_range} years)"
+        elif race is None:
+            person_label = f"({gender}, aged between {age_range} years)"
+        else:
+            person_label = f"({race} {gender.lower()}, aged between {age_range} years)"
     else:
         if age_range is None and race is None and gender is None:
             person_label = f"(Person NOT ON {med}-lowering medication)"
@@ -709,12 +749,14 @@ def show_analysis(df):
                 with col8:
                     user_input = column_dict['input']
 
+                    df_metric = ui_choose(df_c, column)
+
                     if user_input == None:
                         break
 
                     placeholder.markdown(f"#### {header}", unsafe_allow_html=True)
 
-                    array = df[column].dropna()
+                    array = df_metric[column].dropna()
                     if len(array.index) < 5:
                         st.markdown(f"Not enough data available for {columnName}.")
                         continue
@@ -967,7 +1009,7 @@ def show_analysis(df):
                     prob_percentile = int(np.mean(sorted_array < value) * 100)
                     prob = 100 - prob_percentile # Get the probability of having a sub-optimal value
 
-                    df4 = df.copy()
+                    df4 = df_metric.copy()
                     df4 = df4[column]
                     df4 = df4.dropna()
                     total = df4.shape[0]
@@ -1016,6 +1058,9 @@ def show_analysis(df):
                         elif "Glucose" in columnName or "A1C" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood sugar", medDiab, prob, 
                                 percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, prop)   
+                        elif "Body Mass Index" in columnName:
+                            popup(column, popup_column, user_input, gender, ethnicity, age_group, None, "No", prob, 
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, prop)
                         else:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood pressure", medBP, prob, 
                                 percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, prop)
@@ -1024,8 +1069,8 @@ def show_analysis(df):
 
 ########################### MAIN EXECUTION ##############################
 df_c = new_load_files()
-df_d = ui_choose(df_c)
-show_analysis(df_d)
+# df_d = ui_choose(df_c)
+show_analysis(df_c)
 
 ########################### MAIN EXECUTION END ##############################
 
