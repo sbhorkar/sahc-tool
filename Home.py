@@ -41,7 +41,7 @@ DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 3.9 #Fixed issue of column
+VERSION = 4.0
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
