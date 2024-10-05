@@ -178,26 +178,31 @@ def config_sidebar():
                 header_popup(False)
         
         st.write("Share with others")
-        with stylable_container(
-            key="container_with_border",
-            css_styles=r"""
-                button div:before {
-                    font-family: "Font Awesome 5 Free";
-                    content: '\f14d'; # Get the share icon
-                    display: inline-block;
-                    padding-right: 0px;
-                    vertical-align: middle;
-                    font-weight: 900;
-                    color: black;
-                }
-                """,
-            ): 
-            col_empty, col_up, col_down, col_empty2 = st.columns([0.05, 0.1, 0.1, 0.2])
-            with col_up:
-                share = st.button("", help='Share with others')
+        # with stylable_container(
+        #     key="container_with_border",
+        #     css_styles=r"""
+        #         button div:before {
+        #             font-family: "Font Awesome 5 Free";
+        #             content: '\f14d'; # Get the share icon
+        #             display: inline-block;
+        #             padding-right: 0px;
+        #             vertical-align: middle;
+        #             font-weight: 900;
+        #             color: black;
+        #         }
+        #         """,
+        #     ): 
+        #     col_empty, col_up, col_down, col_empty2 = st.columns([0.05, 0.1, 0.1, 0.2])
+        #     with col_up:
+        #         share = st.button("", help='Share with others')
         
-                if share:
-                    share_popup()
+        #         if share:
+        #             share_popup()
+
+        col_empty, col_up, col_down = st.columns([0.05, 0.3, 0.1])
+        with col_up:
+            if st.button("Share via...", help='Share with others'):
+                share_popup()
 
         global colorblind_mode
         st.write("High Contrast Mode")
