@@ -209,6 +209,7 @@ def config_sidebar():
         col_empty, col_up, col_empty2 = st.columns([0.03,0.25, 0.1])
         with col_up:
             colorblind_mode = st.toggle("On/Off", help='Colorblindess improvements')
+        
 
 ########################### PDF CODE FOR LATER ##############################
 
@@ -264,7 +265,7 @@ config_sidebar()
 st.image(image_path)
 col_score, col_records = st.columns([0.95, 0.05])
 with col_score:
-    st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity.")
+    st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity. **Disclaimer**: The SCORE risk marker qualifier tool is intended for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. The categories presented (optimal, borderline, at-risk) are based on standard reference ranges and should not be used to make any definitive health decisions. The relative comparison (percentile) is based on general population data, adjusted for age, gender, race, and medication use. Results may vary based on individual health factors not accounted for in this tool. Always consult a healthcare provider for a full evaluation of your risk factors and personalized medical advice.")
 
 ########################### HEADER END ##############################
 
