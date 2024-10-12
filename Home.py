@@ -41,7 +41,7 @@ DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 4.0
+VERSION = 4.1
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
@@ -318,7 +318,7 @@ DROPDOWN_SELECTION = {
 
 AHA_RANGES = {
     'Triglycerides (mg/dL)': ("Optimal", 150, "Borderline", 200, "At risk", None, None),
-    'HDL (mg/dL)': ("At risk", 40, "Borderline", 60, "At Risk", None, None),
+    'HDL (mg/dL)': ("At risk", 40, "Borderline", 60, "Optimal", None, None),
     'LDL (mg/dL)': ("Optimal", 100, "Borderline", 160, "At risk", None, None),
     'Total Cholesterol (mg/dL)': ("Optimal", 200, "Borderline", 240, "At risk", None, None),
     'Fasting Glucose (mg/dL)': ("Optimal", 100, "Borderline", 126, "At risk", None, None),
@@ -520,7 +520,7 @@ def ui_choose(df, metric):
     if ethnicity == 'South Asians only':
         AHA_RANGES['Body Mass Index'] = ("Low", 18.5, "Optimal", 23, "Borderline", 25, "At risk")
     if gender == 'Female':
-        AHA_RANGES['HDL (mg/dL)'] = ("At risk", 50, "Borderline", 60, "At Risk", None, None)
+        AHA_RANGES['HDL (mg/dL)'] = ("At risk", 50, "Borderline", 60, "Optimal", None, None)
 
     return df2
 
