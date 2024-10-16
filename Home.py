@@ -41,7 +41,7 @@ DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 4.1
+VERSION = 4.2 # new line for Disclaimer
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
@@ -265,7 +265,7 @@ config_sidebar()
 st.image(image_path)
 col_score, col_records = st.columns([0.95, 0.05])
 with col_score:
-    st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity. **Disclaimer**: The SCORE risk marker qualifier tool is intended for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. The categories presented (optimal, borderline, at-risk) are based on standard reference ranges and should not be used to make any definitive health decisions. The relative comparison (percentile) is based on general population data, adjusted for age, gender, race, and medication use. Results may vary based on individual health factors not accounted for in this tool. Always consult a healthcare provider for a full evaluation of your risk factors and personalized medical advice.")
+    st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity. \n\r**Disclaimer**: The SCORE risk marker qualifier tool is intended for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. The categories presented (optimal, borderline, at-risk) are based on standard reference ranges and should not be used to make any definitive health decisions. The relative comparison (percentile) is based on general population data, adjusted for age, gender, race, and medication use. Results may vary based on individual health factors not accounted for in this tool. Always consult a healthcare provider for a full evaluation of your risk factors and personalized medical advice.")
 
 ########################### HEADER END ##############################
 
