@@ -26,14 +26,7 @@ st.markdown("""
         </style>
         """, unsafe_allow_html=True)
 
-# Hide the hamburger menu
-hide_menu_style = """
-        <style>
-        #MainMenu {visibility: hidden;}
-        </style>
-        """
-st.markdown(hide_menu_style, unsafe_allow_html=True)
-
+# Hide the hamburger menu, fork, and github buttons
 hide_streamlit_style = """
     <style>
     #MainMenu {visibility: hidden;}
