@@ -818,43 +818,43 @@ def show_analysis(df):
 
                     if columnName == 'HDL (mg/dL)':
                         ax.add_patch(Rectangle((0, 0.6), 
-                                        low_percentile, 0.35, 
+                                        low_percentile, user_rectangle_width, 
                                         color=at_risk, fill=True, zorder=90))
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                    (high_percentile - low_percentile), 0.35, 
+                                    (high_percentile - low_percentile), user_rectangle_width, 
                                     color=borderline, fill=True, zorder=90))
                         ax.add_patch(Rectangle((high_percentile, 0.6), 
-                                    (100 - high_percentile), 0.35, 
+                                    (100 - high_percentile), user_rectangle_width, 
                                     color=optimal, fill=True, zorder=90))
                     elif "BP " in columnName:
                         ax.add_patch(Rectangle((0, 0.6), 
-                                        low_percentile, 0.35, 
+                                        low_percentile, user_rectangle_width, 
                                         color=optimal, fill=True, zorder=90))
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                    (high_percentile - low_percentile), 0.35, 
+                                    (high_percentile - low_percentile), user_rectangle_width, 
                                     color=at_risk, fill=True, zorder=90))
                     elif "Body Mass" in columnName:
                         ax.add_patch(Rectangle((0, 0.6), 
-                                        low_percentile, 0.35, 
+                                        low_percentile, user_rectangle_width, 
                                         color=at_risk, fill=True, zorder=90))
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                    (high_percentile - low_percentile), 0.35, 
+                                    (high_percentile - low_percentile), user_rectangle_width, 
                                     color=optimal, fill=True, zorder=90))
                         ax.add_patch(Rectangle((high_percentile, 0.6), 
-                                    (extra_high_percentile - high_percentile), 0.35, 
+                                    (extra_high_percentile - high_percentile), user_rectangle_width, 
                                     color=borderline, fill=True, zorder=90))
                         ax.add_patch(Rectangle((extra_high_percentile, 0.6), 
-                                    (100 - extra_high_percentile), 0.35, 
+                                    (100 - extra_high_percentile), user_rectangle_width, 
                                     color=at_risk, fill=True, zorder=90))
                     else:
                         ax.add_patch(Rectangle((0, 0.6), 
-                                        low_percentile, 0.35, 
+                                        low_percentile, user_rectangle_width, 
                                         color=optimal, fill=True, zorder=90))
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                    (high_percentile - low_percentile), 0.35, 
+                                    (high_percentile - low_percentile), user_rectangle_width, 
                                     color=borderline, fill=True, zorder=90))
                         ax.add_patch(Rectangle((high_percentile, 0.6), 
-                                    (100 - high_percentile), 0.35, 
+                                    (100 - high_percentile), user_rectangle_width, 
                                     color=at_risk, fill=True, zorder=90))
 
                     scatter_size = 1750
@@ -924,10 +924,20 @@ def show_analysis(df):
                             if user_input < high_number:
                                 update_header_color('Borderline')
                                         
-                    # Show the circle for the user input on the graph
-                    ax.scatter(user_percentile, 0.85, zorder=999, s=scatter_size+225, edgecolors='k')
-                    ax.scatter(user_percentile, 0.85, color=header_color, zorder=1000, label='Your Input', s=scatter_size, edgecolors='w', linewidth=3)
+                    # Show the rectangle for the user input on the graph
+                    user_rectangle_width = 4  # Adjust width based on visibility
+                    user_rectangle_height = 0.2  # Keep it smaller than the bar height
 
+                    ax.add_patch(Rectangle(
+                        (user_percentile - user_rectangle_width / 2, 0.75),  # Centered on user percentile
+                        user_rectangle_width, user_rectangle_height,
+                        color=header_color, edgecolor='white', linewidth=2, zorder=1000
+                    ))
+
+                    # Annotate with user input value inside the rectangle
+                    ax.text(user_percentile, 0.81, f"{user_input:.1f}" if STEP_SIZE[column] == 0.1 else f"{user_input:.0f}",
+                            horizontalalignment='center', verticalalignment='center',
+                            fontsize=14, color='white', fontweight='bold', zorder=1001)
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True) # Change the color of the title for each graph
 
                     ax.set_ylim(0.4, 1.1)

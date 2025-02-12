@@ -816,45 +816,47 @@ def show_analysis(df):
                         borderline = orange
                         at_risk = red
 
+                    user_rectangle_width = 0.2  # Keep it smaller than the bar height
+
                     if columnName == 'HDL (mg/dL)':
                         ax.add_patch(Rectangle((0, 0.6), 
-                                        low_percentile, 0.35, 
+                                        low_percentile, user_rectangle_width, 
                                         color=at_risk, fill=True, zorder=90))
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                    (high_percentile - low_percentile), 0.35, 
+                                    (high_percentile - low_percentile), user_rectangle_width, 
                                     color=borderline, fill=True, zorder=90))
                         ax.add_patch(Rectangle((high_percentile, 0.6), 
-                                    (100 - high_percentile), 0.35, 
+                                    (100 - high_percentile), user_rectangle_width, 
                                     color=optimal, fill=True, zorder=90))
                     elif "BP " in columnName:
                         ax.add_patch(Rectangle((0, 0.6), 
-                                        low_percentile, 0.35, 
+                                        low_percentile, user_rectangle_width, 
                                         color=optimal, fill=True, zorder=90))
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                    (high_percentile - low_percentile), 0.35, 
+                                    (high_percentile - low_percentile), user_rectangle_width, 
                                     color=at_risk, fill=True, zorder=90))
                     elif "Body Mass" in columnName:
                         ax.add_patch(Rectangle((0, 0.6), 
-                                        low_percentile, 0.35, 
+                                        low_percentile, user_rectangle_width, 
                                         color=at_risk, fill=True, zorder=90))
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                    (high_percentile - low_percentile), 0.35, 
+                                    (high_percentile - low_percentile), user_rectangle_width, 
                                     color=optimal, fill=True, zorder=90))
                         ax.add_patch(Rectangle((high_percentile, 0.6), 
-                                    (extra_high_percentile - high_percentile), 0.35, 
+                                    (extra_high_percentile - high_percentile), user_rectangle_width, 
                                     color=borderline, fill=True, zorder=90))
                         ax.add_patch(Rectangle((extra_high_percentile, 0.6), 
-                                    (100 - extra_high_percentile), 0.35, 
+                                    (100 - extra_high_percentile), user_rectangle_width, 
                                     color=at_risk, fill=True, zorder=90))
                     else:
                         ax.add_patch(Rectangle((0, 0.6), 
-                                        low_percentile, 0.35, 
+                                        low_percentile, user_rectangle_width, 
                                         color=optimal, fill=True, zorder=90))
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                    (high_percentile - low_percentile), 0.35, 
+                                    (high_percentile - low_percentile), user_rectangle_width, 
                                     color=borderline, fill=True, zorder=90))
                         ax.add_patch(Rectangle((high_percentile, 0.6), 
-                                    (100 - high_percentile), 0.35, 
+                                    (100 - high_percentile), user_rectangle_width, 
                                     color=at_risk, fill=True, zorder=90))
 
                     scatter_size = 1750
@@ -924,13 +926,31 @@ def show_analysis(df):
                             if user_input < high_number:
                                 update_header_color('Borderline')
                                         
-                    # Show the circle for the user input on the graph
-                    ax.scatter(user_percentile, 0.85, zorder=999, s=scatter_size+225, edgecolors='k')
-                    ax.scatter(user_percentile, 0.85, color=header_color, zorder=1000, label='Your Input', s=scatter_size, edgecolors='w', linewidth=3)
+                    # Show the rectangle for the user input on the graph
+                    ax.add_patch(Rectangle(
+                        (user_percentile - 9.5, 1),  # Centered on user percentile
+                        5, 0.2,
+                        color=header_color, edgecolor='white', linewidth=2, zorder=1000
+                    ))
 
-                    placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True) # Change the color of the title for each graph
+                    # Second rectangle (Attached to the first, positioned right next to it)
+                    ax.add_patch(Rectangle(
+                        (user_percentile - 4.5, 1),  # Directly next to the first rectangle
+                        12, 0.2,
+                        color='lightgray', edgecolor='white', linewidth=2, zorder=1000
+                    ))
 
-                    ax.set_ylim(0.4, 1.1)
+
+                    # Add a downward-pointing triangle (black)
+                    ax.scatter(user_percentile, 0.9, marker='v', color='black', s=100, zorder=1001)
+
+                    # Annotate with user input value inside the rectangle
+                    # ax.text(user_percentile, 0.81, f"{user_input:.1f}" if STEP_SIZE[column] == 0.1 else f"{user_input:.0f}",
+                    #         horizontalalignment='center', verticalalignment='center',
+                    #         fontsize=14, color='white', fontweight='bold', zorder=1001)
+                    # placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True) # Change the color of the title for each graph
+
+                    ax.set_ylim(0.5, 1.2)
                     ax.set_yticks([]) 
                     ax.set_xticks([])
 
@@ -940,18 +960,21 @@ def show_analysis(df):
                         text_color = 'white'
 
                     if STEP_SIZE[column] == .1 or column == 'BMXBMI':
-                        ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.25, 0.79),
+                        ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.9), xytext=(user_percentile - 7.5, 1.02),
                                     horizontalalignment='center', color = text_color, zorder=1001, weight='bold', fontsize=16)
                     else:
-                        ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.865), xytext=(user_percentile - 0.25, 0.79),
+                        ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.9), xytext=(user_percentile - 7.5, 1.02),
                                     horizontalalignment='center', color = text_color, zorder=1001, weight='bold', fontsize=16)
                     
-                    if user_percentile > 90:
-                        plt.annotate(f'({user_percentile:.0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile - 5, 0.98), 
-                                horizontalalignment='center')
-                    else:
-                        plt.annotate(f'({user_percentile:.0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile + 5, 0.98), 
-                                horizontalalignment='center')
+                    ax.annotate(f'{status}', xy=(user_percentile, 0.9), xytext=(user_percentile + 1.5, 1.025),
+                                    horizontalalignment='center', color = "black", zorder=1001, weight='bold', fontsize=16)
+
+                    # if user_percentile > 90:
+                    #     plt.annotate(f'({user_percentile:.0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile - 5, 0.98), 
+                    #             horizontalalignment='center')
+                    # else:
+                    #     plt.annotate(f'({user_percentile:.0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile + 5, 0.98), 
+                    #             horizontalalignment='center')
                         
                     if columnName == 'Body Mass Index':
                         plt.annotate(f'{AHA_RANGES[columnName][0]}', xy=(low_percentile, 0.675), xytext=(low_percentile - 1, 0.45),
