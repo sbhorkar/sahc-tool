@@ -589,7 +589,7 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
             {person_label}
             """, unsafe_allow_html=True)
     
-    file_path = "/workspaces/sahc-tool/RiskMarkerDescriptions.csv"
+    file_path = "RiskMarkerDescriptions.csv"
     df_csv = pd.read_csv(file_path)
 
     # Rename columns correctly (assuming first row is the actual data)
