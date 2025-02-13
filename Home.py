@@ -588,13 +588,35 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
             <br>
             {person_label}
             """, unsafe_allow_html=True)
+    
+    file_path = "/workspaces/sahc-tool/RiskMarkerDescriptions.csv"
+    df_csv = pd.read_csv(file_path)
+
+    # Rename columns correctly (assuming first row is the actual data)
+    df_csv.columns = ["Marker", "How It Increases Risk", "Ways to Improve & Lower Risk"]
+
+    # Directly extract row matching the selected marker
+    selected_row = df_csv[df_csv["Marker"] == column]
+
+    if not selected_row.empty:
+        risk_info = selected_row["How It Increases Risk"].values[0]
+        improvement_info = selected_row["Ways to Improve & Lower Risk"].values[0]
+    else:
+        risk_info = "No data available for this marker."
+        improvement_info = "No suggestions available."
+
+    st.write("**How It Increases Risk**")
+    st.write(risk_info)
+
+    st.write("**Ways to Improve & Lower Risk**")
+    st.write(improvement_info)
 
     st.write(f"""
-        **Your {column}: {user_input:.1f} {UNITS_MAP[acro]}
-        <br>
-        Risk classification: {status}**
-        """, unsafe_allow_html=True)
-    
+    **Your {column}: {user_input:.1f} {UNITS_MAP[acro]}
+    <br>
+    Risk classification: {status}**
+    """, unsafe_allow_html=True)
+
     if "LDL" in column:
         st.write(f"**{prop:.0f}%** of individuals in your peer group have an {column} < {user_input:.1f}")
     else:
@@ -944,11 +966,8 @@ def show_analysis(df):
                     # Add a downward-pointing triangle (black)
                     ax.scatter(user_percentile, 0.9, marker='v', color='black', s=100, zorder=1001)
 
-                    # Annotate with user input value inside the rectangle
-                    # ax.text(user_percentile, 0.81, f"{user_input:.1f}" if STEP_SIZE[column] == 0.1 else f"{user_input:.0f}",
-                    #         horizontalalignment='center', verticalalignment='center',
-                    #         fontsize=14, color='white', fontweight='bold', zorder=1001)
-                    # placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True) # Change the color of the title for each graph
+                    # Change the color of the header depending on the risk classification
+                    placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True) # Change the color of the title for each graph
 
                     ax.set_ylim(0.5, 1.2)
                     ax.set_yticks([]) 
