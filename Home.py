@@ -37,6 +37,33 @@ hide_streamlit_style = """
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+# Hide link anchors on headers
+st.html(
+    body="""
+        <style>
+            /* hide hyperlink anchors generated next to headers */
+            h1 > div > a {
+                display: none !important;
+            }
+            h2 > div > a {
+                display: none !important;
+            }
+            h3 > div > a {
+                display: none !important;
+            }
+            h4 > div > a {
+                display: none !important;
+            }
+            h5 > div > a {
+                display: none !important;
+            }
+            h6 > div > a {
+                display: none !important;
+            }
+        </style>
+    """,
+)
+
 # Adding CSS for the share button logo
 st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>', unsafe_allow_html=True)
 
@@ -147,7 +174,7 @@ total_unique_views = track_unique_view(user_id)
 def share_popup():
     col_mail, col_what, col_mess = st.columns(3, gap='small')
     with col_mail:
-        url = 'mailto:?Subject=Checkout%20SCORE%3A%20Compare%20your%20lipid%20and%20glucose%20markers%20with%20others%20similar%20to%20you&Body=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20risk%20profile.%0A%0ACheck%20it%20out%20it%20out%20here%3A%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A'
+        url = 'mailto:?Subject=Checkout%20SCORE%3A%20Compare%20your%20lipid%20and%20glucose%20markers%20with%20others%20similar%20to%20you&Body=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20cardiometabolic%20risk%20profile.%0A%0ACheck%20it%20out%20here:%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A'
         st.link_button(":envelope: Mail", url)
     with col_what:
         url = 'https://wa.me/?text=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20risk%20profile.%0A%0ACheck%20it%20out%20it%20out%20here%3A%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A'
@@ -173,7 +200,7 @@ def config_sidebar():
         with col_up:
             if st.button("👍", help="Like this"):
                 update_count("thumbs_up")
-                header_popup(True)
+                share_popup()
                     
         with col_down:
             if st.button("👎", help="Needs improvement"):
@@ -208,10 +235,11 @@ def config_sidebar():
                 share_popup()
 
         global colorblind_mode
-        st.write("High Contrast Mode")
-        col_empty, col_up, col_empty2 = st.columns([0.03,0.25, 0.1])
-        with col_up:
-            colorblind_mode = st.toggle("On/Off", help='Colorblindess improvements')
+        colorblind_mode = False
+        # st.write("High Contrast Mode")
+        # col_empty, col_up, col_empty2 = st.columns([0.03,0.25, 0.1])
+        # with col_up:
+        #     colorblind_mode = st.toggle("On/Off", help='Colorblindess improvements')
         
 
 ########################### PDF CODE FOR LATER ##############################
@@ -404,14 +432,14 @@ with aboutMe_expand:
     medBPOptions = {'Yes': 1, 'No': 2}
 
     with col1:
-        gender = st.selectbox('Gender assigned at birth', list(genderOptions.keys()), key="selected_gender", on_change=update_title, index=None)
+        gender = st.selectbox('Gender assigned at birth', list(genderOptions.keys()), key="selected_gender", on_change=update_title, index=None, placeholder="Choose a gender")
     with col2:
-        age_group = st.selectbox('Age group', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None)
+        age_group = st.selectbox('Age group', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None, placeholder="Choose an age group")
     with col3:
-        ethnicity = st.selectbox('Ethnicity', ['Any ethnicity', 'South Asians only'], key="selected_ethnicity", on_change=update_title, index=None)
+        ethnicity = st.selectbox('Ethnicity', ['Any ethnicity', 'South Asians only'], key="selected_ethnicity", on_change=update_title, index=None, placeholder="Choose an ethnicity")
     with col4:
-        med_options = ['None', 'Cholesterol', 'Diabetes', 'Blood Pressure']
-        medications_select = st.multiselect(label="Medications", options=med_options, key="selected_meds", on_change=update_title)
+        med_options = ['None', 'Cholesterol-lowering', 'Glucose-managing', 'Blood pressure-lowering']
+        medications_select = st.multiselect(label="Medications", options=med_options, key="selected_meds", on_change=update_title, placeholder="Medications I use")
 
         medChol = 'No'
         medDiab = 'No'
@@ -419,9 +447,9 @@ with aboutMe_expand:
 
         if 'Cholesterol' in medications_select:
             medChol = 'Yes'
-        if 'Diabetes' in medications_select:
+        if 'Glucose' in medications_select:
             medDiab = 'Yes'
-        if 'Blood Pressure' in medications_select:
+        if 'Blood pressure' in medications_select:
             medBP = 'Yes'
 
 ########################### EXPANDER TITLE SET UP END ##############################
@@ -457,10 +485,10 @@ def get_relevant_medications(metric):
         'LBDHDD': ['Cholesterol'],
         'LBXTR': ['Cholesterol'],
         'TotHDLRat': ['Cholesterol'],
-        'LBXGLU': ['Diabetes'],
-        'LBXGH': ['Diabetes'],
-        'BPXOSY1': ['Blood Pressure'],
-        'BPXODI1': ['Blood Pressure'],
+        'LBXGLU': ['Glucose'],
+        'LBXGH': ['Glucose'],
+        'BPXOSY1': ['Blood pressure'],
+        'BPXODI1': ['Blood pressure'],
         'BMXBMI': None,  # BMI doesn't have medication filters
     }
     return metric_med_map.get(metric, [])
@@ -482,10 +510,10 @@ def ui_choose(df, metric):
             if 'Cholesterol' in relevant_meds:
                 medCholFilter = [medCholOptions[medChol]]
                 df2 = df2[df2['cholMeds'].isin(medCholFilter)]
-            if 'Diabetes' in relevant_meds:
+            if 'Glucose' in relevant_meds:
                 medDiabFilter = [medDiabOptions[medDiab]]
                 df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
-            if 'Blood Pressure' in relevant_meds:
+            if 'Blood pressure' in relevant_meds:
                 medBPFilter = [medBPOptions[medBP]]
                 df2 = df2[df2['bpMeds'].isin(medBPFilter)]
     elif ethnicity is None or ethnicity != 'South Asians only':
@@ -496,10 +524,10 @@ def ui_choose(df, metric):
                     df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
                 elif medChol == 'No':
                     df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
-            if 'Diabetes' in relevant_meds:
+            if 'Glucose' in relevant_meds:
                 medDiabFilter = [medDiabOptions[medDiab]]
                 df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
-            if 'Blood Pressure' in relevant_meds:
+            if 'Blood pressure' in relevant_meds:
                 medBPFilter = [medBPOptions[medBP]]
                 if medBP == 'Yes':
                     df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
@@ -532,95 +560,100 @@ def ui_choose(df, metric):
 ########################### INFORMATION POP UP ##############################
 
 @st.dialog(" ", width='large')
-def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, p25, p50, p75, p90, low_number, high_number, status, prop):
+def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, prob, p25, p50, p75, p90, low_number, high_number, status, prop):
+
+    # Display the saved graph at the beginning
+    st.pyplot(stored_graph)
 
     if med is not None:
         med = med.lower()
 
-    if on_med == 'Yes' and med is not None:
-        if age_range is None and race is None and gender is None:
-            person_label = f"(Person ON {med}-lowering medication)"
-        elif gender is None and race is None:
-            person_label = f"(Person aged between {age_range} years, ON {med}-lowering medication)"
-        elif age_range is None and gender is None:
-            person_label = f"({race}, ON {med}-lowering medication)"
-        elif age_range is None and race is None:
-            person_label = f"({gender}, ON {med}-lowering medication)"
-        elif gender is None:
-            person_label = f"({race}, aged between {age_range} years, ON {med}-lowering medication)"
-        elif race is None:
-            person_label = f"({gender}, aged between {age_range} years, ON {med}-lowering medication)"
-        else:
-            person_label = f"({race} {gender.lower()}, aged between {age_range} years, ON {med}-lowering medication)"
-    elif med is None:
-        if age_range is None and race is None and gender is None:
-            person_label = f""
-        elif gender is None and race is None:
-            person_label = f"(Person aged between {age_range} years)"
-        elif age_range is None and gender is None:
-            person_label = f"({race})"
-        elif age_range is None and race is None:
-            person_label = f"({gender})"
-        elif gender is None:
-            person_label = f"({race}, aged between {age_range} years)"
-        elif race is None:
-            person_label = f"({gender}, aged between {age_range} years)"
-        else:
-            person_label = f"({race} {gender.lower()}, aged between {age_range} years)"
+    if gender is None:
+        gender_text = "Males and Females"
     else:
-        if age_range is None and race is None and gender is None:
-            person_label = f"(Person NOT ON {med}-lowering medication)"
-        elif gender is None and race is None:
-            person_label = f"(Person aged between {age_range} years, NOT ON {med}-lowering medication)"
-        elif age_range is None and gender is None:
-            person_label = f"({race}, NOT ON {med}-lowering medication)"
-        elif age_range is None and race is None:
-            person_label = f"({gender}, NOT ON {med}-lowering medication)"
-        elif gender is None:
-            person_label = f"({race}, aged between {age_range} years, NOT ON {med}-lowering medication)"
-        elif race is None:
-            person_label = f"({gender}, aged between {age_range} years, NOT ON {med}-lowering medication)"
-        else:
-            person_label = f"({race} {gender.lower()}, aged between {age_range} years, NOT ON {med}-lowering medication)"
+        gender_text = gender
+    
+    if age_range is not None:
+        age_text = f"{age_range} years"
+
+    if ethnicity is None:
+        ethnicity_text = "All"
+    else:
+        race_text = "South Asian"
+
+    if on_med is "No":
+        med_text = f"NOT ON {med}-lowering medication"
+    else:
+        med_text = f"ON {med}-lowering medication"
+
+    # Constructing the peer group output
+    peer_group = "**My peer group:**\n"
+    peer_group += "- **Gender:** " + gender_text + "\n"
+    if age_range is not None:
+        peer_group += f"- **Age:** " + "Between {age_text}" + "\n"
+    peer_group += "- **Ethnicity:** " + ethnicity_text + "\n"
+    peer_group += "- **Medication use:** " + med_text + "\n"
 
     st.write(f"""
-            **Your {column} compared to others in your peer group**
-            <br>
-            {person_label}
+            **<u>Your </u><span style='color:{header_color};'><u>{column} of {user_input:.1f} {UNITS_MAP[acro]}</u></span><u> compared to others in your peer group</span></u>**
             """, unsafe_allow_html=True)
+    
+    st.write(peer_group)
     
     file_path = "RiskMarkerDescriptions.csv"
     df_csv = pd.read_csv(file_path)
 
     # Rename columns correctly (assuming first row is the actual data)
-    df_csv.columns = ["Marker", "How It Increases Risk", "Ways to Improve & Lower Risk"]
+    df_csv.columns = ["Marker", "How It Increases Risk", "Ways to Reduce Risk"]
 
     # Directly extract row matching the selected marker
     selected_row = df_csv[df_csv["Marker"] == column]
 
     if not selected_row.empty:
         risk_info = selected_row["How It Increases Risk"].values[0]
-        improvement_info = selected_row["Ways to Improve & Lower Risk"].values[0]
+        improvement_info = selected_row["Ways to Reduce Risk"].values[0]
     else:
         risk_info = "No data available for this marker."
         improvement_info = "No suggestions available."
 
-    st.write("**How It Increases Risk**")
-    st.write(risk_info)
-
-    st.write("**Ways to Improve & Lower Risk**")
-    st.write(improvement_info)
+    st.write(f"""
+            **How {column} Increases Risk**
+            <br>
+            {risk_info}
+            """, unsafe_allow_html=True)
 
     st.write(f"""
-    **Your {column}: {user_input:.1f} {UNITS_MAP[acro]}
-    <br>
-    Risk classification: {status}**
-    """, unsafe_allow_html=True)
+            **Ways to Reduce Risk**
+            <br>
+            {improvement_info}
+            """, unsafe_allow_html=True)
 
-    if "LDL" in column:
-        st.write(f"**{prop:.0f}%** of individuals in your peer group have an {column} < {user_input:.1f}")
+    st.write(f"""
+             **Your Risk Profile:**
+             <br>
+            {column}: <b>{user_input:.1f} {UNITS_MAP[acro]}</b>
+            <br>
+            Risk classification: **<span style='color:{header_color};'>{status}</span>**
+            """, unsafe_allow_html=True)
+    
+    if 'Body Mass' in column:
+        st.write(f"""
+        According to AHA guidelines, the **optimal** value for {column} is <b>{low_number} - {high_number - 0.1} {UNITS_MAP[acro]}</b>.
+        <br>
+        In your peer group, your {column} of {user_input} {UNITS_MAP[acro]} is in the top <b>{99-prop:.0f}%</b> the estimated probability of having a sub-optimal {column} of < {low_number} {UNITS_MAP[acro]} or ≥ {high_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
+        """, unsafe_allow_html=True)
+    elif 'HDL (mg/dL)' in column:
+        st.write(f"""
+            According to AHA guidelines, the **optimal** value for {column} is < <b>{low_number} {UNITS_MAP[acro]}</b>.
+            <br>
+            In your peer group, your {column} of {user_input} {UNITS_MAP[acro]} is in the top <b>{99-prop:.0f}%</b> the estimated probability of having a sub-optimal {column} of ≤ {low_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
+            """, unsafe_allow_html=True)
     else:
-        st.write(f"**{prop:.0f}%** of individuals in your peer group have a {column} < {user_input:.1f}")
+        st.write(f"""
+            According to AHA guidelines, the **optimal** value for {column} is < <b>{low_number} {UNITS_MAP[acro]}</b>.
+            <br>
+            In your peer group, your {column} of {user_input} {UNITS_MAP[acro]} is in the top <b>{99-prop:.0f}%</b> and the estimated probability of having a sub-optimal {column} of ≥ {low_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
+            """, unsafe_allow_html=True)
 
     if STEP_SIZE[acro] == 0.1:
         data = pd.DataFrame({
@@ -653,30 +686,17 @@ def popup(acro, column, user_input, gender, race, age_range, med, on_med, prob, 
     html = ''.join(html_parts)
 
     st.markdown(html, unsafe_allow_html=True)
-
-    if 'Body Mass' in column:
-        st.write(f"""
-        According to AHA guidelines, the **optimal** value for {column} is **{low_number} - {high_number - 0.1}**.
-        <br>
-        In your peer group, the estimated probability of having a sub-optimal {column} of < {low_number} or ≥ {high_number} is **{prob:.0f}%.**
-        """, unsafe_allow_html=True)
-    elif 'HDL (mg/dL)' in column:
-        st.write(f"""
-            According to AHA guidelines, the **optimal** value for {column} is < **{low_number}**.
-            <br>
-            In your peer group, the estimated probability of having a sub-optimal {column} of ≤ {low_number} is **{prob:.0f}%.**
-            """, unsafe_allow_html=True)
-    else:
-        st.write(f"""
-            According to AHA guidelines, the **optimal** value for {column} is < **{low_number}**.
-            <br>
-            In your peer group, the estimated probability of having a sub-optimal {column} of ≥ {low_number} is **{prob:.0f}%.**
-            """, unsafe_allow_html=True)
     
     if status != 'Optimal':
-        st.markdown('To understand your cardio-metabolic risk profile further, and to receive personalized guidance to improve lifestyle behaviors such as diet, exercise, sleep, stress management and more, <a href="https://www.elcaminohealth.org/community/lifestyle-consult">schedule</a> a 60 minute lifestyle medicine consult with El Camino Health.', unsafe_allow_html=True)
+        now_text = 'To understand your cardio-metabolic risk profile further, and to receive personalized guidance to improve lifestyle behaviors such as diet, exercise, sleep, stress management and more, <a href="https://www.elcaminohealth.org/community/lifestyle-consult">schedule</a> a 60 minute lifestyle medicine consult with El Camino Health.'
     else:
-        "Your marker is in optimal range. Continue working on your lifestyle behaviors to keep this marker in range."
+        now_text = "Your marker is in optimal range. Continue working on your lifestyle behaviors to keep this marker in range."
+
+    st.write(f"""
+             **What now?**
+             <br>
+            {now_text}
+            """, unsafe_allow_html=True)
 
 ########################### INFORMATION POP UP END ##############################
 
@@ -772,10 +792,15 @@ def show_analysis(df):
 
             with cols[i].container():
 
-                placeholder = st.empty()
+                # Create columns for header and button
+                placeholder_header, info_button = st.columns([0.5, 0.5])  # Adjust width ratio as needed
+
+                with placeholder_header:
+                    placeholder = st.empty()  # Header text
+
                 header = f"{NAME_MAP[column]}"
 
-                col8, col9 = st.columns([0.65, 0.35], vertical_alignment='top', gap='small')
+                col8, col9 = st.columns([0.75, 0.25], vertical_alignment='top', gap='small')
             
                 with col8:
                     user_input = column_dict['input']
@@ -815,6 +840,9 @@ def show_analysis(df):
                     low_percentile = int(np.mean(sorted_array <= low_number) * 100)
 
                     fig, ax = plt.subplots(figsize=(16, 1.15))
+
+                    global stored_graph
+                    stored_graph = fig
 
                     # Find the user percentile
                     user_percentile = int(np.mean(sorted_array <= user_input) * 100)
@@ -950,21 +978,13 @@ def show_analysis(df):
                                         
                     # Show the rectangle for the user input on the graph
                     ax.add_patch(Rectangle(
-                        (user_percentile - 9.5, 1),  # Centered on user percentile
+                        (user_percentile - 2.5, 1),  # Centered on user percentile
                         5, 0.2,
                         color=header_color, edgecolor='white', linewidth=2, zorder=1000
                     ))
 
-                    # Second rectangle (Attached to the first, positioned right next to it)
-                    ax.add_patch(Rectangle(
-                        (user_percentile - 4.5, 1),  # Directly next to the first rectangle
-                        12, 0.2,
-                        color='lightgray', edgecolor='white', linewidth=2, zorder=1000
-                    ))
-
-
                     # Add a downward-pointing triangle (black)
-                    ax.scatter(user_percentile, 0.9, marker='v', color='black', s=100, zorder=1001)
+                    ax.scatter(user_percentile, 0.9, marker='v', color=header_color, s=100, zorder=1001)
 
                     # Change the color of the header depending on the risk classification
                     placeholder.markdown(f"#### <span style='color:{header_color};'>{header}</span>", unsafe_allow_html=True) # Change the color of the title for each graph
@@ -979,14 +999,14 @@ def show_analysis(df):
                         text_color = 'white'
 
                     if STEP_SIZE[column] == .1 or column == 'BMXBMI':
-                        ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.9), xytext=(user_percentile - 7.5, 1.02),
+                        ax.annotate(f'{user_input: .1f}', xy=(user_percentile, 0.9), xytext=(user_percentile - 0.5, 1.02),
                                     horizontalalignment='center', color = text_color, zorder=1001, weight='bold', fontsize=16)
                     else:
-                        ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.9), xytext=(user_percentile - 7.5, 1.02),
+                        ax.annotate(f'{user_input: .0f}', xy=(user_percentile, 0.9), xytext=(user_percentile - 0.5, 1.02),
                                     horizontalalignment='center', color = text_color, zorder=1001, weight='bold', fontsize=16)
-                    
-                    ax.annotate(f'{status}', xy=(user_percentile, 0.9), xytext=(user_percentile + 1.5, 1.025),
-                                    horizontalalignment='center', color = "black", zorder=1001, weight='bold', fontsize=16)
+                       
+                    ax.annotate(f'{status}', xy=(user_percentile, 0.9), xytext=(user_percentile, 1.25),
+                                    horizontalalignment='center', color=header_color, zorder=1001, weight='bold', fontsize=16)
 
                     # if user_percentile > 90:
                     #     plt.annotate(f'({user_percentile:.0f}%ile)', xy=(user_percentile, 0.9), xytext=(user_percentile - 5, 0.98), 
@@ -1090,16 +1110,37 @@ def show_analysis(df):
                             background-color: white;
                             color: black;
                             border: 0px solid #7D343C;
-                            padding: 5px;
+                            padding: 2px;
+                            margin-top: 5px;  /* Adjust margin to move button lower if needed */
                         }
-
+                        div[data-testid="stButton"] {
+                            display: flex;
+                            align-items: center;
+                        }
                         button[kind="primary"]:hover {
                             background-color: #7D343C; /* Slightly different background on hover */
                             color: white; /* Ensure text color remains visible on hover */
                         }
                         </style>
                         """, unsafe_allow_html=True)
+                    
+                    # st.markdown("""
+                    #     <style>
+                    #     button[kind="primary"] {
+                    #         background-color: white;
+                    #         color: black;
+                    #         border: 0px solid #7D343C;
+                    #         padding: 5px;
+                    #     }
 
+                    #     button[kind="primary"]:hover {
+                    #         background-color: #7D343C; /* Slightly different background on hover */
+                    #         color: white; /* Ensure text color remains visible on hover */
+                    #     }
+                    #     </style>
+                    #     """, unsafe_allow_html=True)
+
+                with info_button:
                     more_info = st.button(f'ⓘ {user_percentile: .0f}{suffix} percentile compared to peers in your group', key=column, type='primary')
 
                 if more_info:
