@@ -579,7 +579,7 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
     if ethnicity is None:
         ethnicity_text = "All"
     else:
-        race_text = "South Asian"
+        ethnicity_text = "South Asian"
 
     if on_med is "No":
         med_text = f"NOT ON {med}-lowering medication"
@@ -590,7 +590,7 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
     peer_group = "**My peer group:**\n"
     peer_group += "- **Gender:** " + gender_text + "\n"
     if age_range is not None:
-        peer_group += f"- **Age:** " + "Between {age_text}" + "\n"
+        peer_group += "- **Age:** " + f"Between {age_text}" + "\n"
     peer_group += "- **Ethnicity:** " + ethnicity_text + "\n"
     peer_group += "- **Medication use:** " + med_text + "\n"
 
@@ -636,23 +636,33 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
             Risk classification: **<span style='color:{header_color};'>{status}</span>**
             """, unsafe_allow_html=True)
     
+    if prop > 99:
+        prop = 99
+    elif prop < 1:
+        prop = 1
+
+    if prop >= 50:
+        prop_text = f"top <b>{99-prop:.0f}%</b>"
+    else:
+        prop_text = f"bottom <b>{prop:.0f}%</b>"
+
     if 'Body Mass' in column:
         st.write(f"""
-        According to AHA guidelines, the **optimal** value for {column} is <b>{low_number} - {high_number - 0.1} {UNITS_MAP[acro]}</b>.
+        According to AHA guidelines, the **optimal** value for {column} is <b>{low_number} - {high_number - 0.1}</b>.
         <br>
-        In your peer group, your {column} of {user_input} {UNITS_MAP[acro]} is in the top <b>{99-prop:.0f}%</b> the estimated probability of having a sub-optimal {column} of < {low_number} {UNITS_MAP[acro]} or ≥ {high_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
+        The estimated probability of having a sub-optimal {column} of < {low_number} {UNITS_MAP[acro]} or ≥ {high_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
         """, unsafe_allow_html=True)
-    elif 'HDL (mg/dL)' in column:
+    elif 'HDL' in column:
         st.write(f"""
-            According to AHA guidelines, the **optimal** value for {column} is < <b>{low_number} {UNITS_MAP[acro]}</b>.
+            According to AHA guidelines, the **optimal** value for {column} is > <b>{high_number} {UNITS_MAP[acro]}</b>.
             <br>
-            In your peer group, your {column} of {user_input} {UNITS_MAP[acro]} is in the top <b>{99-prop:.0f}%</b> the estimated probability of having a sub-optimal {column} of ≤ {low_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
+            The estimated probability of having a sub-optimal {column} of ≤ {high_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
             """, unsafe_allow_html=True)
     else:
         st.write(f"""
             According to AHA guidelines, the **optimal** value for {column} is < <b>{low_number} {UNITS_MAP[acro]}</b>.
             <br>
-            In your peer group, your {column} of {user_input} {UNITS_MAP[acro]} is in the top <b>{99-prop:.0f}%</b> and the estimated probability of having a sub-optimal {column} of ≥ {low_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
+            The estimated probability of having a sub-optimal {column} of ≥ {low_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
             """, unsafe_allow_html=True)
 
     if STEP_SIZE[acro] == 0.1:
@@ -685,7 +695,11 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
 
     html = ''.join(html_parts)
 
-    st.markdown(html, unsafe_allow_html=True)
+    st.write(f"""
+            Your {column} of {user_input:.1f} {UNITS_MAP[acro]} is in the {prop_text} of your peer group.
+            <br>
+            {html}
+            """, unsafe_allow_html=True)
     
     if status != 'Optimal':
         now_text = 'To understand your cardio-metabolic risk profile further, and to receive personalized guidance to improve lifestyle behaviors such as diet, exercise, sleep, stress management and more, <a href="https://www.elcaminohealth.org/community/lifestyle-consult">schedule</a> a 60 minute lifestyle medicine consult with El Camino Health.'
@@ -848,6 +862,8 @@ def show_analysis(df):
                     user_percentile = int(np.mean(sorted_array <= user_input) * 100)
                     if user_percentile == 100:
                         user_percentile = 99
+                    elif user_percentile == 0:
+                        user_percentile = 1
 
                     status = 'Optimal'
                     
