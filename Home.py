@@ -595,7 +595,7 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
     peer_group += "- **Medication use:** " + med_text + "\n"
 
     st.write(f"""
-            **<u>Your </u><span style='color:{header_color};'><u>{column} of {user_input:.1f} {UNITS_MAP[acro]}</u></span><u> compared to others in your peer group</span></u>**
+            **Your <span style='color:{header_color};'><u>{column} of {user_input:.1f} {UNITS_MAP[acro]}</u></span> compared to others in your peer group</span>**
             """, unsafe_allow_html=True)
     
     st.write(peer_group)
