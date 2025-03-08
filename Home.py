@@ -587,7 +587,7 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
         med_text = f"ON {med}-lowering medication"
 
     # Constructing the peer group output
-    peer_group = "**My peer group:**\n"
+    peer_group = "**Your peer group:**\n"
     peer_group += "- **Gender:** " + gender_text + "\n"
     if age_range is not None:
         peer_group += "- **Age:** " + f"Between {age_text}" + "\n"
