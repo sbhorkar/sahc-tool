@@ -652,7 +652,7 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
         <br>
         The estimated probability of having a sub-optimal {column} of < {low_number} {UNITS_MAP[acro]} or ≥ {high_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
         """, unsafe_allow_html=True)
-    elif 'HDL' in column:
+    elif column == 'HDL':
         st.write(f"""
             According to AHA guidelines, the **optimal** value for {column} is > <b>{high_number} {UNITS_MAP[acro]}</b>.
             <br>
