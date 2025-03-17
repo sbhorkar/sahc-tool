@@ -304,7 +304,7 @@ with col_score:
 
 ########################### PAGE SETTINGS AND CONSTANTS ##############################
 if "title_expander" not in st.session_state:
-    st.session_state.title_expander = "About Me"
+    st.session_state.title_expander = "About Me: South Asian"
 
 expand_label = "About Me"
 aboutMe_expand = st.expander(st.session_state.title_expander or expand_label, expanded=True)
