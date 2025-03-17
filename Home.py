@@ -589,7 +589,7 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
         gender_text = gender
 
     if age_range is not None:
-        if added_age_group is not "No":
+        if added_age_group != "No":
             age_text = f"{age_range} years (Added {added_age_group} years for comparison)"
         else:
             age_text = f"{age_range} years"
@@ -599,7 +599,7 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
     else:
         ethnicity_text = "South Asian"
 
-    if on_med is "No":
+    if on_med == "No":
         med_text = f"NOT ON {med}-lowering medication"
     else:
         med_text = f"ON {med}-lowering medication"
