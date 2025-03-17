@@ -14,7 +14,7 @@ from streamlit_extras.stylable_container import stylable_container
 # Setting page initial state
 st.set_page_config(page_title="SCORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide", initial_sidebar_state = "auto")
 
-st.write("Current font setting:", st.get_option("theme.font"))
+# st.write("Current font setting:", st.get_option("theme.font"))
 
 # Set up the page margins to reduce top padding
 st.markdown("""
