@@ -387,7 +387,7 @@ if "selected_age" not in st.session_state:
     st.session_state.selected_age = None
 
 if "selected_ethnicity" not in st.session_state:
-    st.session_state.selected_ethnicity = None
+    st.session_state.selected_ethnicity = True
 
 if "selected_meds" not in st.session_state:
     st.session_state.selected_meds = []
@@ -409,7 +409,10 @@ def update_title():
     if selected_age:
         st.session_state.title_list.append(f"Age: {selected_age}")
     if selected_ethnicity:
-        st.session_state.title_list.append(selected_ethnicity)
+        if selected_ethnicity is True:
+            st.session_state.title_list.append("South Asian")
+    else:
+        st.session_state.title_list.append("Any ethnicity")
     if selected_meds:
         if 'None' in selected_meds:
             selected_meds.remove('None')
@@ -439,7 +442,7 @@ with aboutMe_expand:
         age_group = st.selectbox('', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None, placeholder="Choose an age group", label_visibility='collapsed')
     with col3:
         st.caption('<span style="color:black;">Ethnicity</span>', unsafe_allow_html=True)
-        ethnicity = st.toggle('South Asian', value=True, key="selected_ethnicity")
+        ethnicity = st.toggle('South Asian', value=True, key="selected_ethnicity", on_change=update_title)
 
         if ethnicity is True:
             ethnicity = "South Asian"
@@ -544,6 +547,8 @@ def ui_choose(df, metric):
                 elif medBP == 'No':
                     df2 = df2[df2['BPQ020'].isin(medBPFilter) | df2['BPQ040A'].isin(medBPFilter)]
 
+    additional_age_group = "No"
+
     if age_group is not None:
         ageFilter = [ageOptions[age_group]]
         length = len(df2[df2['Age_Group'].isin(ageFilter)])
@@ -551,6 +556,7 @@ def ui_choose(df, metric):
         if length < 15:
             next_age_group = get_next_age_group(age_group)
             ageFilter.append(ageOptions[next_age_group])
+            additional_age_group = next_age_group
         
         df2 = df2[df2['Age_Group'].isin(ageFilter)]
     
@@ -563,14 +569,14 @@ def ui_choose(df, metric):
     if gender == 'Female':
         AHA_RANGES['HDL (mg/dL)'] = ("At risk", 50, "Borderline", 60, "Optimal", None, None)
 
-    return df2
+    return df2, additional_age_group
 
 ########################### DATAFRAME CLEAN UP AND FILTER END ##############################
 
 ########################### INFORMATION POP UP ##############################
 
 @st.dialog(" ", width='large')
-def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, prob, p25, p50, p75, p90, low_number, high_number, status, prop):
+def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, prob, p25, p50, p75, p90, low_number, high_number, status, prop, additional_age_group):
 
     # Display the saved graph at the beginning
     st.pyplot(stored_graph)
@@ -582,9 +588,14 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
         gender_text = "Males and Females"
     else:
         gender_text = gender
-    
+
+    st.write(additional_age_group)
+
     if age_range is not None:
-        age_text = f"{age_range} years"
+        if additional_age_group is not "No":
+            age_text = f"{age_range} years (Added {additional_age_group} years for comparison)"
+        else:
+            age_text = f"{age_range} years"
 
     if ethnicity is None:
         ethnicity_text = "All"
@@ -713,9 +724,9 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
             """, unsafe_allow_html=True)
     
     if status != 'Optimal':
-        now_text = 'To understand your cardio-metabolic risk profile further, and to receive personalized guidance to improve lifestyle behaviors such as diet, exercise, sleep, stress management and more, <a href="https://www.elcaminohealth.org/community/lifestyle-consult">schedule</a> a 60 minute lifestyle medicine consult with El Camino Health.'
+        now_text = f'Understanding your risk factors, such as {column}, is essential in preventing coronary artery disease and diabetes. Sub-optimal markers raise risk, yet you may manage them well with the suggestions above.  However, {column} in isolation may not reflect your complete risk. El Camino Health offers a 60-minute telehealth Lifestyle Medicine consultation to assess your comprehensive A.B.C. risk profile—Atherogenic, Behavioral, and Cardio-metabolic. You will receive personalized guidance on eating well, moving more, managing stress, and improving sleep. <a href="https://www.elcaminohealth.org/community/lifestyle-consult">Schedule</a> your consultation now.'
     else:
-        now_text = "Your marker is in optimal range. Continue working on your lifestyle behaviors to keep this marker in range."
+        now_text = f'Understanding your risk factors, such as {column}, is essential in preventing coronary artery disease and diabetes. Optimal markers may lower your risk considerably if you continue to maintain them at optimal levels.  However, {column} in isolation may not reflect your complete risk. El Camino Health offers a 60-minute telehealth Lifestyle Medicine consultation to assess your comprehensive A.B.C. risk profile—Atherogenic, Behavioral, and Cardio-metabolic. You will receive personalized guidance on eating well, moving more, managing stress, and improving sleep. <a href="https://www.elcaminohealth.org/community/lifestyle-consult">Schedule</a> your consultation now.'
 
     st.write(f"""
              **What now?**
@@ -830,7 +841,7 @@ def show_analysis(df):
                 with col8:
                     user_input = column_dict['input']
 
-                    df_metric = ui_choose(df_c, column)
+                    df_metric, additional_age_group = ui_choose(df_c, column)
 
                     if user_input == None:
                         break
@@ -1173,16 +1184,16 @@ def show_analysis(df):
                 if more_info:
                         if "HDL (mg/dL)" in columnName or "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "cholesterol", medChol, prob, 
-                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile)
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile, additional_age_group)
                         elif "Glucose" in columnName or "A1C" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood sugar", medDiab, prob, 
-                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile)   
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile, additional_age_group)   
                         elif "Body Mass Index" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, None, "No", prob, 
-                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile)
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile, additional_age_group)
                         else:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood pressure", medBP, prob, 
-                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile)
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile, additional_age_group)
 
 ########################### INFORMATION BUTTON END ##############################
 
