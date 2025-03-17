@@ -73,7 +73,7 @@ DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 4.2 # new line for Disclaimer
+VERSION = 4.5
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
