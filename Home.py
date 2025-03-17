@@ -296,7 +296,7 @@ config_sidebar()
 st.image(image_path)
 col_score, col_records = st.columns([0.95, 0.05])
 with col_score:
-    st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity. \n\r**Disclaimer**: The SCORE risk marker qualifier tool is intended for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment. The categories presented (optimal, borderline, at-risk) are based on standard reference ranges and should not be used to make any definitive health decisions. The relative comparison (percentile) is based on general population data, adjusted for age, gender, race, and medication use. Results may vary based on individual health factors not accounted for in this tool. Always consult a healthcare provider for a full evaluation of your risk factors and personalized medical advice.")
+    st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity. \n\r**Disclaimer**: The SCORE risk marker comparison tool is intended for informational and educational purposes only. SCORE is not intended to be a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition or treatment and before undertaking a new health care regimen. \n\r The categories presented (optimal, borderline, at-risk) are based on standard reference ranges and should not be used to make any definitive health decisions. The relative comparison (percentile) is based on general population data, adjusted for age, gender, race, and medication use. Results may vary based on individual health factors not accounted for in this tool. Always consult a healthcare provider for a full evaluation of your risk factors and personalized medical advice.")
 
 ########################### HEADER END ##############################
 
@@ -432,31 +432,41 @@ with aboutMe_expand:
     medBPOptions = {'Yes': 1, 'No': 2}
 
     with col1:
-        gender = st.selectbox('Gender assigned at birth', list(genderOptions.keys()), key="selected_gender", on_change=update_title, index=None, placeholder="Choose a gender")
+        st.caption('<span style="color:black;">Gender assigned at birth</span>', unsafe_allow_html=True)
+        gender = st.selectbox('', list(genderOptions.keys()), key="selected_gender", on_change=update_title, index=None, placeholder="Choose a gender", label_visibility='collapsed')
     with col2:
-        age_group = st.selectbox('Age group', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None, placeholder="Choose an age group")
+        st.caption('<span style="color:black;">Age group</span>', unsafe_allow_html=True)
+        age_group = st.selectbox('', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None, placeholder="Choose an age group", label_visibility='collapsed')
     with col3:
-        ethnicity = st.selectbox('Ethnicity', ['Any ethnicity', 'South Asians only'], key="selected_ethnicity", on_change=update_title, index=None, placeholder="Choose an ethnicity")
+        st.caption('<span style="color:black;">Ethnicity</span>', unsafe_allow_html=True)
+        ethnicity = st.toggle('South Asian', value=True, key="selected_ethnicity")
+
+        if ethnicity is True:
+            ethnicity = "South Asian"
+        else:
+            ethnicity = None
+   
     with col4:
+        st.caption('<span style="color:black;">Medications</span>', unsafe_allow_html=True)
         med_options = ['None', 'Cholesterol-lowering', 'Glucose-managing', 'Blood pressure-lowering']
-        medications_select = st.multiselect(label="Medications", options=med_options, key="selected_meds", on_change=update_title, placeholder="Medications I use")
+        medications_select = st.multiselect('', options=med_options, key="selected_meds", on_change=update_title, placeholder="Medications I use", label_visibility='collapsed')
 
         medChol = 'No'
         medDiab = 'No'
         medBP = 'No'
 
-        if 'Cholesterol' in medications_select:
+        if 'Cholesterol-lowering' in medications_select:
             medChol = 'Yes'
-        if 'Glucose' in medications_select:
+        if 'Glucose-managing' in medications_select:
             medDiab = 'Yes'
-        if 'Blood pressure' in medications_select:
+        if 'Blood pressure-lowering' in medications_select:
             medBP = 'Yes'
 
 ########################### EXPANDER TITLE SET UP END ##############################
 
 def new_load_files():
     global df_nhanes, df_sahc
-    if ethnicity is None or ethnicity != 'South Asians only':
+    if ethnicity is None:
         return df_nhanes
     else:
         return df_sahc
@@ -480,15 +490,15 @@ def get_next_age_group(age_group, direction='up'):
         
 def get_relevant_medications(metric):
     metric_med_map = {
-        'LBXTC': ['Cholesterol'],
-        'LBDLDL': ['Cholesterol'],
-        'LBDHDD': ['Cholesterol'],
-        'LBXTR': ['Cholesterol'],
-        'TotHDLRat': ['Cholesterol'],
-        'LBXGLU': ['Glucose'],
-        'LBXGH': ['Glucose'],
-        'BPXOSY1': ['Blood pressure'],
-        'BPXODI1': ['Blood pressure'],
+        'LBXTC': ['Cholesterol-lowering'],
+        'LBDLDL': ['Cholesterol-lowering'],
+        'LBDHDD': ['Cholesterol-lowering'],
+        'LBXTR': ['Cholesterol-lowering'],
+        'TotHDLRat': ['Cholesterol-lowering'],
+        'LBXGLU': ['Glucose-managing'],
+        'LBXGH': ['Glucose-managing'],
+        'BPXOSY1': ['Blood pressure-lowering'],
+        'BPXODI1': ['Blood pressure-lowering'],
         'BMXBMI': None,  # BMI doesn't have medication filters
     }
     return metric_med_map.get(metric, [])
@@ -507,27 +517,27 @@ def ui_choose(df, metric):
     
     if ethnicity is not None and ethnicity == 'South Asians only':
         if relevant_meds is not None:
-            if 'Cholesterol' in relevant_meds:
+            if any("Cholesterol" in med for med in relevant_meds):
                 medCholFilter = [medCholOptions[medChol]]
                 df2 = df2[df2['cholMeds'].isin(medCholFilter)]
-            if 'Glucose' in relevant_meds:
+            if any("Glucose" in med for med in relevant_meds):
                 medDiabFilter = [medDiabOptions[medDiab]]
                 df2 = df2[df2['diabMeds'].isin(medDiabFilter)]
-            if 'Blood pressure' in relevant_meds:
+            if any("Blood pressure" in med for med in relevant_meds):
                 medBPFilter = [medBPOptions[medBP]]
                 df2 = df2[df2['bpMeds'].isin(medBPFilter)]
-    elif ethnicity is None or ethnicity != 'South Asians only':
+    elif ethnicity is None:
         if relevant_meds is not None:
-            if 'Cholesterol' in relevant_meds:
+            if any("Cholesterol" in med for med in relevant_meds):
                 medCholFilter = [medCholOptions[medChol]]
                 if medChol == 'Yes':
                     df2 = df2[df2['BPQ100D'].isin(medCholFilter)]
                 elif medChol == 'No':
                     df2 = df2[df2['BPQ090D'].isin(medCholFilter) | df2['BPQ100D'].isin(medCholFilter)]
-            if 'Glucose' in relevant_meds:
+            if any("Glucose" in med for med in relevant_meds):
                 medDiabFilter = [medDiabOptions[medDiab]]
                 df2 = df2[df2['DIQ070'].isin(medDiabFilter)]
-            if 'Blood pressure' in relevant_meds:
+            if any("Blood pressure" in med for med in relevant_meds):
                 medBPFilter = [medBPOptions[medBP]]
                 if medBP == 'Yes':
                     df2 = df2[df2['BPQ040A'].isin(medBPFilter)]
@@ -636,11 +646,6 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
             Risk classification: **<span style='color:{header_color};'>{status}</span>**
             """, unsafe_allow_html=True)
     
-    if prop > 99:
-        prop = 99
-    elif prop < 1:
-        prop = 1
-
     if prop >= 50:
         prop_text = f"top <b>{99-prop:.0f}%</b>"
     else:
@@ -695,8 +700,14 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
 
     html = ''.join(html_parts)
 
+    digit = prop % 10
+    suffix = 'th'
+
+    if prop not in (11,12,13):
+        suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(digit, 'th')
+
     st.write(f"""
-            Your {column} of {user_input:.1f} {UNITS_MAP[acro]} is in the {prop_text} of your peer group.
+            Your {column} of {user_input:.1f} {UNITS_MAP[acro]} is at the <b>{prop}{suffix} percentile</b> or in the {prop_text} of your peer group.
             <br>
             {html}
             """, unsafe_allow_html=True)
@@ -807,7 +818,7 @@ def show_analysis(df):
             with cols[i].container():
 
                 # Create columns for header and button
-                placeholder_header, info_button = st.columns([0.5, 0.5])  # Adjust width ratio as needed
+                placeholder_header, info_button = st.columns([0.3, 0.7])  # Adjust width ratio as needed
 
                 with placeholder_header:
                     placeholder = st.empty()  # Header text
@@ -1162,16 +1173,16 @@ def show_analysis(df):
                 if more_info:
                         if "HDL (mg/dL)" in columnName or "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "cholesterol", medChol, prob, 
-                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, prop)
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile)
                         elif "Glucose" in columnName or "A1C" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood sugar", medDiab, prob, 
-                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, prop)   
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile)   
                         elif "Body Mass Index" in columnName:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, None, "No", prob, 
-                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, prop)
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile)
                         else:
                             popup(column, popup_column, user_input, gender, ethnicity, age_group, "blood pressure", medBP, prob, 
-                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, prop)
+                                percentile_25, percentile_50, percentile_75, percentile_90, low_number, high_number, status, user_percentile)
 
 ########################### INFORMATION BUTTON END ##############################
 
