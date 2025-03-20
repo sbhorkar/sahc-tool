@@ -592,7 +592,9 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
 
     if age_range is not None:
         if added_age_group != "No":
-            age_text = f"{age_range} years (Added {added_age_group} years for comparison)"
+            lower, upper = age_range.split("-")
+            lower_new, upper_new = added_age_group.split("-")
+            age_text = f"{lower}-{upper_new} years"
         else:
             age_text = f"{age_range} years"
 
@@ -1125,7 +1127,6 @@ def show_analysis(df):
                     # Get the percentage of people that have a value <= the entered value
                     df4 = df4[df4 < user_input]
                     top = df4.shape[0]          
-                    prop = (top / total) * 100
 
                     percentile_25 = int(np.percentile(sorted_array, 25))
                     percentile_50 = int(np.percentile(sorted_array, 50))
