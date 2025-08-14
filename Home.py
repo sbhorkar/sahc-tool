@@ -42,8 +42,14 @@ hide_streamlit_style = """
         display: none !important;
     }
     .stDeployButton {display: none !important;} /* Hides deploy button */
-    div._profilePreview_gzau3_63 {
-        display: none !important; /* Hides Sanaa Bhorkar profile button*
+    /* Match any element whose class starts with "profilePreview" */
+    div[class^="profilePreview"] {
+        display: none !important;
+    }
+
+    /* Or match if it contains "profilePreview" anywhere */
+    div[class*="profilePreview"] {
+        display: none !important;
     }
     </style>
 """
@@ -247,7 +253,7 @@ def config_sidebar():
         """
         <style>
             section[data-testid="stSidebar"] {
-                width: 125px !important; # Set the width to your desired value
+                width: 150px !important; # Set the width to your desired value
             }
         </style>
         """,
