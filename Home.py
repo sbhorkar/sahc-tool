@@ -38,7 +38,6 @@ hide_streamlit_style = """
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header[data-testid="stHeader"] {visibility: hidden;}
     .stDeployButton {display: none !important;} /* Hides deploy button */
     </style>
 """
