@@ -42,14 +42,8 @@ hide_streamlit_style = """
         display: none !important;
     }
     .stDeployButton {display: none !important;} /* Hides deploy button */
-    /* Match any element whose class starts with "profilePreview" */
-    div[class^="profilePreview"] {
-        display: none !important;
-    }
-
-    /* Or match if it contains "profilePreview" anywhere */
-    div[class*="profilePreview"] {
-        display: none !important;
+    div._strealmitAppContainer_nim44_1 {
+        display: none !important; /* Hides Sanaa Bhorkar profile button*
     }
     </style>
 """
