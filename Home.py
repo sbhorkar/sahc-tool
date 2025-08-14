@@ -223,7 +223,7 @@ cursor.execute('SELECT * FROM analytics')
 all_data = cursor.fetchall()
 conn.close()
 
-# st.write(f"Total Views: {viewed_total or 0}")
+st.write(f"Total Views: {viewed_total or 0}")
 # st.write(f"Total Shares: {shared_total or 0}")
 # st.write(f"Total Interactions: {interacted_total or 0}")
 
