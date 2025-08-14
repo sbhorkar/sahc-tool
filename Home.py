@@ -217,7 +217,7 @@ cursor.execute('SELECT * FROM analytics')
 all_data = cursor.fetchall()
 conn.close()
 
-# st.write(f"Total Views: {viewed_total or 0}")
+st.write(f"Total Views: {viewed_total or 0}")
 # st.write(f"Total Shares: {shared_total or 0}")
 # st.write(f"Total Interactions: {interacted_total or 0}")
 
@@ -243,16 +243,16 @@ def share_popup():
        
 
 def config_sidebar():
-    st.markdown(
-        """
-        <style>
-            section[data-testid="stSidebar"] {
-                width: 150px !important; # Set the width to your desired value
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    # st.markdown(
+    #     """
+    #     <style>
+    #         section[data-testid="stSidebar"] {
+    #             width: 150px !important; # Set the width to your desired value
+    #         }
+    #     </style>
+    #     """,
+    #     unsafe_allow_html=True,
+    # )
     with st.sidebar:
         st.write("Provide Feedback:")
         col_empty, col_up, col_down, col_empty2 = st.columns([0.05,0.1, 0.1,0.2])
