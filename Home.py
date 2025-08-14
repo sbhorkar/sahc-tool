@@ -42,8 +42,7 @@ hide_streamlit_style = """
         display: none !important;
     }
     .stDeployButton {display: none !important;} /* Hides deploy button */
-    image[aria-label="App Creator Avatar"], 
-    link[aria-label="App Creator Avatar"] {
+    [aria-label="App Creator Avatar"] {
         display: none !important; /* Hides Sanaa Bhorkar profile button*
     }
     </style>
