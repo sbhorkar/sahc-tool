@@ -52,7 +52,7 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 # Hide fullscreen button on images
 st.markdown("""
 <style>
-button[title="Fullscreen"] {
+button[name="Fullscreen"] {
     display: none !important;
 }
 </style>
