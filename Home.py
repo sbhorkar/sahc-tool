@@ -38,8 +38,7 @@ hide_streamlit_style = """
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header[data-testid="stHeader"] a[href*="github"],
-    header[data-testid="stHeader"] a[href*="fork"] {
+    header[data-testid="stHeader"] .stToolbarActionButton {
         display: none !important;
     }
     .stDeployButton {display: none !important;} /* Hides deploy button */
