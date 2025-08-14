@@ -38,6 +38,9 @@ hide_streamlit_style = """
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+    header[data-testid="stHeader"] {
+    display: none;
+}
     .stDeployButton {display: none !important;} /* Hides deploy button */
     </style>
 """
@@ -237,16 +240,16 @@ def share_popup():
        
 
 def config_sidebar():
-    # st.markdown(
-    #     """
-    #     <style>
-    #         section[data-testid="stSidebar"] {
-    #             width: 100px !important; # Set the width to your desired value
-    #         }
-    #     </style>
-    #     """,
-    #     unsafe_allow_html=True,
-    # )
+    st.markdown(
+        """
+        <style>
+            section[data-testid="stSidebar"] {
+                width: 100px !important; # Set the width to your desired value
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     with st.sidebar:
         st.write("Provide Feedback:")
         col_empty, col_up, col_down, col_empty2 = st.columns([0.05,0.1, 0.1,0.2])
