@@ -42,8 +42,12 @@ hide_streamlit_style = """
         display: none !important;
     }
     .stDeployButton {display: none !important;} /* Hides deploy button */
-    [alt="App Creator Avatar"] {
-        display: none !important; /* Hides Sanaa Bhorkar profile button*
+    /* Optionally hide the parent div too */
+    [data-testid="appCreatorAvatar"] {
+        pointer-events: none; /* prevent clicking */
+    }
+    [data-testid="appCreatorAvatar"] {
+        visibility: hidden;
     }
     </style>
 """
