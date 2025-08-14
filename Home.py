@@ -42,7 +42,7 @@ hide_streamlit_style = """
         display: none !important;
     }
     .stDeployButton {display: none !important;} /* Hides deploy button */
-    div._strealmitAppContainer_nim44_1 {
+    div._profileContainer_gzau3_53 {
         display: none !important; /* Hides Sanaa Bhorkar profile button*
     }
     </style>
