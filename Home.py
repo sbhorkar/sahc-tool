@@ -238,16 +238,16 @@ def share_popup():
        
 
 def config_sidebar():
-    st.markdown(
-        """
-        <style>
-            section[data-testid="stSidebar"] {
-                width: 100px !important; # Set the width to your desired value
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    # st.markdown(
+    #     """
+    #     <style>
+    #         section[data-testid="stSidebar"] {
+    #             width: 100px !important; # Set the width to your desired value
+    #         }
+    #     </style>
+    #     """,
+    #     unsafe_allow_html=True,
+    # )
     with st.sidebar:
         st.write("Provide Feedback:")
         col_empty, col_up, col_down, col_empty2 = st.columns([0.05,0.1, 0.1,0.2])
@@ -497,8 +497,8 @@ with aboutMe_expand:
         age_group = st.selectbox(' ', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None, placeholder="Choose an age group", label_visibility='collapsed')
     with col3:
         st.caption('<span style="color:black;">Ethnicity</span>', unsafe_allow_html=True)
-        ethnicity = st.toggle('South Asian', key="selected_ethnicity", value=st.session_state.selected_ethnicity, on_change=update_title)
-        if ethnicity is True:
+        ethnicity = st.toggle('South Asian', key="selected_ethnicity", on_change=update_title)
+        if ethnicity is not None and ethnicity == True:
             ethnicity = "South Asian"
         else:
             ethnicity = None
