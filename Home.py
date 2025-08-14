@@ -42,6 +42,9 @@ hide_streamlit_style = """
         display: none !important;
     }
     .stDeployButton {display: none !important;} /* Hides deploy button */
+    div._profilePreview_gzau3_63 {
+        display: none !important; /* Hides Sanaa Bhorkar profile button*
+    }
     </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
@@ -244,7 +247,7 @@ def config_sidebar():
         """
         <style>
             section[data-testid="stSidebar"] {
-                width: 100px !important; # Set the width to your desired value
+                width: 125px !important; # Set the width to your desired value
             }
         </style>
         """,
