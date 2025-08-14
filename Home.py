@@ -17,7 +17,7 @@ import uuid
 ########################### PAGE SET UP ##############################
 
 # Setting page initial state
-st.set_page_config(page_title="SCORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide", initial_sidebar_state = "auto")
+st.set_page_config(page_title="SCORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide", initial_sidebar_state="expanded")
 
 # st.write("Current font setting:", st.get_option("theme.font"))
 
