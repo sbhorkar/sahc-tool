@@ -1206,7 +1206,7 @@ show_analysis(df_c)
 
 ########################### FOOTER ##############################
 up, down = get_counts()
-st.markdown(f"<div style='text-align: center'> Total Visitors: {total_unique_views}</div>", unsafe_allow_html=True)
+# st.markdown(f"<div style='text-align: center'> Total Visitors: {total_unique_views}</div>", unsafe_allow_html=True)
 st.markdown(f"<div style='text-align: center'> Version {VERSION}</div>", unsafe_allow_html=True)
 st.markdown(f"<div style='text-align: center'><span style='color:white;'>({up}, {down})</span></div>", unsafe_allow_html=True)
 conn.close()
