@@ -24,13 +24,12 @@ else:
     st.success("Authenticated")
 
     st.write("Legend for each column:")
-    st.write("* user_id: random string set for each new 'viewer'"
-             "* shared_clicked: numbers of times that user clicked the 'Shared via...' button" \
-             "* interacted: true if user inputted a number for any marker; false if not"
-             "* thumbs_up: number of times the user clicked thumbs_up"
-             "* thummbs_down: number of times the user clicked thumbs_down"
-             "* first_*_at: date and time of the first time the user did the respective action"
-                   )
+    st.write("* user_id: random string set for each new 'viewer'")
+    st.write("* shared_clicked: numbers of times that user clicked the 'Shared via...' button")
+    st.write("* interacted: true if user inputted a number for any marker; false if not")
+    st.write("* thumbs_up: number of times the user clicked thumbs_up")
+    st.write("* thummbs_down: number of times the user clicked thumbs_down")
+    st.write("* first_*_at: date and time of the first time the user did the respective action")
 
     if os.path.exists(DB_PATH):
         try:
