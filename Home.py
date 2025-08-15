@@ -9,10 +9,15 @@ from matplotlib.patches import Rectangle
 from collections import deque
 import sqlite3
 from streamlit_extras.stylable_container import stylable_container
+from datetime import datetime
+from zoneinfo import ZoneInfo
+import hashlib
+import uuid
 
 ########################### PAGE SET UP ##############################
+
 # Setting page initial state
-st.set_page_config(page_title="SCORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide", initial_sidebar_state = "auto")
+st.set_page_config(page_title="SCORE Comparison Tool", page_icon=":anatomical_heart:", layout="wide", initial_sidebar_state="expanded")
 
 # st.write("Current font setting:", st.get_option("theme.font"))
 
@@ -33,38 +38,41 @@ hide_streamlit_style = """
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+    header[data-testid="stHeader"] .stToolbarActionButton {
+        display: none !important;
+    }
     .stDeployButton {display: none !important;} /* Hides deploy button */
+    /* Optionally hide the parent div too */
+    [data-testid="appCreatorAvatar"] {
+        pointer-events: none; /* prevent clicking */
+    }
+    [data-testid="appCreatorAvatar"] {
+        visibility: hidden;
+    }
     </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+# Hide fullscreen button on images
+st.markdown("""
+<style>
+button[title="View fullscreen"],
+button[aria-label="View fullscreen"],
+button[aria-label="Fullscreen"] {
+    display: none !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Hide link anchors on headers
-st.html(
-    body="""
-        <style>
-            /* hide hyperlink anchors generated next to headers */
-            h1 > div > a {
-                display: none !important;
-            }
-            h2 > div > a {
-                display: none !important;
-            }
-            h3 > div > a {
-                display: none !important;
-            }
-            h4 > div > a {
-                display: none !important;
-            }
-            h5 > div > a {
-                display: none !important;
-            }
-            h6 > div > a {
-                display: none !important;
-            }
-        </style>
-    """,
-)
+st.markdown("""
+<style>
+/* Hide link icons next to all headers */
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+    display: none !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # Adding CSS for the share button logo
 st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>', unsafe_allow_html=True)
@@ -73,38 +81,11 @@ DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 4.5
+VERSION = 5.0
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
 ########################### FEEDBACK ##############################
-# Initialize the database connection
-conn = sqlite3.connect('feedback.db')
-c = conn.cursor()
-
-# Create table if it doesn't exist
-c.execute('''CREATE TABLE IF NOT EXISTS feedback
-            (thumbs_up INTEGER DEFAULT 0, thumbs_down INTEGER DEFAULT 0)''')
-
-# Initialize counts if the table is empty
-c.execute("SELECT COUNT(*) FROM feedback")
-if c.fetchone()[0] == 0:
-    c.execute("INSERT INTO feedback (thumbs_up, thumbs_down) VALUES (0, 0)")
-    conn.commit()
-
-# Function to get counts
-def get_counts():
-    c.execute("SELECT thumbs_up, thumbs_down FROM feedback")
-    return c.fetchone()
-
-# Function to update count
-def update_count(feedback_type):
-    if feedback_type == "thumbs_up":
-        c.execute("UPDATE feedback SET thumbs_up = thumbs_up + 1")
-    elif feedback_type == "thumbs_down":
-        c.execute("UPDATE feedback SET thumbs_down = thumbs_down + 1")
-    conn.commit()
-
 @st.dialog(" ")
 def header_popup(liked):
     if liked:
@@ -124,28 +105,37 @@ def header_popup(liked):
 
 ########################### VIEWER COUNT ##############################
 
-def create_db():
-    conn = sqlite3.connect('unique_views.db')
+# Create table with all columns
+def create_analytics():
+    conn = sqlite3.connect('analytics.db')
     cursor = conn.cursor()
+
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS unique_views (
-            user_id TEXT PRIMARY KEY
+        CREATE TABLE IF NOT EXISTS analytics (
+            user_id TEXT PRIMARY KEY,
+            shared_clicked INTEGER DEFAULT 0,
+            interacted BOOLEAN DEFAULT FALSE,
+            thumbs_up INTEGER DEFAULT 0,
+            thumbs_down INTEGER DEFAULT 0,
+            first_viewed_at DATETIME,
+            first_shared_at DATETIME,
+            first_interacted_at DATETIME,
+            first_thumbs_at DATETIME
         )
     ''')
+
     conn.commit()
-    conn.close()
 
-create_db()
+create_analytics()
 
-import streamlit as st
-import hashlib
-
-import uuid
+def get_now_pst():
+    return datetime.now(tz=ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d %H:%M:%S")
 
 # Generate a unique run_id for the session
 if 'run_id' not in st.session_state:
     st.session_state.run_id = str(uuid.uuid4())
 
+# Get a hashed user ID
 def get_user_id():
     session_id = st.session_state.get("user_id")
     if not session_id:
@@ -153,21 +143,93 @@ def get_user_id():
         st.session_state["user_id"] = session_id
     return session_id
 
-def track_unique_view(user_id):
-    conn = sqlite3.connect('unique_views.db')
-    cursor = conn.cursor()
-
-    cursor.execute('INSERT OR IGNORE INTO unique_views (user_id) VALUES (?)', (user_id,))
-    conn.commit()
-
-    cursor.execute('SELECT COUNT(*) FROM unique_views')
-    total_views = cursor.fetchone()[0]
-
-    conn.close()
-    return total_views
-
+global user_id
 user_id = get_user_id()
-total_unique_views = track_unique_view(user_id)
+
+# Track unique views
+def increment_view():
+    conn = sqlite3.connect('analytics.db') # Started tracking 08/13/2025
+    cursor = conn.cursor()
+    now_pst = get_now_pst()
+
+    cursor.execute('''
+        INSERT INTO analytics (user_id, first_viewed_at)
+        VALUES (?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET
+            first_viewed_at = COALESCE(first_viewed_at, excluded.first_viewed_at)
+    ''', (user_id, now_pst))
+
+    conn.commit()
+    conn.close()
+
+def increment_share():
+    conn = sqlite3.connect('analytics.db')
+    cursor = conn.cursor()
+    now_pst = get_now_pst()
+
+    cursor.execute(f'''
+        INSERT INTO analytics (user_id, shared_clicked, first_shared_at)
+        VALUES (?, 1, ?)
+        ON CONFLICT(user_id) DO UPDATE SET
+            shared_clicked = shared_clicked + 1,
+            first_shared_at = COALESCE(first_shared_at, excluded.first_shared_at)
+    ''', (user_id, now_pst))
+
+    conn.commit()
+    conn.close()
+
+def increment_interact():
+    conn = sqlite3.connect('analytics.db')
+    cursor = conn.cursor()
+    now_pst = get_now_pst()
+
+    cursor.execute('''
+        INSERT INTO analytics (user_id, interacted, first_interacted_at)
+        VALUES (?, 1, ?)
+        ON CONFLICT(user_id) DO UPDATE SET
+            interacted = TRUE, 
+            first_interacted_at = COALESCE(first_interacted_at, excluded.first_interacted_at)
+    ''', (user_id, now_pst))
+
+    conn.commit()
+    conn.close()
+
+def increment_feedback(feedback_type):
+    conn = sqlite3.connect('analytics.db')
+    cursor = conn.cursor()
+    now_pst = get_now_pst()
+
+    cursor.execute(f'''
+        INSERT INTO analytics (user_id, {feedback_type}, first_thumbs_at)
+        VALUES (?, 1, ?)
+        ON CONFLICT(user_id) DO UPDATE SET
+            {feedback_type} = {feedback_type} + 1,
+            first_thumbs_at = COALESCE(first_thumbs_at, excluded.first_thumbs_at)
+    ''', (user_id, now_pst))
+    
+    conn.commit()
+    conn.close()
+
+# Usage
+
+increment_view()
+
+conn = sqlite3.connect('analytics.db')
+cursor = conn.cursor()
+cursor.execute('SELECT COUNT(user_id), SUM(shared_clicked), SUM(CASE WHEN interacted = 1 THEN 1 ELSE 0 END) FROM analytics')
+viewed_total, shared_total, interacted_total = cursor.fetchone()
+
+cursor.execute('SELECT * FROM analytics')
+all_data = cursor.fetchall()
+conn.close()
+
+# st.write(f"Total Views: {viewed_total or 0}")
+# st.write(f"Total Shares: {shared_total or 0}")
+# st.write(f"Total Interactions: {interacted_total or 0}")
+
+# st.write("User Data (all columns):")
+# for row in all_data:
+#     st.write(row)
 
 ########################### VIEWER COUNT END ##############################
 
@@ -177,36 +239,37 @@ def share_popup():
     col_mail, col_what, col_mess = st.columns(3, gap='small')
     with col_mail:
         url = 'mailto:?Subject=Checkout%20SCORE%3A%20Compare%20your%20lipid%20and%20glucose%20markers%20with%20others%20similar%20to%20you&Body=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20cardiometabolic%20risk%20profile.%0A%0ACheck%20it%20out%20here:%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A'
-        st.link_button(":envelope: Mail", url)
+        st.link_button("✉️ Gmail", url)
     with col_what:
         url = 'https://wa.me/?text=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20risk%20profile.%0A%0ACheck%20it%20out%20it%20out%20here%3A%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A'
-        st.link_button("Whatsapp", url)
+        st.link_button("📞 Whatsapp", url)
     with col_mess:
         url = 'sms:&body=Hello%2C%0A%0AI%20recently%20came%20across%20SCORE%2C%20a%20tool%20from%20El%20Camino%20Health%2C%20South%20Asian%20Heart%20Center%20that%20compares%20your%20lipids%20and%20other%20cardio-metabolic%20markers%20against%20your%20peers%2C%20matching%20your%20age%2C%20gender%2C%20ethnicity%2C%20and%20medication%20use.%0A%0AThis%20may%20help%20you%20calibrate%20your%20markers%20and%20take%20steps%20to%20improve%20your%20risk%20profile.%0A%0ACheck%20it%20out%20it%20out%20here%3A%20https%3A//scores.streamlit.app/%0A%0AYou%20may%20read%20more%20about%20the%20work%20of%20El%20Camino%20Health%27s%20South%20Asian%20Heart%20Center%2C%20a%20non-profit%20with%20the%20mission%20to%20reduce%20the%20high%20incidence%20of%20diabetes%20and%20heart%20disease%20with%20evidence-based%2C%20culturally%20tailored%2C%20and%20lifestyle-focused%20prevention%20services%2C%20here%3A%20www.southasianheartcenter.org%0A%0ABest%2C%0A'
-        st.link_button(":speech_balloon: Messages", url)
+        st.link_button("💬 Messages", url)
+       
 
 def config_sidebar():
-    st.markdown(
-        """
-        <style>
-            section[data-testid="stSidebar"] {
-                width: 100px !important; # Set the width to your desired value
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    # st.markdown(
+    #     """
+    #     <style>
+    #         section[data-testid="stSidebar"] {
+    #             width: 150px !important; # Set the width to your desired value
+    #         }
+    #     </style>
+    #     """,
+    #     unsafe_allow_html=True,
+    # )
     with st.sidebar:
         st.write("Provide Feedback:")
         col_empty, col_up, col_down, col_empty2 = st.columns([0.05,0.1, 0.1,0.2])
         with col_up:
             if st.button("👍", help="Like this"):
-                update_count("thumbs_up")
+                increment_feedback("thumbs_up")
                 share_popup()
                     
         with col_down:
             if st.button("👎", help="Needs improvement"):
-                update_count("thumbs_down")
+                increment_feedback("thumbs_down")
                 header_popup(False)
         
         st.write("Share with others")
@@ -234,6 +297,7 @@ def config_sidebar():
         col_empty, col_up, col_down = st.columns([0.05, 0.3, 0.1])
         with col_up:
             if st.button("Share via...", help='Share with others'):
+                increment_share()
                 share_popup()
 
         global colorblind_mode
@@ -298,7 +362,7 @@ config_sidebar()
 st.image(image_path)
 col_score, col_records = st.columns([0.95, 0.05])
 with col_score:
-    st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity. \n\r**Disclaimer**: The SCORE risk marker comparison tool is intended for informational and educational purposes only. SCORE is not intended to be a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition or treatment and before undertaking a new health care regimen. \n\r The categories presented (optimal, borderline, at-risk) are based on standard reference ranges and should not be used to make any definitive health decisions. The relative comparison (percentile) is based on general population data, adjusted for age, gender, race, and medication use. Results may vary based on individual health factors not accounted for in this tool. Always consult a healthcare provider for a full evaluation of your risk factors and personalized medical advice.")
+    st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity. \n\r**Disclaimer**: The SCORE risk marker comparison tool is intended for informational and educational purposes only. SCORE is not intended to be a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition or treatment and before undertaking a new health care regimen. \n\r The categories presented (optimal, borderline, at-risk) are based on standard AHA/ADA reference ranges based on traditional guidelines and should not be used to make any definitive health decisions. The relative comparison (percentile) is based on general population data, adjusted for age, gender, race, and medication use. Results may vary based on individual health factors not accounted for in this tool. Always consult a healthcare provider for a full evaluation of your risk factors and personalized medical advice.")
 
 ########################### HEADER END ##############################
 
@@ -358,7 +422,7 @@ AHA_RANGES = {
     'Systolic BP (mmHg)': ("Optimal", 120, "At risk", None, None, None, None),
     'Diastolic BP (mmHg)': ("Optimal", 80, "At risk", None, None, None, None),
     'Total Cholesterol:HDL ()':("Optimal", 3.5, "Borderline", 5.1, "At risk", None, None),
-    'HbA1c (%)': ("Optimal", 5.7, "Borderline", 6.4, "At risk", None, None),
+    'HbA1c (%)': ("Optimal", 5.7, "Borderline", 6.5, "At risk", None, None),
     'Body Mass Index': ("Low", 18.5, "Optimal", 25, "Borderline", 30, "At risk")
 }
 
@@ -438,14 +502,14 @@ with aboutMe_expand:
 
     with col1:
         st.caption('<span style="color:black;">Gender assigned at birth</span>', unsafe_allow_html=True)
-        gender = st.selectbox('', list(genderOptions.keys()), key="selected_gender", on_change=update_title, index=None, placeholder="Choose a gender", label_visibility='collapsed')
+        gender = st.selectbox(' ', list(genderOptions.keys()), key="selected_gender", on_change=update_title, index=None, placeholder="Choose a gender", label_visibility='collapsed')
     with col2:
         st.caption('<span style="color:black;">Age group</span>', unsafe_allow_html=True)
-        age_group = st.selectbox('', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None, placeholder="Choose an age group", label_visibility='collapsed')
+        age_group = st.selectbox(' ', list(ageOptions.keys()), key="selected_age", on_change=update_title, index=None, placeholder="Choose an age group", label_visibility='collapsed')
     with col3:
         st.caption('<span style="color:black;">Ethnicity</span>', unsafe_allow_html=True)
-        ethnicity = st.toggle('South Asian', value=True, key="selected_ethnicity", on_change=update_title)
-        if ethnicity is True:
+        ethnicity = st.toggle('South Asian', key="selected_ethnicity", on_change=update_title)
+        if ethnicity is not None and ethnicity == True:
             ethnicity = "South Asian"
         else:
             ethnicity = None
@@ -453,7 +517,7 @@ with aboutMe_expand:
     with col4:
         st.caption('<span style="color:black;">Medications</span>', unsafe_allow_html=True)
         med_options = ['None', 'Cholesterol-lowering', 'Glucose-managing', 'Blood pressure-lowering']
-        medications_select = st.multiselect('', options=med_options, key="selected_meds", on_change=update_title, placeholder="Medications I use", label_visibility='collapsed')
+        medications_select = st.multiselect(' ', options=med_options, key="selected_meds", on_change=update_title, placeholder="Medications I use", label_visibility='collapsed')
 
         medChol = 'No'
         medDiab = 'No'
@@ -519,7 +583,7 @@ def ui_choose(df, metric):
     # st.write(metric)
     # st.write(relevant_meds)
     
-    if ethnicity is not None and ethnicity == 'South Asians only':
+    if ethnicity is not None and ethnicity == 'South Asian':
         if relevant_meds is not None:
             if any("Cholesterol" in med for med in relevant_meds):
                 medCholFilter = [medCholOptions[medChol]]
@@ -565,8 +629,8 @@ def ui_choose(df, metric):
         st.write(f"Not enough records found to compare. Please remove medication usage and try again.") 
     
     # Edit the BMI and HDL numbers for ethnicity/gender
-    if ethnicity == 'South Asians only':
-        AHA_RANGES['Body Mass Index'] = ("Low", 18.5, "Optimal", 23, "Borderline", 25, "At risk")
+    if ethnicity is not None and 'South Asian' in ethnicity:
+        AHA_RANGES['Body Mass Index'] = ("Low", 18.5, "Optimal", 23, "Borderline", 25, "At risk") # South Asian BMI
     if gender == 'Female':
         AHA_RANGES['HDL (mg/dL)'] = ("At risk", 50, "Borderline", 60, "Optimal", None, None)
 
@@ -838,7 +902,7 @@ def show_analysis(df):
                 header = f"{NAME_MAP[column]}"
 
                 col8, col9 = st.columns([0.75, 0.25], vertical_alignment='top', gap='small')
-            
+
                 with col8:
                     user_input = column_dict['input']
 
@@ -864,6 +928,9 @@ def show_analysis(df):
 
                     sorted_array = np.sort(array)
 
+                    if "LDL" in header and ethnicity is not None and "South Asian" in ethnicity:
+                        st.write("*South Asians are at high ASCVD risk. AHA guidelines recommend maintaining LDL at < 100 mg/dL.")
+
                     # Calculate the percentile
                     if high_number == None:
                         high_number = 1000
@@ -877,6 +944,7 @@ def show_analysis(df):
                     low_percentile = int(np.mean(sorted_array <= low_number) * 100)
 
                     fig, ax = plt.subplots(figsize=(16, 1.15))
+                    increment_interact()
 
                     global stored_graph
                     stored_graph = fig
@@ -1019,7 +1087,7 @@ def show_analysis(df):
                     ax.add_patch(Rectangle(
                         (user_percentile - 2.5, 1),  # Centered on user percentile
                         5, 0.2,
-                        color=header_color, edgecolor='white', linewidth=2, zorder=1000
+                        facecolor=header_color, edgecolor='white', linewidth=2, zorder=1000
                     ))
 
                     # Add a downward-pointing triangle (black)
@@ -1205,8 +1273,7 @@ show_analysis(df_c)
 ########################### MAIN EXECUTION END ##############################
 
 ########################### FOOTER ##############################
-up, down = get_counts()
-# st.markdown(f"<div style='text-align: center'> Total Visitors: {total_unique_views}</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: center'><a href='https://www.southasianheartcenter.org'>www.southasianheartcenter.org</a> </div>", unsafe_allow_html=True)
 st.markdown(f"<div style='text-align: center'> Version {VERSION}</div>", unsafe_allow_html=True)
-st.markdown(f"<div style='text-align: center'><span style='color:white;'>({up}, {down})</span></div>", unsafe_allow_html=True)
+# st.markdown(f"<div style='text-align: center'><span style='color:white;'>({up}, {down})</span></div>", unsafe_allow_html=True)
 conn.close()
