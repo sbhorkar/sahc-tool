@@ -115,8 +115,8 @@ def create_analytics():
             user_id TEXT PRIMARY KEY,
             shared_clicked INTEGER DEFAULT 0,
             interacted BOOLEAN DEFAULT FALSE,
-            thumbs_up INTEGER DEFAULT 0,
-            thumbs_down INTEGER DEFAULT 0,
+            thumbs_up BOOLEAN DEFAULT FALSE,
+            thumbs_down BOOEAL DEFAULT FALSE,
             first_viewed_at DATETIME,
             first_shared_at DATETIME,
             first_interacted_at DATETIME,
@@ -203,7 +203,7 @@ def increment_feedback(feedback_type):
         INSERT INTO analytics (user_id, {feedback_type}, first_thumbs_at)
         VALUES (?, 1, ?)
         ON CONFLICT(user_id) DO UPDATE SET
-            {feedback_type} = {feedback_type} + 1,
+            {feedback_type} = TRUE, 
             first_thumbs_at = COALESCE(first_thumbs_at, excluded.first_thumbs_at)
     ''', (user_id, now_pst))
     
