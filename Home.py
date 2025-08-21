@@ -415,7 +415,8 @@ DROPDOWN_SELECTION = {
 
 AHA_RANGES = {
     'Triglycerides (mg/dL)': ("Optimal", 150, "Borderline", 200, "At risk", None, None),
-    'HDL (mg/dL)': ("At risk", 40, "Borderline", 60, "Optimal", None, None),
+    'HDL (mg/dL)': ("At risk", 40, "Optimal", None, None, None, None),
+    # 'HDL (mg/dL)': ("At risk", 40, "Borderline", 60, "Optimal", None, None),
     'LDL (mg/dL)': ("Optimal", 100, "Borderline", 160, "At risk", None, None),
     'Total Cholesterol (mg/dL)': ("Optimal", 200, "Borderline", 240, "At risk", None, None),
     'Fasting Glucose (mg/dL)': ("Optimal", 100, "Borderline", 126, "At risk", None, None),
@@ -632,7 +633,7 @@ def ui_choose(df, metric):
     if ethnicity is not None and 'South Asian' in ethnicity:
         AHA_RANGES['Body Mass Index'] = ("Low", 18.5, "Optimal", 23, "Borderline", 25, "At risk") # South Asian BMI
     if gender == 'Female':
-        AHA_RANGES['HDL (mg/dL)'] = ("At risk", 50, "Borderline", 60, "Optimal", None, None)
+        AHA_RANGES['HDL (mg/dL)'] = ("At risk", 45, "Borderline", None, None, None, None)
 
     return df2, added_age_group
 
@@ -735,9 +736,9 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
         """, unsafe_allow_html=True)
     elif column == 'HDL':
         st.write(f"""
-            According to AHA guidelines, the **optimal** value for {column} is > <b>{high_number} {UNITS_MAP[acro]}</b>.
+            According to AHA guidelines, the **optimal** value for {column} is ≥ <b>{low_number} {UNITS_MAP[acro]}</b>.
             <br>
-            The estimated probability of having a sub-optimal {column} of ≤ {high_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
+            The estimated probability of having a sub-optimal {column} of < {low_number} {UNITS_MAP[acro]} is **{prob:.0f}%.**
             """, unsafe_allow_html=True)
     else:
         st.write(f"""
@@ -976,14 +977,20 @@ def show_analysis(df):
                     user_rectangle_width = 0.2  # Keep it smaller than the bar height
 
                     if columnName == 'HDL (mg/dL)':
+                        # ax.add_patch(Rectangle((0, 0.6), 
+                        #                 low_percentile, user_rectangle_width, 
+                        #                 color=at_risk, fill=True, zorder=90))
+                        # ax.add_patch(Rectangle((low_percentile, 0.6), 
+                        #             (high_percentile - low_percentile), user_rectangle_width, 
+                        #             color=borderline, fill=True, zorder=90))
+                        # ax.add_patch(Rectangle((high_percentile, 0.6), 
+                        #             (100 - high_percentile), user_rectangle_width, 
+                        #             color=optimal, fill=True, zorder=90))
                         ax.add_patch(Rectangle((0, 0.6), 
                                         low_percentile, user_rectangle_width, 
                                         color=at_risk, fill=True, zorder=90))
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
                                     (high_percentile - low_percentile), user_rectangle_width, 
-                                    color=borderline, fill=True, zorder=90))
-                        ax.add_patch(Rectangle((high_percentile, 0.6), 
-                                    (100 - high_percentile), user_rectangle_width, 
                                     color=optimal, fill=True, zorder=90))
                     elif "BP " in columnName:
                         ax.add_patch(Rectangle((0, 0.6), 
@@ -1020,20 +1027,14 @@ def show_analysis(df):
                         if user_percentile <= low_percentile:
                             # Boundary condition of percentile
                             if user_input >= low_number:
-                                update_header_color('Borderline')
-                            else:
-                                update_header_color('At risk')
-                        elif user_percentile <= high_percentile:
-                            if user_input < low_number:
-                                update_header_color('At risk')
-                            elif user_input >= high_number:
                                 update_header_color('Optimal')
                             else:
-                                update_header_color('Borderline')
-                        elif user_percentile >= high_percentile:
-                            update_header_color('Optimal')
-                            if user_input < high_number:
-                                update_header_color('Borderline')
+                                update_header_color('At risk')
+                        else:
+                            if user_input < low_number:
+                                update_header_color('At risk')
+                            else:
+                                update_header_color('Optimal')  
                     elif 'BP ' in columnName:
                         if user_percentile <= low_percentile:
                             # Boundary condition of percentile
