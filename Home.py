@@ -81,7 +81,7 @@ DIR = os.getcwd()
 LOGO_DIR = DIR + '/logo/'
 DATA_DIR = DIR + '/data/'
 SAHC_DATA_DIR = DIR + '/sahc_data/'
-VERSION = 5.0
+VERSION = 5.1
 
 image_path = os.path.join(LOGO_DIR, 'SCORE Official Logo.svg')
 
@@ -362,7 +362,7 @@ config_sidebar()
 st.image(image_path)
 col_score, col_records = st.columns([0.95, 0.05])
 with col_score:
-    st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity. \n\r**Disclaimer**: The SCORE risk marker comparison tool is intended for informational and educational purposes only. SCORE is not intended to be a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition or treatment and before undertaking a new health care regimen. \n\r The categories presented (optimal, borderline, at-risk) are based on standard AHA/ADA reference ranges based on traditional guidelines and should not be used to make any definitive health decisions. The relative comparison (percentile) is based on general population data, adjusted for age, gender, race, and medication use. Results may vary based on individual health factors not accounted for in this tool. Always consult a healthcare provider for a full evaluation of your risk factors and personalized medical advice.")
+    st.write(f"SCORE evaluates your cardiometabolic risk profile and compares your markers against peers based on your gender, age, and ethnicity. As you enter your marker values, click on ⓘ to get more details about how you compare with your peer group. \n\r**Disclaimer**: The SCORE risk marker comparison tool is intended for informational and educational purposes only. SCORE is not intended to be a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition or treatment and before undertaking a new health care regimen. \n\r The categories presented (optimal, borderline, at-risk) are based on standard AHA/ADA reference ranges based on traditional guidelines and should not be used to make any definitive health decisions. The relative comparison (percentile) is based on general population data, adjusted for age, gender, race, and medication use. Results may vary based on individual health factors not accounted for in this tool. Always consult a healthcare provider for a full evaluation of your risk factors and personalized medical advice.")
 
 ########################### HEADER END ##############################
 
@@ -415,12 +415,11 @@ DROPDOWN_SELECTION = {
 
 AHA_RANGES = {
     'Triglycerides (mg/dL)': ("Optimal", 150, "Borderline", 200, "At risk", None, None),
-    'HDL (mg/dL)': ("At risk", 40, "Optimal", None, None, None, None),
-    # 'HDL (mg/dL)': ("At risk", 40, "Borderline", 60, "Optimal", None, None),
+    'HDL (mg/dL)': ("At risk", 50, "Optimal", None, None, None, None),
     'LDL (mg/dL)': ("Optimal", 100, "Borderline", 160, "At risk", None, None),
     'Total Cholesterol (mg/dL)': ("Optimal", 200, "Borderline", 240, "At risk", None, None),
     'Fasting Glucose (mg/dL)': ("Optimal", 100, "Borderline", 126, "At risk", None, None),
-    'Systolic BP (mmHg)': ("Optimal", 120, "At risk", None, None, None, None),
+    'Systolic BP (mmHg)': ("Optimal", 120, "Borderline", 130, "At Risk", None, None),
     'Diastolic BP (mmHg)': ("Optimal", 80, "At risk", None, None, None, None),
     'Total Cholesterol:HDL ()':("Optimal", 3.5, "Borderline", 5.1, "At risk", None, None),
     'HbA1c (%)': ("Optimal", 5.7, "Borderline", 6.5, "At risk", None, None),
@@ -633,7 +632,7 @@ def ui_choose(df, metric):
     if ethnicity is not None and 'South Asian' in ethnicity:
         AHA_RANGES['Body Mass Index'] = ("Low", 18.5, "Optimal", 23, "Borderline", 25, "At risk") # South Asian BMI
     if gender == 'Female':
-        AHA_RANGES['HDL (mg/dL)'] = ("At risk", 45, "Borderline", None, None, None, None)
+        AHA_RANGES['HDL (mg/dL)'] = ("At risk", 50, "Borderline", None, None, None, None)
 
     return df2, added_age_group
 
@@ -714,6 +713,12 @@ def popup(acro, column, user_input, gender, ethnicity, age_range, med, on_med, p
             <br>
             {improvement_info}
             """, unsafe_allow_html=True)
+
+    if "Glucose" in column:
+        if status == "Borderline":
+            status = "Prediabetic"
+        elif status == "At risk":
+            status == "Diabetic"
 
     st.write(f"""
              **Your Risk Profile:**
@@ -895,7 +900,7 @@ def show_analysis(df):
             with cols[i].container():
 
                 # Create columns for header and button
-                placeholder_header, info_button = st.columns([0.3, 0.7])  # Adjust width ratio as needed
+                placeholder_header, info_button = st.columns([0.35, 0.65])  # Adjust width ratio as needed
 
                 with placeholder_header:
                     placeholder = st.empty()  # Header text
@@ -959,12 +964,12 @@ def show_analysis(df):
 
                     status = 'Optimal'
                     
-                    if high_percentile < 99:
-                        ax.plot([high_percentile, high_percentile], [0.6, 0.95], color='white', lw=2, label='Demarcation', zorder=999)
+                    # if high_percentile < 99:
+                    #     ax.plot([high_percentile, high_percentile], [0.6, 0.95], color='white', lw=2, label='Demarcation', zorder=999)
                     ax.plot([low_percentile, low_percentile], [0.6, 0.95], color='white', lw=2, label='Demarcation', zorder=999)
                     if columnName == 'Body Mass Index':
-                        ax.plot([extra_high_percentile, extra_high_percentile], [0.6, 0.95], color='white', lw=2, label='Demarcation', zorder=999)
-                    
+                        ax.plot([high_percentile, high_percentile], [0.6, 0.95], color='white', lw=2, label='Demarcation', zorder=999)
+
                     if colorblind_mode == True:
                         optimal = lightgreen
                         borderline = darkgreen
@@ -977,18 +982,7 @@ def show_analysis(df):
                     user_rectangle_width = 0.2  # Keep it smaller than the bar height
 
                     if columnName == 'HDL (mg/dL)':
-                        # ax.add_patch(Rectangle((0, 0.6), 
-                        #                 low_percentile, user_rectangle_width, 
-                        #                 color=at_risk, fill=True, zorder=90))
-                        # ax.add_patch(Rectangle((low_percentile, 0.6), 
-                        #             (high_percentile - low_percentile), user_rectangle_width, 
-                        #             color=borderline, fill=True, zorder=90))
-                        # ax.add_patch(Rectangle((high_percentile, 0.6), 
-                        #             (100 - high_percentile), user_rectangle_width, 
-                        #             color=optimal, fill=True, zorder=90))
-                        ax.add_patch(Rectangle((0, 0.6), 
-                                        low_percentile, user_rectangle_width, 
-                                        color=at_risk, fill=True, zorder=90))
+                        # st.write(low_percentile)
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
                                     (high_percentile - low_percentile), user_rectangle_width, 
                                     color=optimal, fill=True, zorder=90))
@@ -996,9 +990,6 @@ def show_analysis(df):
                         ax.add_patch(Rectangle((0, 0.6), 
                                         low_percentile, user_rectangle_width, 
                                         color=optimal, fill=True, zorder=90))
-                        ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                    (high_percentile - low_percentile), user_rectangle_width, 
-                                    color=at_risk, fill=True, zorder=90))
                     elif "Body Mass" in columnName:
                         ax.add_patch(Rectangle((0, 0.6), 
                                         low_percentile, user_rectangle_width, 
@@ -1006,22 +997,10 @@ def show_analysis(df):
                         ax.add_patch(Rectangle((low_percentile, 0.6), 
                                     (high_percentile - low_percentile), user_rectangle_width, 
                                     color=optimal, fill=True, zorder=90))
-                        ax.add_patch(Rectangle((high_percentile, 0.6), 
-                                    (extra_high_percentile - high_percentile), user_rectangle_width, 
-                                    color=borderline, fill=True, zorder=90))
-                        ax.add_patch(Rectangle((extra_high_percentile, 0.6), 
-                                    (100 - extra_high_percentile), user_rectangle_width, 
-                                    color=at_risk, fill=True, zorder=90))
                     else:
                         ax.add_patch(Rectangle((0, 0.6), 
                                         low_percentile, user_rectangle_width, 
                                         color=optimal, fill=True, zorder=90))
-                        ax.add_patch(Rectangle((low_percentile, 0.6), 
-                                    (high_percentile - low_percentile), user_rectangle_width, 
-                                    color=borderline, fill=True, zorder=90))
-                        ax.add_patch(Rectangle((high_percentile, 0.6), 
-                                    (100 - high_percentile), user_rectangle_width, 
-                                    color=at_risk, fill=True, zorder=90))
 
                     if columnName == 'HDL (mg/dL)':
                         if user_percentile <= low_percentile:
@@ -1035,7 +1014,7 @@ def show_analysis(df):
                                 update_header_color('At risk')
                             else:
                                 update_header_color('Optimal')  
-                    elif 'BP ' in columnName:
+                    elif 'Diastolic ' in columnName:
                         if user_percentile <= low_percentile:
                             # Boundary condition of percentile
                             if user_input >= low_number:
@@ -1089,6 +1068,32 @@ def show_analysis(df):
                         facecolor=header_color, edgecolor='white', linewidth=2, zorder=1000
                     ))
 
+                    # gradient
+                    if 'HDL (mg/dL)' in columnName:
+                        ax.imshow(
+                        np.tile(np.linspace(0, 1, 256), (2, 1)),
+                        extent=(0, low_percentile, 0.6, 0.6 + user_rectangle_width),
+                        aspect='auto',
+                        cmap=plt.cm.autumn,   # red -> yellow
+                        zorder=90
+                        )
+                    elif 'Body' in columnName:
+                        ax.imshow(
+                        np.tile(np.linspace(0, 1, 256), (2, 1)),
+                        extent=(high_percentile, 99, 0.6, 0.6 + user_rectangle_width),
+                        origin='lower', aspect='auto',
+                        cmap=plt.cm.autumn_r,   # yellow -> red
+                        zorder=90
+                        )
+                    else:
+                        ax.imshow(
+                            np.tile(np.linspace(0, 1, 256), (2, 1)),
+                            extent=(low_percentile, 99, 0.6, 0.6 + user_rectangle_width),
+                            origin='lower', aspect='auto',
+                            cmap=plt.cm.autumn_r,   # yellow → red
+                            zorder=90
+                        )
+
                     # Add a downward-pointing triangle (black)
                     ax.scatter(user_percentile, 0.9, marker='v', color=header_color, s=100, zorder=1001)
 
@@ -1130,39 +1135,37 @@ def show_analysis(df):
                                 horizontalalignment='left', weight='bold')
                         plt.annotate(f'18.5-{AHA_RANGES[columnName][3] - 0.1}', xy=(low_percentile, 0.657), xytext=(low_percentile, 0.3),
                                 horizontalalignment='left')
-                        plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(low_percentile, 0.675), xytext=(high_percentile, 0.45),
+                        plt.annotate(f'Suboptimal', xy=(low_percentile, 0.675), xytext=(high_percentile, 0.45),
                                 horizontalalignment='left', weight='bold')
-                        plt.annotate(f'{AHA_RANGES[columnName][3]}-{AHA_RANGES[columnName][5] - 0.1}', xy=(high_percentile - 1, 0.657), xytext=(high_percentile, 0.3),
+                        plt.annotate(f'≥{AHA_RANGES[columnName][3]}', xy=(high_percentile - 1, 0.657), xytext=(high_percentile, 0.3),
                                 horizontalalignment='left')
-                        plt.annotate(f'{AHA_RANGES[columnName][6]}', xy=(low_percentile, 0.675), xytext=(extra_high_percentile, 0.45),
-                                horizontalalignment='left', weight='bold')
-                        plt.annotate(f'≥{AHA_RANGES[columnName][5]}', xy=(extra_high_percentile - 1, 0.657), xytext=(extra_high_percentile, 0.3),
-                                horizontalalignment='left')
-                    else:
-                        if high_number < 1000:
-                            plt.annotate(f'{AHA_RANGES[columnName][4]}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.45),
+                    elif 'HDL (mg/dL)' in columnName:
+                        plt.annotate('Suboptimal', xy=(low_percentile, 0.675), xytext=(low_percentile - 1, 0.45),
+                                    horizontalalignment='right', weight='bold')
+                        plt.annotate(f'<{low_number}', xy=(low_percentile - 1, 0.657), xytext=(low_percentile - 1, 0.3),
+                                    horizontalalignment='right')
+                        plt.annotate('Optimal', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
                                         horizontalalignment='left', weight='bold')
-                            plt.annotate(f'≥{high_number}', xy=(high_percentile, 0.675), xytext=(high_percentile, 0.3),
+                        plt.annotate(f'≥{low_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
                                         horizontalalignment='left')
-                        if low_number > 0:
-                            plt.annotate(f'{AHA_RANGES[columnName][0]}', xy=(low_percentile, 0.675), xytext=(low_percentile - 1, 0.45),
-                                        horizontalalignment='right', weight='bold')
-                            plt.annotate(f'<{low_number}', xy=(low_percentile - 1, 0.657), xytext=(low_percentile - 1, 0.3),
-                                        horizontalalignment='right')
-                        if high_number == 1000:
-                            plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
-                                            horizontalalignment='left', weight='bold')
-                            plt.annotate(f'≥{low_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
-                                            horizontalalignment='left')
-                        else:
-                            plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
-                                            horizontalalignment='left', weight='bold')
-                            if columnName == 'HbA1c (%)' or columnName == 'Total Cholesterol:HDL ()':
-                                plt.annotate(f'{low_number}-{high_number - 0.1:.1f}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
-                                            horizontalalignment='left')
-                            else:
-                                plt.annotate(f'{low_number}-{high_number - 1}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
-                                            horizontalalignment='left')
+                    else:
+                        plt.annotate('Optimal', xy=(low_percentile, 0.675), xytext=(low_percentile - 1, 0.45),
+                                    horizontalalignment='right', weight='bold')
+                        plt.annotate(f'<{low_number}', xy=(low_percentile - 1, 0.657), xytext=(low_percentile - 1, 0.3),
+                                    horizontalalignment='right')
+                        plt.annotate('Suboptimal', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
+                                        horizontalalignment='left', weight='bold')
+                        plt.annotate(f'≥{low_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
+                                        horizontalalignment='left')
+                        # else:
+                        #     plt.annotate(f'{AHA_RANGES[columnName][2]}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.45),
+                        #                     horizontalalignment='left', weight='bold')
+                        #     if columnName == 'HbA1c (%)' or columnName == 'Total Cholesterol:HDL ()':
+                        #         plt.annotate(f'≥{low_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
+                        #                     horizontalalignment='left')
+                        #     else:
+                        #         plt.annotate(f'≥{low_number}', xy=(low_percentile, 0.675), xytext=(low_percentile, 0.3),
+                                            # horizontalalignment='left')
 
                     for spine in ax.spines.values():
                         spine.set_visible(False)
@@ -1246,7 +1249,7 @@ def show_analysis(df):
                     #     """, unsafe_allow_html=True)
 
                 with info_button:
-                    more_info = st.button(f'ⓘ {user_percentile: .0f}{suffix} percentile compared to peers in your group', key=column, type='primary')
+                    more_info = st.button(f'ⓘ {user_percentile: .0f}{suffix} percentile compared to your peer group', key=column, type='primary')
 
                 if more_info:
                         if "HDL (mg/dL)" in columnName or "DL" in columnName or "Trig" in columnName or "Chol" in columnName:
