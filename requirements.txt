@@ -2,7 +2,7 @@ altair==4.2.2
 numpy
 pandas
 pydeck
-streamlit
+streamlit>=1.32
 matplotlib
 seaborn
 statsmodels
