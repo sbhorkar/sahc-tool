@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from collections import deque
 import sqlite3
-from streamlit-extras.stylable_container import stylable_container
+from streamlit_extras.stylable_container import stylable_container
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import hashlib
